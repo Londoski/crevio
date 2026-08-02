@@ -1,0 +1,21 @@
+{
+  "name": "londoski-media",
+  "version": "1.0.0",
+  "description": "Professional portfolio platform for Joseph Chimaobi / Londoski Media.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node backend/server.js",
+    "dev": "node --watch backend/server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "express": "^5.2.1"
+  }
+}
