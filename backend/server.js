@@ -1,5 +1,6 @@
 const express = require("express");
 const db = require("../database/db");
+const userRoutes = require("./routes/userRoutes");
 
 const app = express();
 
@@ -8,7 +9,10 @@ const PORT = process.env.PORT || 3000;
 // Middleware
 app.use(express.json());
 
-// Test route
+// API Routes
+app.use("/api/users", userRoutes);
+
+// Health Check
 app.get("/api/health", (req, res) => {
     res.json({
         success: true,
@@ -17,7 +21,7 @@ app.get("/api/health", (req, res) => {
     });
 });
 
-// Database test route
+// Database Test
 app.get("/api/db-test", (req, res) => {
     try {
         const result = db.prepare("SELECT 1 AS connected").get();
@@ -27,6 +31,8 @@ app.get("/api/db-test", (req, res) => {
             database: result.connected === 1 ? "connected" : "error"
         });
     } catch (error) {
+        console.error("Database test error:", error);
+
         res.status(500).json({
             success: false,
             message: "Database connection failed."
@@ -34,7 +40,8 @@ app.get("/api/db-test", (req, res) => {
     }
 });
 
-// Start server
+// Start Server
 app.listen(PORT, () => {
+    console.log(`Crevio database connected.`);
     console.log(`Crevio server running at http://localhost:${PORT}`);
 });
