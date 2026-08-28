@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Project — Crevio Admin</title>
+
+    <link
+        rel="stylesheet"
+        href="../css/admin.css"
+    >
+</head>
+
+
+<body>
+
+<div class="dashboard">
+
+
+    <!-- ==========================================
+         SIDEBAR
+    =========================================== -->
+
+    <aside class="sidebar">
+
+        <div class="sidebar-brand">
+
+            <h1>Crevio</h1>
+
+            <span>
+                Admin Portal
+            </span>
+
+        </div>
+
+
+        <nav class="sidebar-nav">
+
+            <a
+                href="/admin/pages/dashboard.html"
+                class="nav-item"
+            >
+                Dashboard
+            </a>
+
+            <a
+                href="/admin/pages/projects.html"
+                class="nav-item active"
+            >
+                Projects
+            </a>
+
+            <a
+                href="/admin/pages/projects.html"
+                class="nav-item"
+            >
+                Media
+            </a>
+
+            <a
+                href="#"
+                class="nav-item"
+            >
+                Settings
+            </a>
+
+        </nav>
+
+
+        <button
+            type="button"
+            class="logout-button"
+            id="logoutButton"
+        >
+            Sign Out
+        </button>
+
+    </aside>
+
+
+
+    <!-- ==========================================
+         MAIN CONTENT
+    =========================================== -->
+
+    <main class="dashboard-main">
+
+
+        <!-- HEADER -->
+
+        <header class="dashboard-header">
+
+            <div>
+
+                <a
+                    href="/admin/pages/projects.html"
+                    class="back-link"
+                >
+                    ← Back to Projects
+                </a>
+
+                <h2 id="projectTitle">
+                    Project
+                </h2>
+
+                <p>
+                    Manage project information and media.
+                </p>
+
+            </div>
+
+        </header>
+
+
+
+        <!-- PROJECT MESSAGE -->
+
+        <div
+            id="projectMessage"
+            class="form-message"
+        ></div>
+
+
+
+        <!-- ==========================================
+             PROJECT INFORMATION
+        =========================================== -->
+
+        <section class="dashboard-section">
+
+            <div class="section-header">
+
+                <div>
+
+                    <h3>
+                        Project Information
+                    </h3>
+
+                    <p>
+                        Update the details of this project.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <form
+                id="projectForm"
+                class="project-form"
+            >
+
+
+                <!-- TITLE -->
+
+                <div class="form-group">
+
+                    <label for="title">
+                        Project Title
+                    </label>
+
+                    <input
+                        type="text"
+                        id="title"
+                        name="title"
+                        placeholder="Project title"
+                        required
+                    >
+
+                </div>
+
+
+
+                <!-- DESCRIPTION -->
+
+                <div class="form-group">
+
+                    <label for="description">
+                        Description
+                    </label>
+
+                    <textarea
+                        id="description"
+                        name="description"
+                        rows="6"
+                        placeholder="Describe this project..."
+                    ></textarea>
+
+                </div>
+
+
+
+                <!-- CATEGORY -->
+
+                <div class="form-group">
+
+                    <label for="category">
+                        Category
+                    </label>
+
+                    <input
+                        type="text"
+                        id="category"
+                        name="category"
+                        placeholder="Video Production"
+                    >
+
+                </div>
+
+
+
+                <!-- CLIENT -->
+
+                <div class="form-group">
+
+                    <label for="client_name">
+                        Client
+                    </label>
+
+                    <input
+                        type="text"
+                        id="client_name"
+                        name="client_name"
+                        placeholder="Client name"
+                    >
+
+                </div>
+
+
+
+                <!-- YEAR -->
+
+                <div class="form-group">
+
+                    <label for="year">
+                        Year
+                    </label>
+
+                    <input
+                        type="number"
+                        id="year"
+                        name="year"
+                        min="1900"
+                        max="2200"
+                        placeholder="2026"
+                    >
+
+                </div>
+
+
+
+                <!-- THUMBNAIL -->
+
+                <div class="form-group">
+
+                    <label for="thumbnail_url">
+                        Thumbnail URL
+                    </label>
+
+                    <input
+                        type="url"
+                        id="thumbnail_url"
+                        name="thumbnail_url"
+                        placeholder="https://example.com/thumbnail.jpg"
+                    >
+
+                </div>
+
+
+
+                <!-- PROJECT URL -->
+
+                <div class="form-group">
+
+                    <label for="project_url">
+                        Project URL
+                    </label>
+
+                    <input
+                        type="url"
+                        id="project_url"
+                        name="project_url"
+                        placeholder="https://example.com/project"
+                    >
+
+                </div>
+
+
+
+                <!-- ACTIONS -->
+
+                <div class="form-actions">
+
+                    <button
+                        type="submit"
+                        class="primary-button"
+                        id="saveProjectButton"
+                    >
+                        Save Changes
+                    </button>
+
+                    <button
+                        type="button"
+                        class="danger-button"
+                        id="deleteProjectButton"
+                    >
+                        Delete Project
+                    </button>
+
+                </div>
+
+
+            </form>
+
+        </section>
+
+
+
+        <!-- ==========================================
+             MEDIA
+        =========================================== -->
+
+        <section class="dashboard-section">
+
+            <div class="section-header">
+
+                <div>
+
+                    <h3>
+                        Media
+                    </h3>
+
+                    <p>
+                        Images and videos belonging to this project.
+                    </p>
+
+                </div>
+
+
+                <button
+                    type="button"
+                    class="primary-button"
+                    id="addMediaButton"
+                >
+                    + Add Media
+                </button>
+
+            </div>
+
+
+
+            <div
+                id="mediaMessage"
+                class="form-message"
+            ></div>
+
+
+
+            <div
+                id="mediaContainer"
+                class="media-grid"
+            >
+
+                <div class="loading-state">
+                    Loading media...
+                </div>
+
+            </div>
+
+        </section>
+
+
+    </main>
+
+</div>
+
+
+
+<!-- ==========================================
+     MEDIA MODAL
+=========================================== -->
+
+<div
+    id="mediaModal"
+    class="modal"
+    aria-hidden="true"
+>
+
+
+    <div class="modal-overlay"></div>
+
+
+    <div
+        class="modal-content"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="mediaModalTitle"
+    >
+
+
+        <!-- MODAL HEADER -->
+
+        <div class="modal-header">
+
+            <div>
+
+                <h3 id="mediaModalTitle">
+                    Add Media
+                </h3>
+
+                <p>
+                    Upload an image or video to this project.
+                </p>
+
+            </div>
+
+
+            <button
+                type="button"
+                class="modal-close"
+                id="closeMediaModal"
+                aria-label="Close"
+            >
+                ×
+            </button>
+
+        </div>
+
+
+
+        <!-- MODAL BODY -->
+
+        <div class="modal-body">
+
+
+            <!-- MEDIA TYPE -->
+
+            <div class="form-group">
+
+                <label for="mediaType">
+                    Media Type
+                </label>
+
+                <select
+                    id="mediaType"
+                    name="mediaType"
+                >
+
+                    <option value="image">
+                        Image
+                    </option>
+
+                    <option value="video">
+                        Video
+                    </option>
+
+                </select>
+
+            </div>
+
+
+
+            <!-- FILE -->
+
+            <div class="form-group">
+
+                <label for="mediaFile">
+                    Upload File
+                </label>
+
+                <input
+                    type="file"
+                    id="mediaFile"
+                    name="mediaFile"
+                    accept="image/*,video/*"
+                >
+
+                <small>
+                    Select an image or video from your computer.
+                </small>
+
+            </div>
+
+
+
+            <!-- DIVIDER -->
+
+            <div class="upload-divider">
+
+                <span>
+                    OR
+                </span>
+
+            </div>
+
+
+
+            <!-- URL -->
+
+            <div class="form-group">
+
+                <label for="mediaUrl">
+                    Media URL
+                </label>
+
+                <input
+                    type="url"
+                    id="mediaUrl"
+                    name="mediaUrl"
+                    placeholder="https://example.com/media.jpg"
+                >
+
+                <small>
+                    Use this if the media is already hosted online.
+                </small>
+
+            </div>
+
+
+
+            <!-- TITLE -->
+
+            <div class="form-group">
+
+                <label for="mediaTitle">
+                    Title
+                </label>
+
+                <input
+                    type="text"
+                    id="mediaTitle"
+                    name="mediaTitle"
+                    placeholder="Media title"
+                >
+
+            </div>
+
+
+
+            <!-- DESCRIPTION -->
+
+            <div class="form-group">
+
+                <label for="mediaDescription">
+                    Description
+                </label>
+
+                <textarea
+                    id="mediaDescription"
+                    name="mediaDescription"
+                    rows="4"
+                    placeholder="Describe this media..."
+                ></textarea>
+
+            </div>
+
+
+
+            <!-- SORT -->
+
+            <div class="form-group">
+
+                <label for="mediaSortOrder">
+                    Sort Order
+                </label>
+
+                <input
+                    type="number"
+                    id="mediaSortOrder"
+                    name="mediaSortOrder"
+                    value="0"
+                    min="0"
+                    placeholder="0"
+                >
+
+                <small>
+                    Lower numbers appear first.
+                </small>
+
+            </div>
+
+
+        </div>
+
+
+
+        <!-- MODAL FOOTER -->
+
+        <div class="modal-footer">
+
+            <button
+                type="button"
+                class="secondary-button"
+                id="cancelMediaModal"
+            >
+                Cancel
+            </button>
+
+
+            <button
+                type="button"
+                class="primary-button"
+                id="submitMediaButton"
+            >
+                Add Media
+            </button>
+
+        </div>
+
+
+    </div>
+
+</div>
+
+
+
+<script
+    src="../js/project.js"
+    defer
+></script>
+
+
+</body>
+
+</html>

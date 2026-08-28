@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Social Media | Crevio Admin</title>
+
+    <link
+        rel="stylesheet"
+        href="../css/admin.css"
+    >
+
+</head>
+
+
+<body>
+
+    <!-- ==========================================
+         ADMIN LAYOUT
+    =========================================== -->
+
+    <div class="admin-layout">
+
+
+        <!-- ======================================
+             SIDEBAR
+        ======================================= -->
+
+        <aside class="admin-sidebar">
+
+            <div class="sidebar-brand">
+
+                <h2>CREVIO</h2>
+
+                <span>
+                    Admin
+                </span>
+
+            </div>
+
+
+            <nav class="sidebar-nav">
+
+                <a
+                    href="/admin/pages/dashboard.html"
+                    class="nav-link"
+                >
+                    Dashboard
+                </a>
+
+
+                <a
+                    href="/admin/pages/projects.html"
+                    class="nav-link"
+                >
+                    Projects
+                </a>
+
+
+                <a
+                    href="/admin/pages/social-links.html"
+                    class="nav-link active"
+                >
+                    Social Media
+                </a>
+
+            </nav>
+
+
+            <div class="sidebar-bottom">
+
+                <button
+                    type="button"
+                    id="logoutButton"
+                    class="logout-button"
+                >
+                    Logout
+                </button>
+
+            </div>
+
+        </aside>
+
+
+
+        <!-- ======================================
+             MAIN CONTENT
+        ======================================= -->
+
+        <main class="admin-main">
+
+
+            <!-- ==================================
+                 HEADER
+            =================================== -->
+
+            <header class="admin-header">
+
+                <div>
+
+                    <h1>
+                        Social Media
+                    </h1>
+
+                    <p>
+                        Manage the social media accounts displayed on your portfolio.
+                    </p>
+
+                </div>
+
+
+                <button
+                    type="button"
+                    id="addSocialButton"
+                    class="primary-button"
+                >
+                    + Add Social Media
+                </button>
+
+            </header>
+
+
+
+            <!-- ==================================
+                 MESSAGE
+            =================================== -->
+
+            <div
+                id="socialMessage"
+                class="admin-message"
+            ></div>
+
+
+
+            <!-- ==================================
+                 SOCIAL LINKS
+            =================================== -->
+
+            <section class="admin-section">
+
+                <div
+                    id="socialLinksContainer"
+                    class="social-links-grid"
+                >
+
+                    <div class="loading-state">
+
+                        Loading social media...
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+
+        </main>
+
+    </div>
+
+
+
+    <!-- ==========================================
+         SOCIAL MEDIA MODAL
+    =========================================== -->
+
+    <div
+        id="socialModal"
+        class="modal"
+    >
+
+        <div class="modal-overlay"></div>
+
+
+        <div class="modal-content">
+
+
+            <!-- ==================================
+                 MODAL HEADER
+            =================================== -->
+
+            <div class="modal-header">
+
+                <div>
+
+                    <h2 id="socialModalTitle">
+                        Add Social Media
+                    </h2>
+
+                    <p>
+                        Add a social media account to your portfolio.
+                    </p>
+
+                </div>
+
+
+                <button
+                    type="button"
+                    id="closeSocialModal"
+                    class="modal-close"
+                    aria-label="Close"
+                >
+                    &times;
+                </button>
+
+            </div>
+
+
+
+            <!-- ==================================
+                 FORM
+            =================================== -->
+
+            <form
+                id="socialForm"
+                autocomplete="off"
+            >
+
+
+                <!-- PLATFORM -->
+
+                <div class="form-group">
+
+                    <label for="platform">
+                        Platform
+                    </label>
+
+                    <select
+                        id="platform"
+                        name="platform"
+                        required
+                    >
+
+                        <option value="">
+                            Select platform
+                        </option>
+
+                        <option value="instagram">
+                            Instagram
+                        </option>
+
+                        <option value="tiktok">
+                            TikTok
+                        </option>
+
+                        <option value="youtube">
+                            YouTube
+                        </option>
+
+                        <option value="facebook">
+                            Facebook
+                        </option>
+
+                        <option value="linkedin">
+                            LinkedIn
+                        </option>
+
+                        <option value="x">
+                            X / Twitter
+                        </option>
+
+                        <option value="threads">
+                            Threads
+                        </option>
+
+                        <option value="behance">
+                            Behance
+                        </option>
+
+                        <option value="dribbble">
+                            Dribbble
+                        </option>
+
+                        <option value="github">
+                            GitHub
+                        </option>
+
+                        <option value="website">
+                            Website
+                        </option>
+
+                        <option value="other">
+                            Other
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+
+                <!-- HANDLE -->
+
+                <div class="form-group">
+
+                    <label for="handle">
+                        Handle / Display Name
+                    </label>
+
+                    <input
+                        type="text"
+                        id="handle"
+                        name="handle"
+                        placeholder="@yourusername"
+                        maxlength="150"
+                        required
+                    >
+
+                </div>
+
+
+
+                <!-- URL -->
+
+                <div class="form-group">
+
+                    <label for="url">
+                        Profile URL
+                    </label>
+
+                    <input
+                        type="url"
+                        id="url"
+                        name="url"
+                        placeholder="https://instagram.com/yourusername"
+                        maxlength="500"
+                        required
+                    >
+
+                </div>
+
+
+
+                <!-- SORT ORDER -->
+
+                <div class="form-group">
+
+                    <label for="sortOrder">
+                        Display Order
+                    </label>
+
+                    <input
+                        type="number"
+                        id="sortOrder"
+                        name="sortOrder"
+                        value="0"
+                        min="0"
+                        step="1"
+                    >
+
+                </div>
+
+
+
+                <!-- ACTIVE -->
+
+                <div class="form-group checkbox-group">
+
+                    <label>
+
+                        <input
+                            type="checkbox"
+                            id="isActive"
+                            name="isActive"
+                            checked
+                        >
+
+                        <span>
+                            Display this account publicly
+                        </span>
+
+                    </label>
+
+                </div>
+
+
+
+                <!-- ACTIONS -->
+
+                <div class="modal-actions">
+
+                    <button
+                        type="button"
+                        id="cancelSocialModal"
+                        class="secondary-button"
+                    >
+                        Cancel
+                    </button>
+
+
+                    <button
+                        type="submit"
+                        id="submitSocialButton"
+                        class="primary-button"
+                    >
+                        Add Social Media
+                    </button>
+
+                </div>
+
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- ==========================================
+         JAVASCRIPT
+    =========================================== -->
+
+    <script src="../js/social-links.js"></script>
+
+</body>
+
+</html>

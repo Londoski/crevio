@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Project — Crevio Admin</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="../css/admin.css">
+
+    <style>
+        .form-page {
+            max-width: 720px;
+            margin: 0 auto;
+        }
+
+        .form-card {
+            padding: 32px 36px;
+        }
+
+        .form-card h2 {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 4px;
+            letter-spacing: -0.04em;
+        }
+
+        .form-card .form-subtitle {
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-bottom: 24px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .form-group.full {
+            grid-column: 1 / -1;
+        }
+
+        .form-group label {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: 1px solid var(--border-glass);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 14px;
+            font-family: inherit;
+            transition: border 0.2s;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+        }
+
+        .btn-secondary {
+            padding: 10px 20px;
+            border-radius: 999px;
+            border: 1px solid var(--border-glass);
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-glass);
+            color: var(--text-primary);
+        }
+
+        .btn-danger {
+            padding: 10px 20px;
+            border-radius: 999px;
+            border: none;
+            background: #ef4444;
+            color: #fff;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            transition: background 0.2s;
+            margin-right: auto;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+            margin-bottom: 24px;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover {
+            color: var(--primary);
+        }
+
+        .loading-state,
+        .error-state {
+            color: var(--text-muted);
+            padding: 40px 0;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .error-state {
+            color: #ef4444;
+        }
+
+        .dashboard-message {
+            margin-top: 16px;
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .dashboard-message.success {
+            display: block;
+            background: rgba(34, 197, 94, 0.1);
+            color: #22c55e;
+            border: 1px solid rgba(34, 197, 94, 0.2);
+        }
+
+        .dashboard-message.error {
+            display: block;
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        @media (max-width: 600px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-card {
+                padding: 24px 20px;
+            }
+
+            .form-actions {
+                flex-direction: column-reverse;
+            }
+
+            .btn-danger {
+                margin-right: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="dashboard">
+
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+
+            <div class="sidebar-brand">
+                <h1>Crevio</h1>
+                <span>Admin Portal</span>
+            </div>
+
+            <nav class="sidebar-nav">
+
+                <a href="dashboard.html" class="nav-item">
+                    <span class="nav-icon">◉</span>
+                    Dashboard
+                </a>
+
+                <a href="projects.html" class="nav-item active">
+                    <span class="nav-icon">⊞</span>
+                    Projects
+                </a>
+
+                <a href="#" class="nav-item">
+                    <span class="nav-icon">◐</span>
+                    Media
+                </a>
+
+                <a href="#" class="nav-item">
+                    <span class="nav-icon">⚙</span>
+                    Settings
+                </a>
+
+            </nav>
+
+            <div class="sidebar-footer">
+                <button id="themeToggle" class="theme-toggle" aria-label="Toggle theme">
+                    🌙
+                </button>
+                <button id="logoutButton" class="logout-button">
+                    Logout
+                </button>
+            </div>
+
+        </aside>
+
+
+        <!-- MAIN CONTENT -->
+        <main class="dashboard-main">
+
+            <div class="form-page">
+                <a href="projects.html" class="back-link">← Back to Projects</a>
+
+                <div class="form-card glass">
+                    <h2>Edit Project</h2>
+                    <p class="form-subtitle">Update project details</p>
+
+                    <div id="loading" class="loading-state">Loading project...</div>
+
+                    <form id="projectForm" style="display:none;">
+                        <div class="form-grid">
+                            <div class="form-group full">
+                                <label for="title">Project Title *</label>
+                                <input type="text" id="title" required>
+                            </div>
+
+                            <div class="form-group full">
+                                <label for="description">Description</label>
+                                <textarea id="description"></textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="category">Category</label>
+                                <input type="text" id="category">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="year">Year</label>
+                                <input type="number" id="year">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="client">Client</label>
+                                <input type="text" id="client">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="url">Project URL</label>
+                                <input type="url" id="url">
+                            </div>
+
+                            <div class="form-group full">
+                                <label for="thumbnail">Thumbnail Image URL</label>
+                                <input type="url" id="thumbnail">
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="button" class="btn-danger" id="deleteBtn">Delete Project</button>
+                            <button type="button" class="btn-secondary" onclick="window.location.href='projects.html'">Cancel</button>
+                            <button type="submit" class="primary-button">Save Changes</button>
+                        </div>
+                    </form>
+
+                    <div id="formMessage" class="dashboard-message"></div>
+                </div>
+            </div>
+
+        </main>
+
+    </div>
+
+    <script src="../js/project-edit.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard — Crevio Admin</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+
+    <!-- Chart.js for the overview graph -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+
+    <link rel="stylesheet" href="../css/admin.css">
+</head>
+
+<body>
+
+<div class="dashboard">
+
+    <!-- ========================================
+         SIDEBAR
+    ======================================== -->
+    <aside class="sidebar">
+
+        <div class="sidebar-brand">
+            <h1>Crevio</h1>
+            <span>Admin Portal</span>
+        </div>
+
+        <nav class="sidebar-nav">
+
+            <a href="dashboard.html" class="nav-item active">
+                <span class="nav-icon">◉</span>
+                Dashboard
+            </a>
+
+            <a href="projects.html" class="nav-item">
+                <span class="nav-icon">⊞</span>
+                Projects
+            </a>
+
+            <a href="#" class="nav-item">
+                <span class="nav-icon">◐</span>
+                Media
+            </a>
+
+            <a href="#" class="nav-item">
+                <span class="nav-icon">⚙</span>
+                Settings
+            </a>
+
+        </nav>
+
+        <div class="sidebar-footer">
+            <button id="themeToggle" class="theme-toggle" aria-label="Toggle theme">
+                🌙
+            </button>
+            <button id="logoutButton" class="logout-button">
+                Logout
+            </button>
+        </div>
+
+    </aside>
+
+
+    <!-- ========================================
+         MAIN CONTENT
+    ======================================== -->
+    <main class="dashboard-main">
+
+        <!-- Top Bar -->
+        <header class="dashboard-header">
+            <div class="topbar-left">
+                <h2>Dashboard</h2>
+                <p class="header-description">Welcome back, Joseph! 👋</p>
+            </div>
+            <div class="topbar-right">
+                <button type="button" class="primary-button" id="addProjectButton">
+                    + New Project
+                </button>
+                <div class="user-profile">
+                    <span class="user-avatar">J</span>
+                    <span class="user-name">Joseph Admin</span>
+                </div>
+            </div>
+        </header>
+
+
+        <!-- STATS CARDS -->
+        <section class="stats-grid">
+
+            <article class="stat-card glass">
+                <div class="stat-icon">📁</div>
+                <div class="stat-content">
+                    <span class="stat-label">Total Projects</span>
+                    <strong id="projectsCount" class="stat-value">—</strong>
+                </div>
+            </article>
+
+            <article class="stat-card glass">
+                <div class="stat-icon">🖼</div>
+                <div class="stat-content">
+                    <span class="stat-label">Media Files</span>
+                    <strong id="mediaCount" class="stat-value">—</strong>
+                </div>
+            </article>
+
+            <article class="stat-card glass">
+                <div class="stat-icon">💾</div>
+                <div class="stat-content">
+                    <span class="stat-label">Storage Used</span>
+                    <strong id="storageUsed" class="stat-value">—</strong>
+                </div>
+            </article>
+
+            <article class="stat-card glass">
+                <div class="stat-icon">🏷</div>
+                <div class="stat-content">
+                    <span class="stat-label">Categories</span>
+                    <strong id="categoriesCount" class="stat-value">—</strong>
+                </div>
+            </article>
+
+        </section>
+
+
+        <!-- DASHBOARD GRID (Recent Projects + Chart) -->
+        <section class="dashboard-grid">
+
+            <!-- Recent Projects -->
+            <div class="recent-projects glass">
+                <div class="section-header">
+                    <h3>Recent Projects</h3>
+                    <a href="projects.html" class="view-all">View all →</a>
+                </div>
+                <div id="projectsContainer" class="project-list">
+                    <div class="loading-state">Loading projects...</div>
+                </div>
+            </div>
+
+            <!-- Project Overview Chart -->
+            <div class="chart-card glass">
+                <div class="section-header">
+                    <h3>Project Overview</h3>
+                    <span class="chart-period">This Month</span>
+                </div>
+                <div class="chart-container">
+                    <canvas id="projectChart"></canvas>
+                </div>
+            </div>
+
+        </section>
+
+        <div id="dashboardMessage" class="dashboard-message"></div>
+
+    </main>
+
+</div>
+
+<script src="../js/dashboard.js"></script>
+
+</body>
+</html>

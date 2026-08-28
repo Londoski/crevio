@@ -1,33 +1,16 @@
-# Dependencies
 node_modules/
-
-# Environment variables
 .env
-.env.*
-!.env.example
 
-# Build files
-dist/
-build/
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
 
-# Logs
-*.log
-npm-debug.log*
-
-# Operating system
-.DS_Store
-Thumbs.db
-
-# Editor
-.vscode/
-
-# Temporary files
-*.tmp
-*.temp
-
-# Local databases
-*.sqlite
-*.sqlite3
-
-# Private uploads
 uploads/
+*.log
+
+admin_backup_before_architecture/
+frontend_backup_before_architecture/
+backend_backup_before_architecture/
+
+database/2fa-setup.html

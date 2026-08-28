@@ -1,7 +1,12 @@
+const bcrypt = require("bcrypt");
 const userModel = require("../models/userModel");
 
-// Create a new user
-const createUser = (req, res) => {
+
+// ==========================================
+// CREATE USER
+// ==========================================
+
+const createUser = async (req, res) => {
     try {
         const {
             username,
@@ -13,7 +18,6 @@ const createUser = (req, res) => {
             location
         } = req.body;
 
-        // Validate required fields
         if (!username || !email || !password) {
             return res.status(400).json({
                 success: false,
@@ -21,7 +25,6 @@ const createUser = (req, res) => {
             });
         }
 
-        // Check if username already exists
         const existingUsername = userModel.findByUsername(username);
 
         if (existingUsername) {
@@ -31,7 +34,6 @@ const createUser = (req, res) => {
             });
         }
 
-        // Check if email already exists
         const existingEmail = userModel.findByEmail(email);
 
         if (existingEmail) {
@@ -41,19 +43,17 @@ const createUser = (req, res) => {
             });
         }
 
-        // Create user
+        const password_hash = await bcrypt.hash(password, 12);
+
         const user = userModel.create({
             username,
             email,
-            password_hash: password,
+            password_hash,
             display_name,
             bio,
             profile_image,
             location
         });
-
-        // Never return the password
-        delete user.password_hash;
 
         res.status(201).json({
             success: true,
@@ -72,7 +72,91 @@ const createUser = (req, res) => {
 };
 
 
-// Get user by username
+// ==========================================
+// GET CURRENT USER
+// ==========================================
+
+const getCurrentUser = (req, res) => {
+    try {
+        const user_id = req.user.id;
+
+        const user = userModel.findById(user_id);
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found."
+            });
+        }
+
+        res.json({
+            success: true,
+            user
+        });
+
+    } catch (error) {
+        console.error("Get current user error:", error);
+
+        res.status(500).json({
+            success: false,
+            message: "Unable to retrieve profile."
+        });
+    }
+};
+
+
+// ==========================================
+// UPDATE CURRENT USER PROFILE
+// ==========================================
+
+const updateCurrentUser = (req, res) => {
+    try {
+        const user_id = req.user.id;
+
+        const {
+            display_name,
+            bio,
+            profile_image,
+            location
+        } = req.body;
+
+        const existingUser = userModel.findById(user_id);
+
+        if (!existingUser) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found."
+            });
+        }
+
+        const updatedUser = userModel.updateProfile(user_id, {
+            display_name,
+            bio,
+            profile_image,
+            location
+        });
+
+        res.json({
+            success: true,
+            message: "Profile updated successfully.",
+            user: updatedUser
+        });
+
+    } catch (error) {
+        console.error("Update profile error:", error);
+
+        res.status(500).json({
+            success: false,
+            message: "Unable to update profile."
+        });
+    }
+};
+
+
+// ==========================================
+// GET USER BY USERNAME
+// ==========================================
+
 const getUserByUsername = (req, res) => {
     try {
         const { username } = req.params;
@@ -85,9 +169,6 @@ const getUserByUsername = (req, res) => {
                 message: "User not found."
             });
         }
-
-        // Never return password hash
-        delete user.password_hash;
 
         res.json({
             success: true,
@@ -107,5 +188,7 @@ const getUserByUsername = (req, res) => {
 
 module.exports = {
     createUser,
+    getCurrentUser,
+    updateCurrentUser,
     getUserByUsername
 };

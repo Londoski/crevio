@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Projects — Crevio Admin</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="../css/admin.css">
+
+    <style>
+        .projects-page {
+            max-width: 1200px;
+        }
+
+        .projects-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .projects-header h2 {
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: -0.04em;
+        }
+
+        .projects-table-wrap {
+            overflow-x: auto;
+            padding: 4px 0;
+        }
+
+        .projects-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        .projects-table th {
+            text-align: left;
+            padding: 14px 16px;
+            color: var(--text-muted);
+            font-weight: 500;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            border-bottom: 1px solid var(--border-glass);
+        }
+
+        .projects-table td {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border-glass);
+            color: var(--text-secondary);
+            vertical-align: middle;
+        }
+
+        .projects-table tr:hover td {
+            background: var(--bg-glass);
+        }
+
+        .project-title-cell {
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .project-actions {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+
+        .project-actions button {
+            padding: 4px 12px;
+            border-radius: 6px;
+            border: 1px solid var(--border-glass);
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+
+        .project-actions .edit-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .project-actions .delete-btn:hover {
+            border-color: #ef4444;
+            color: #ef4444;
+        }
+
+        .loading-state,
+        .empty-state,
+        .error-state {
+            padding: 40px 0;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .error-state {
+            color: #ef4444;
+        }
+
+        @media (max-width: 600px) {
+            .projects-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+
+            .projects-table th,
+            .projects-table td {
+                padding: 10px 12px;
+                font-size: 13px;
+            }
+
+            .project-actions button {
+                padding: 4px 8px;
+                font-size: 11px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="dashboard">
+
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+
+            <div class="sidebar-brand">
+                <h1>Crevio</h1>
+                <span>Admin Portal</span>
+            </div>
+
+            <nav class="sidebar-nav">
+
+                <a href="dashboard.html" class="nav-item">
+                    <span class="nav-icon">◉</span>
+                    Dashboard
+                </a>
+
+                <a href="projects.html" class="nav-item active">
+                    <span class="nav-icon">⊞</span>
+                    Projects
+                </a>
+
+                <a href="#" class="nav-item">
+                    <span class="nav-icon">◐</span>
+                    Media
+                </a>
+
+                <a href="#" class="nav-item">
+                    <span class="nav-icon">⚙</span>
+                    Settings
+                </a>
+
+            </nav>
+
+            <div class="sidebar-footer">
+                <button id="themeToggle" class="theme-toggle" aria-label="Toggle theme">
+                    🌙
+                </button>
+                <button id="logoutButton" class="logout-button">
+                    Logout
+                </button>
+            </div>
+
+        </aside>
+
+
+        <!-- MAIN CONTENT -->
+        <main class="dashboard-main">
+
+            <div class="projects-page">
+
+                <div class="projects-header">
+                    <h2>All Projects</h2>
+                    <a href="project-new.html" class="primary-button">+ New Project</a>
+                </div>
+
+                <div class="projects-table-wrap glass">
+                    <div id="projectsContainer" class="loading-state">Loading projects...</div>
+                </div>
+
+                <div id="projectsMessage" class="dashboard-message"></div>
+
+            </div>
+
+        </main>
+
+    </div>
+
+    <script src="../js/projects.js"></script>
+
+</body>
+</html>

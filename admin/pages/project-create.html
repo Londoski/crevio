@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Create Project — Crevio Admin</title>
+
+    <link
+        rel="stylesheet"
+        href="/admin/assets/css/admin.css"
+    >
+
+</head>
+
+
+<body>
+
+    <!-- ==========================================
+         HEADER
+    =========================================== -->
+
+    <header class="admin-header">
+
+        <div class="admin-brand">
+            CREVIO
+        </div>
+
+
+        <div class="admin-header-actions">
+
+            <a
+                href="/"
+                target="_blank"
+            >
+                View Portfolio
+            </a>
+
+            <button
+                id="logout-button"
+                type="button"
+            >
+                Logout
+            </button>
+
+        </div>
+
+    </header>
+
+
+
+    <!-- ==========================================
+         LAYOUT
+    =========================================== -->
+
+    <div class="admin-layout">
+
+
+        <!-- ======================================
+             SIDEBAR
+        ======================================= -->
+
+        <aside class="admin-sidebar">
+
+            <nav>
+
+                <a href="/admin/pages/dashboard.html">
+                    Dashboard
+                </a>
+
+                <a
+                    href="/admin/pages/projects.html"
+                    class="active"
+                >
+                    Projects
+                </a>
+
+                <a href="/admin/pages/social-links.html">
+                    Social Links
+                </a>
+
+                <a href="/admin/pages/profile.html">
+                    Profile
+                </a>
+
+            </nav>
+
+        </aside>
+
+
+
+        <!-- ======================================
+             MAIN
+        ======================================= -->
+
+        <main class="admin-main">
+
+            <div class="admin-page-header">
+
+                <div>
+
+                    <p class="admin-eyebrow">
+                        PROJECTS
+                    </p>
+
+                    <h1>
+                        Create Project
+                    </h1>
+
+                    <p>
+                        Add a new project to your Crevio portfolio.
+                    </p>
+
+                </div>
+
+                <a
+                    href="/admin/pages/projects.html"
+                    class="admin-secondary-button"
+                >
+                    ← Back to Projects
+                </a>
+
+            </div>
+
+
+
+            <!-- ==================================
+                 FORM
+            =================================== -->
+
+            <section class="admin-form-card">
+
+                <form id="create-project-form">
+
+
+                    <!-- TITLE -->
+
+                    <div class="admin-form-field">
+
+                        <label for="title">
+                            Project Title
+                        </label>
+
+                        <input
+                            id="title"
+                            name="title"
+                            type="text"
+                            placeholder="e.g. Lura Energy Campaign"
+                            required
+                        >
+
+                    </div>
+
+
+                    <!-- DESCRIPTION -->
+
+                    <div class="admin-form-field">
+
+                        <label for="description">
+                            Description
+                        </label>
+
+                        <textarea
+                            id="description"
+                            name="description"
+                            rows="6"
+                            placeholder="Describe the project..."
+                        ></textarea>
+
+                    </div>
+
+
+                    <!-- CATEGORY -->
+
+                    <div class="admin-form-field">
+
+                        <label for="category">
+                            Category
+                        </label>
+
+                        <input
+                            id="category"
+                            name="category"
+                            type="text"
+                            placeholder="e.g. Video Production"
+                        >
+
+                    </div>
+
+
+                    <!-- THUMBNAIL -->
+
+                    <div class="admin-form-field">
+
+                        <label for="thumbnail_url">
+                            Thumbnail URL
+                        </label>
+
+                        <input
+                            id="thumbnail_url"
+                            name="thumbnail_url"
+                            type="url"
+                            placeholder="https://..."
+                        >
+
+                    </div>
+
+
+                    <!-- PROJECT URL -->
+
+                    <div class="admin-form-field">
+
+                        <label for="project_url">
+                            Project URL
+                        </label>
+
+                        <input
+                            id="project_url"
+                            name="project_url"
+                            type="url"
+                            placeholder="https://..."
+                        >
+
+                    </div>
+
+
+                    <!-- CLIENT -->
+
+                    <div class="admin-form-field">
+
+                        <label for="client_name">
+                            Client
+                        </label>
+
+                        <input
+                            id="client_name"
+                            name="client_name"
+                            type="text"
+                            placeholder="e.g. Lura Energy"
+                        >
+
+                    </div>
+
+
+                    <!-- YEAR -->
+
+                    <div class="admin-form-field">
+
+                        <label for="year">
+                            Year
+                        </label>
+
+                        <input
+                            id="year"
+                            name="year"
+                            type="number"
+                            min="1900"
+                            max="2100"
+                            placeholder="2026"
+                        >
+
+                    </div>
+
+
+                    <!-- ACTIONS -->
+
+                    <div class="admin-form-actions">
+
+                        <a
+                            href="/admin/pages/projects.html"
+                            class="admin-secondary-button"
+                        >
+                            Cancel
+                        </a>
+
+                        <button
+                            type="submit"
+                            class="admin-primary-button"
+                        >
+                            Create Project
+                        </button>
+
+                    </div>
+
+
+                    <!-- STATUS -->
+
+                    <div
+                        id="form-status"
+                        class="admin-form-status"
+                    >
+                    </div>
+
+                </form>
+
+            </section>
+
+        </main>
+
+    </div>
+
+
+
+    <script src="/admin/assets/js/project-create.js"></script>
+
+</body>
+
+</html>
