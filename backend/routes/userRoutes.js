@@ -1,48 +1,12 @@
-const express = require("express");
-
-const {
-    createUser,
-    getCurrentUser,
-    updateCurrentUser,
-    getUserByUsername
-} = require("../controllers/userController");
-
-const authMiddleware = require("../middleware/authMiddleware");
-
+const express = require('express');
 const router = express.Router();
+const userController = require('../controllers/userController');
+const { authenticate } = require('../middleware/authMiddleware');
 
+router.use(authenticate);
 
-// ==========================================
-// PUBLIC ROUTES
-// ==========================================
-
-// Create user
-router.post("/", createUser);
-
-// Get public profile by username
-router.get(
-    "/username/:username",
-    getUserByUsername
-);
-
-
-// ==========================================
-// AUTHENTICATED ROUTES
-// ==========================================
-
-// Get logged-in user's profile
-router.get(
-    "/me",
-    authMiddleware,
-    getCurrentUser
-);
-
-// Update logged-in user's profile
-router.put(
-    "/me",
-    authMiddleware,
-    updateCurrentUser
-);
-
+router.get('/me', userController.getMe);
+router.put('/me', userController.updateMe);
+router.get('/profile', userController.getProfile);
 
 module.exports = router;

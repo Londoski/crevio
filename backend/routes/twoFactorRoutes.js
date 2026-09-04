@@ -2,19 +2,44 @@
 // CREVIO — TWO FACTOR ROUTES
 // =========================================================
 
-const express =
-    require("express");
+const express = require("express");
+const authMiddleware = require("../middleware/authMiddleware");
+const controller = require("../controllers/twoFactorController");
+const authController = require("../controllers/authController");
 
-const authMiddleware =
-    require("../middleware/authMiddleware");
+const router = express.Router();
 
-const controller =
-    require("../controllers/twoFactorController");
+// =========================================================
+// AUTHENTICATOR SETUP
+// =========================================================
 
+router.post("/setup", authMiddleware, controller.setupAuthenticator);
 
-const router =
-    express.Router();
+// =========================================================
+// VERIFY SETUP
+// =========================================================
 
+router.post("/verify-setup", authMiddleware, controller.verifyAuthenticatorSetup);
+
+// =========================================================
+// DISABLE 2FA
+// =========================================================
+
+router.post("/disable", authMiddleware, controller.disableTwoFactor);
+
+// =========================================================
+// RECOVERY CODES
+// =========================================================
+
+router.post("/recovery-codes/regenerate", authMiddleware, controller.regenerateRecoveryCodes);
+
+// =========================================================
+// VERIFY 2FA CHALLENGE (LOGIN)
+// =========================================================
+
+router.post("/verify-challenge", authController.verifyTwoFactorChallenge);
+
+module.exports = router;
 
 // =========================================================
 // AUTHENTICATOR SETUP

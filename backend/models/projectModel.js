@@ -1,294 +1,134 @@
+// =========================================================
+// CREVIO — PROJECT MODEL
+// =========================================================
+
 const db = require("../../database/db");
-const projectMediaModel = require("./projectMediaModel");
 
 const projectModel = {
 
-    // ==========================================
-    // CREATE A NEW PROJECT
-    // ==========================================
-
-    create(project) {
-
-        const {
-            user_id,
-            title,
-            description,
-            category,
-            thumbnail_url,
-            project_url,
-            client_name,
-            year
-        } = project;
-
-        const stmt = db.prepare(`
-            INSERT INTO projects (
-                user_id,
-                title,
-                description,
-                category,
-                thumbnail_url,
-                project_url,
-                client_name,
-                year
-            )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        `);
-
+    // ---- COUNT BY USER (safe) ----
+    countByUser(userId) {
         try {
-
-            const result = stmt.run(
-                user_id,
-                title,
-                description || null,
-                category || null,
-                thumbnail_url || null,
-                project_url || null,
-                client_name || null,
-                year || null
-            );
-
-            return this.findById(
-                result.lastInsertRowid
-            );
-
-        } catch (error) {
-
-            console.error(
-                "Database insert error:",
-                error
-            );
-
-            throw error;
-
+            const tableCheck = db.prepare(`SELECT name FROM sqlite_master WHERE type='table' AND name='projects'`).get();
+            if (!tableCheck) return 0;
+            const result = db.prepare(`SELECT COUNT(*) as count FROM projects WHERE user_id = ?`).get(userId);
+            return result ? result.count : 0;
+        } catch (e) {
+            return 0;
         }
-
     },
 
+    // ---- COUNT PUBLISHED BY USER (safe) ----
+    countPublishedByUser(userId) {
+        try {
+            const tableCheck = db.prepare(`SELECT name FROM sqlite_master WHERE type='table' AND name='projects'`).get();
+            if (!tableCheck) return 0;
+            const result = db.prepare(`SELECT COUNT(*) as count FROM projects WHERE user_id = ? AND published = 1`).get(userId);
+            return result ? result.count : 0;
+        } catch (e) {
+            return 0;
+        }
+    },
 
-    // ==========================================
-    // FIND PROJECT BY ID
-    // ==========================================
+    // ---- GET RECENT BY USER (safe) ----
+    getRecentByUser(userId, limit = 5) {
+        try {
+            const tableCheck = db.prepare(`SELECT name FROM sqlite_master WHERE type='table' AND name='projects'`).get();
+            if (!tableCheck) return [];
+            return db.prepare(`SELECT * FROM projects WHERE user_id = ? ORDER BY created_at DESC LIMIT ?`).all(userId, limit);
+        } catch (e) {
+            console.error('getRecentByUser error:', e.message);
+            return [];
+        }
+    },
 
+    // ---- FIND BY ID ----
     findById(id) {
-
         try {
-
-            const stmt = db.prepare(`
-                SELECT *
-                FROM projects
-                WHERE id = ?
-            `);
-
-            const project = stmt.get(id);
-
-            if (!project) {
-
-                return null;
-
-            }
-
-            project.media =
-                projectMediaModel.findByProjectId(id);
-
-            return project;
-
-        } catch (error) {
-
-            console.error(
-                "Find by ID error:",
-                error
-            );
-
+            return db.prepare(`SELECT * FROM projects WHERE id = ?`).get(id);
+        } catch (e) {
             return null;
-
         }
-
     },
 
+    // ---- FIND BY USER (alias for findByUserId) ----
+    findByUser(userId) {
+        return this.findByUserId(userId);
+    },
 
-    // ==========================================
-    // GET ALL PROJECTS FOR USER
-    // ==========================================
-
-    findByUserId(user_id) {
-
+    // ---- FIND BY USER ID (exact method name expected by controller) ----
+    findByUserId(userId) {
         try {
-
-            const stmt = db.prepare(`
-                SELECT *
-                FROM projects
-                WHERE user_id = ?
-                ORDER BY created_at DESC
-            `);
-
-            const projects =
-                stmt.all(user_id);
-
-            return projects.map(
-                (project) => {
-
-                    project.media =
-                        projectMediaModel.findByProjectId(
-                            project.id
-                        );
-
-                    return project;
-
-                }
-            );
-
-        } catch (error) {
-
-            console.error(
-                "Find by user ID error:",
-                error
-            );
-
+            const tableCheck = db.prepare(`SELECT name FROM sqlite_master WHERE type='table' AND name='projects'`).get();
+            if (!tableCheck) return [];
+            return db.prepare(`SELECT * FROM projects WHERE user_id = ? ORDER BY created_at DESC`).all(userId);
+        } catch (e) {
             return [];
-
         }
-
     },
 
-
-    // ==========================================
-    // UPDATE PROJECT
-    // ==========================================
-
-    update(id, project) {
-
-        const {
-            title,
-            description,
-            category,
-            thumbnail_url,
-            project_url,
-            client_name,
-            year
-        } = project;
-
-        const stmt = db.prepare(`
-            UPDATE projects
-            SET
-                title = ?,
-                description = ?,
-                category = ?,
-                thumbnail_url = ?,
-                project_url = ?,
-                client_name = ?,
-                year = ?,
-                updated_at = CURRENT_TIMESTAMP
-            WHERE id = ?
-        `);
-
+    // ---- CREATE ----
+    create(project) {
         try {
-
-            stmt.run(
-                title,
-                description || null,
-                category || null,
-                thumbnail_url || null,
-                project_url || null,
-                client_name || null,
-                year || null,
-                id
+            const stmt = db.prepare(`
+                INSERT INTO projects (user_id, name, description, category, thumbnail_url, published)
+                VALUES (?, ?, ?, ?, ?, ?)
+            `);
+            const result = stmt.run(
+                project.user_id,
+                project.name,
+                project.description || null,
+                project.category || null,
+                project.thumbnail_url || null,
+                project.published ? 1 : 0
             );
+            return this.findById(result.lastInsertRowid);
+        } catch (e) {
+            console.error('Create project error:', e);
+            return null;
+        }
+    },
 
+    // ---- UPDATE ----
+    update(id, updates) {
+        try {
+            const fields = [];
+            const values = [];
+            if (updates.name !== undefined) { fields.push('name = ?'); values.push(updates.name); }
+            if (updates.description !== undefined) { fields.push('description = ?'); values.push(updates.description); }
+            if (updates.category !== undefined) { fields.push('category = ?'); values.push(updates.category); }
+            if (updates.thumbnail_url !== undefined) { fields.push('thumbnail_url = ?'); values.push(updates.thumbnail_url); }
+            if (updates.published !== undefined) { fields.push('published = ?'); values.push(updates.published ? 1 : 0); }
+            fields.push('updated_at = CURRENT_TIMESTAMP');
+            values.push(id);
+            const sql = `UPDATE projects SET ${fields.join(', ')} WHERE id = ?`;
+            db.prepare(sql).run(...values);
             return this.findById(id);
-
-        } catch (error) {
-
-            console.error(
-                "Update error:",
-                error
-            );
-
-            throw error;
-
+        } catch (e) {
+            console.error('Update project error:', e);
+            return null;
         }
-
     },
 
-
-    // ==========================================
-    // DELETE PROJECT
-    // ==========================================
-
+    // ---- DELETE ----
     delete(id) {
-
         try {
-
-            const stmt = db.prepare(`
-                DELETE FROM projects
-                WHERE id = ?
-            `);
-
-            const result = stmt.run(id);
-
-            return result.changes > 0;
-
-        } catch (error) {
-
-            console.error(
-                "Delete error:",
-                error
-            );
-
+            db.prepare(`DELETE FROM projects WHERE id = ?`).run(id);
+            return true;
+        } catch (e) {
             return false;
-
         }
-
     },
 
-
-    // ==========================================
-    // GET ALL PROJECTS
-    // ==========================================
-
-    getAll() {
-
+    // ---- DELETE BY USER ----
+    deleteByUser(userId) {
         try {
-
-            const stmt = db.prepare(`
-                SELECT *
-                FROM projects
-                ORDER BY id DESC
-            `);
-
-            const projects =
-                stmt.all();
-
-            return projects.map(
-                (project) => {
-
-                    project.media =
-                        projectMediaModel.findByProjectId(
-                            project.id
-                        );
-
-                    return project;
-
-                }
-            );
-
-        } catch (error) {
-
-            console.error(
-                "Get all error:",
-                error
-            );
-
-            return [];
-
+            db.prepare(`DELETE FROM projects WHERE user_id = ?`).run(userId);
+            return true;
+        } catch (e) {
+            return false;
         }
-
     }
-
 };
-
-
-// ==========================================
-// EXPORT
-// ==========================================
 
 module.exports = projectModel;

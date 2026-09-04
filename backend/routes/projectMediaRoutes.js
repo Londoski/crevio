@@ -1,49 +1,24 @@
+// =========================================================
+// CREVIO — PROJECT MEDIA ROUTES
+// =========================================================
+
 const express = require("express");
-
-const router = express.Router();
-
-const projectMediaController = require("../controllers/projectMediaController");
+const router = express.Router({ mergeParams: true });
 const authMiddleware = require("../middleware/authMiddleware");
+const projectMediaController = require("../controllers/projectMediaController");
 
-
-// ==========================================
-// PROJECT MEDIA ROUTES
-// ==========================================
-
-// Add media to a project
-router.post(
-    "/projects/:projectId/media",
-    authMiddleware,
-    projectMediaController.createMedia
-);
+// All routes are prefixed with /api/projects/:projectId/media
 
 // Get all media for a project
-router.get(
-    "/projects/:projectId/media",
-    authMiddleware,
-    projectMediaController.getProjectMedia
-);
+router.get("/", authMiddleware, projectMediaController.getProjectMedia);
 
-// Get one media item
-router.get(
-    "/media/:mediaId",
-    authMiddleware,
-    projectMediaController.getMediaById
-);
+// Add media to a project
+router.post("/", authMiddleware, projectMediaController.addProjectMedia);
 
-// Update media
-router.put(
-    "/media/:mediaId",
-    authMiddleware,
-    projectMediaController.updateMedia
-);
+// Remove media from a project
+router.delete("/:mediaId", authMiddleware, projectMediaController.removeProjectMedia);
 
-// Delete media
-router.delete(
-    "/media/:mediaId",
-    authMiddleware,
-    projectMediaController.deleteMedia
-);
-
+// Update media order / details within project
+router.put("/:mediaId", authMiddleware, projectMediaController.updateProjectMedia);
 
 module.exports = router;

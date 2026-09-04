@@ -2,79 +2,24 @@
 // CREVIO — VERIFICATION ROUTES
 // =========================================================
 
-const express =
-    require("express");
+const express = require("express");
+const router = express.Router();
+const authMiddleware = require("../middleware/authMiddleware");
+const verificationController = require("../controllers/verificationController");
 
+// ---- Email verification ----
+router.post("/verify-email", authMiddleware, verificationController.verifyEmail);
+router.post("/resend-verification", authMiddleware, verificationController.resendVerification);
 
-const verificationController =
-    require(
-        "../controllers/verificationController"
-    );
+// ---- Phone verification ----
+router.post("/verify-phone", authMiddleware, verificationController.verifyPhone);
+router.post("/send-phone-verification", authMiddleware, verificationController.sendPhoneVerification);
 
+// ---- Password reset (public) ----
+router.post("/forgot-password", verificationController.forgotPassword);
+router.post("/reset-password", verificationController.resetPassword);
 
-const authMiddleware =
-    require(
-        "../middleware/authMiddleware"
-    );
+// ---- Check verification status ----
+router.get("/verification-status", authMiddleware, verificationController.getVerificationStatus);
 
-
-const router =
-    express.Router();
-
-
-// =========================================================
-// SECURITY STATUS
-// =========================================================
-
-router.get(
-    "/security",
-    authMiddleware,
-    verificationController.getSecurityStatus
-);
-
-
-// =========================================================
-// EMAIL VERIFICATION
-// =========================================================
-
-router.post(
-    "/email/start",
-    authMiddleware,
-    verificationController.startEmailVerification
-);
-
-
-router.post(
-    "/email/verify",
-    authMiddleware,
-    verificationController.verifyEmail
-);
-
-
-// =========================================================
-// PHONE
-// =========================================================
-
-router.put(
-    "/phone",
-    authMiddleware,
-    verificationController.setPhone
-);
-
-
-router.post(
-    "/phone/start",
-    authMiddleware,
-    verificationController.startPhoneVerification
-);
-
-
-router.post(
-    "/phone/verify",
-    authMiddleware,
-    verificationController.verifyPhone
-);
-
-
-module.exports =
-    router;
+module.exports = router;

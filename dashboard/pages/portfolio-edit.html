@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Portfolio — Crevio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        /* =========================================================
+           RESET & BASE
+           ========================================================= */
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            transition: background 0.3s, color 0.3s;
+            display: flex;
+            min-height: 100vh;
+        }
+        a { text-decoration: none; color: inherit; }
+
+        /* =========================================================
+           THEME VARIABLES
+           ========================================================= */
+        [data-theme="dark"] {
+            --bg-primary: #0F172A;
+            --bg-secondary: #1E293B;
+            --bg-card: #1E293B;
+            --bg-input: #0F172A;
+            --border-color: #334155;
+            --text-primary: #F1F5F9;
+            --text-secondary: #94A3B8;
+            --text-muted: #64748B;
+            --accent: #2563EB;
+            --accent-hover: #1D4ED8;
+            --accent-dim: rgba(37,99,235,0.15);
+            --danger: #EF4444;
+            --danger-hover: #DC2626;
+            --success: #22C55E;
+            --warning: #F59E0B;
+            --shadow: 0 4px 24px rgba(0,0,0,0.4);
+        }
+        [data-theme="light"] {
+            --bg-primary: #F1F5F9;
+            --bg-secondary: #FFFFFF;
+            --bg-card: #FFFFFF;
+            --bg-input: #F8FAFC;
+            --border-color: #E2E8F0;
+            --text-primary: #0F172A;
+            --text-secondary: #475569;
+            --text-muted: #94A3B8;
+            --accent: #2563EB;
+            --accent-hover: #1D4ED8;
+            --accent-dim: rgba(37,99,235,0.1);
+            --danger: #EF4444;
+            --danger-hover: #DC2626;
+            --success: #22C55E;
+            --warning: #F59E0B;
+            --shadow: 0 4px 24px rgba(0,0,0,0.06);
+        }
+
+        /* =========================================================
+           SIDEBAR (consistent with dashboard)
+           ========================================================= */
+        .sidebar {
+            width: 240px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 24px 16px;
+            height: 100vh;
+            position: sticky;
+            top: 0;
+            flex-shrink: 0;
+            transition: background 0.3s, border-color 0.3s;
+            overflow-y: auto;
+        }
+        .sidebar-brand { padding-bottom: 20px; border-bottom: 1px solid var(--border-color); margin-bottom: 20px; }
+        .sidebar-brand h1 { font-size: 20px; font-weight: 700; color: var(--text-primary); }
+        .sidebar-brand span { font-size: 11px; font-weight: 500; text-transform: uppercase; color: var(--text-muted); }
+        .sidebar-nav { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+        .nav-item {
+            display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px;
+            color: var(--text-secondary); font-size: 14px; font-weight: 500; transition: all 0.15s;
+            text-decoration: none;
+        }
+        .nav-item:hover { background: var(--accent-dim); color: var(--text-primary); }
+        .nav-item.active { background: var(--accent-dim); color: var(--accent); }
+        .nav-item .icon { width: 20px; height: 20px; flex-shrink: 0; }
+        .nav-divider { height: 1px; background: var(--border-color); margin: 8px 12px; }
+        .sidebar-footer { padding-top: 16px; border-top: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 8px; }
+        .logout-button {
+            background: transparent; border: none; color: var(--danger); font-size: 13px; font-weight: 500;
+            padding: 10px 12px; border-radius: 8px; cursor: pointer; font-family: inherit;
+            display: flex; align-items: center; gap: 12px; transition: background 0.15s;
+            width: 100%;
+        }
+        .logout-button:hover { background: rgba(239,68,68,0.1); }
+        .theme-toggle-btn {
+            background: transparent; border: none; color: var(--text-secondary); font-size: 18px;
+            cursor: pointer; padding: 6px 10px; border-radius: 8px; transition: background 0.15s;
+            display: inline-flex; align-items: center; gap: 6px; width: fit-content;
+        }
+        .theme-toggle-btn:hover { background: var(--accent-dim); color: var(--text-primary); }
+        .theme-toggle-btn .icon { width: 18px; height: 18px; }
+        .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 199; }
+        .sidebar-overlay.open { display: block; }
+
+        /* =========================================================
+           MAIN CONTENT
+           ========================================================= */
+        .dashboard-main {
+            flex: 1; padding: 28px 36px; background: var(--bg-primary);
+            min-height: 100vh; transition: background 0.3s;
+        }
+
+        /* ----- HEADER ----- */
+        .dashboard-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 28px; flex-wrap: wrap; gap: 12px;
+        }
+        .topbar-left { display: flex; align-items: center; gap: 16px; }
+        .mobile-menu-toggle {
+            display: none; background: none; border: none;
+            color: var(--text-secondary); font-size: 24px; cursor: pointer;
+        }
+        .topbar-left h2 { font-size: 24px; font-weight: 700; color: var(--text-primary); }
+        .header-description { font-size: 14px; color: var(--text-secondary); }
+        .topbar-right { display: flex; align-items: center; gap: 16px; }
+        .primary-button {
+            padding: 8px 18px; border-radius: 8px; border: none;
+            background: var(--accent); color: #fff;
+            font-size: 13px; font-weight: 600; cursor: pointer;
+            display: inline-flex; align-items: center; gap: 6px;
+            transition: all 0.15s; text-decoration: none;
+        }
+        .primary-button:hover { background: var(--accent-hover); transform: translateY(-1px); }
+        .secondary-button {
+            padding: 8px 18px; border-radius: 8px; border: 1px solid var(--border-color);
+            background: transparent; color: var(--text-secondary);
+            font-size: 13px; font-weight: 500; cursor: pointer;
+            display: inline-flex; align-items: center; gap: 6px;
+            transition: all 0.15s; text-decoration: none;
+        }
+        .secondary-button:hover { background: var(--bg-card); color: var(--text-primary); }
+
+        /* ----- USER AVATAR (small, 32px) ----- */
+        .user-profile { display: flex; align-items: center; gap: 8px; }
+        .user-avatar {
+            width: 32px !important;
+            height: 32px !important;
+            border-radius: 50%;
+            background: var(--accent);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 13px !important;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+        .user-avatar img {
+            width: 32px !important;
+            height: 32px !important;
+            object-fit: cover;
+            display: block;
+        }
+        .user-name { font-size: 14px; font-weight: 500; color: var(--text-primary); }
+
+        /* ----- CARDS ----- */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            transition: background 0.3s, border-color 0.3s;
+        }
+        .card h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .card h3 .icon { width: 20px; height: 20px; color: var(--text-secondary); }
+
+        /* ----- TABS ----- */
+        .edit-tabs {
+            display: flex;
+            gap: 4px;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 4px;
+            margin-bottom: 24px;
+            border: 1px solid var(--border-color);
+            overflow-x: auto;
+        }
+        .edit-tab {
+            padding: 10px 20px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .edit-tab.active {
+            background: var(--accent);
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(37,99,235,0.3);
+        }
+        .edit-tab:hover:not(.active) {
+            background: var(--accent-dim);
+            color: var(--text-primary);
+        }
+
+        .edit-panel { display: none; animation: fadeIn 0.25s ease; }
+        .edit-panel.active { display: block; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ----- TEMPLATE GRID ----- */
+        .template-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 20px;
+            margin-top: 8px;
+        }
+        .template-card {
+            background: var(--bg-card);
+            border: 2px solid var(--border-color);
+            border-radius: 16px;
+            padding: 20px;
+            transition: all 0.2s;
+            cursor: pointer;
+            position: relative;
+        }
+        .template-card:hover { border-color: var(--accent); transform: translateY(-3px); }
+        .template-card.selected { border-color: var(--accent); background: var(--accent-dim); }
+        .template-card .preview-box {
+            width: 100%; height: 140px; border-radius: 10px;
+            background: var(--bg-primary); border: 1px solid var(--border-color);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            margin-bottom: 12px; color: var(--text-muted); font-size: 12px;
+        }
+        .template-card .preview-box .label { font-size: 20px; font-weight: 700; color: var(--text-primary); }
+        .template-card .preview-box .sub { font-size: 11px; opacity: 0.6; }
+        .template-card .preview-box .bar { width: 50px; height: 4px; border-radius: 999px; margin-top: 6px; background: var(--accent); }
+        .template-card .name { font-weight: 600; color: var(--text-primary); }
+        .template-card .desc { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
+        .template-card .category-tag {
+            display: inline-block; padding: 2px 10px; border-radius: 999px;
+            font-size: 10px; font-weight: 600; text-transform: uppercase;
+            background: var(--accent-dim); color: var(--accent); margin-top: 8px;
+        }
+        .template-card .check-mark {
+            position: absolute; top: 12px; right: 12px;
+            width: 24px; height: 24px; border-radius: 50%;
+            background: var(--accent); color: #fff;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px; font-weight: 700;
+        }
+
+        /* ----- THEME SETTINGS ----- */
+        .theme-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .theme-group {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 18px;
+        }
+        .theme-group h4 { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 12px; }
+        .theme-group .field { margin-bottom: 12px; }
+        .theme-group .field label { display: block; font-size: 12px; font-weight: 500; color: var(--text-secondary); margin-bottom: 3px; }
+        .theme-group .field input,
+        .theme-group .field select {
+            width: 100%; padding: 8px 12px; border-radius: 8px;
+            border: 1px solid var(--border-color); background: var(--bg-input);
+            color: var(--text-primary); font-size: 13px; font-family: inherit;
+        }
+        .theme-group .field input:focus,
+        .theme-group .field select:focus {
+            outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim);
+        }
+        .theme-group .field input[type="color"] { padding: 2px; height: 38px; cursor: pointer; }
+        .theme-group .field input[type="checkbox"] { width: auto; margin-right: 6px; }
+        .btn {
+            padding: 8px 18px; border-radius: 10px; font-weight: 600; font-size: 13px;
+            border: none; cursor: pointer; transition: all 0.15s;
+            font-family: inherit; display: inline-flex; align-items: center; gap: 6px;
+        }
+        .btn-primary { background: var(--accent); color: #fff; }
+        .btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); }
+        .btn-secondary { background: transparent; border: 1px solid var(--border-color); color: var(--text-secondary); }
+        .btn-secondary:hover { background: var(--bg-card); color: var(--text-primary); }
+        .btn-danger { background: var(--danger); color: #fff; }
+        .btn-danger:hover { background: var(--danger-hover); }
+        .btn-warning { background: transparent; border: 1px solid var(--warning); color: var(--warning); }
+        .btn-warning:hover { background: rgba(245,158,11,0.1); }
+
+        /* ----- PREVIEW ----- */
+        .preview-container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 8px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+        .preview-container .preview-header {
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .preview-container .preview-header span {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+        .preview-container .preview-header .preview-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 14px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            background: var(--accent-dim);
+            color: var(--accent);
+        }
+        .preview-frame {
+            width: 100%;
+            height: 600px;
+            background: var(--bg-primary);
+            overflow: hidden;
+            border: none;
+            display: block;
+        }
+        .preview-frame iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: block;
+        }
+
+        /* ----- PUBLISH ----- */
+        .publish-status {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px 20px;
+            background: var(--bg-primary);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+        .publish-status .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 14px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .status-badge.published { background: rgba(34,197,94,0.15); color: var(--success); }
+        .status-badge.draft { background: rgba(245,158,11,0.15); color: var(--warning); }
+        .publish-url { color: var(--accent); text-decoration: none; font-weight: 500; }
+        .publish-url:hover { text-decoration: underline; }
+        .publish-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+
+        /* ----- RESPONSIVE ----- */
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            .dashboard-main { padding: 16px 20px; }
+            .mobile-menu-toggle { display: block; }
+            .dashboard-header { flex-direction: column; align-items: flex-start; gap: 12px; }
+            .topbar-right { width: 100%; justify-content: space-between; }
+            .user-name { display: none; }
+            .theme-grid { grid-template-columns: 1fr; }
+            .template-grid { grid-template-columns: 1fr; }
+            .edit-tabs { flex-wrap: nowrap; overflow-x: auto; }
+            .edit-tab { padding: 8px 14px; font-size: 13px; }
+            .preview-frame { height: 400px; }
+            .publish-status { flex-direction: column; align-items: flex-start; }
+        }
+        @media (max-width: 480px) {
+            .card { padding: 16px; }
+            .preview-frame { height: 300px; }
+        }
+
+        /* ----- HELPERS ----- */
+        .loading-state, .empty-state, .error-state {
+            padding: 24px 0;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+        .error-state { color: var(--danger); }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand"><h1>Crevio</h1><span>Creator Dashboard</span></div>
+        <nav class="sidebar-nav">
+            <a href="/dashboard/" class="nav-item"><i data-lucide="layout-dashboard" class="icon"></i> Overview</a>
+            <a href="/dashboard/pages/projects.html" class="nav-item"><i data-lucide="folder-open" class="icon"></i> Projects</a>
+            <a href="/dashboard/pages/media.html" class="nav-item"><i data-lucide="image" class="icon"></i> Media</a>
+            <a href="/dashboard/pages/services.html" class="nav-item"><i data-lucide="briefcase" class="icon"></i> Services</a>
+            <a href="/dashboard/pages/skills.html" class="nav-item"><i data-lucide="star" class="icon"></i> Skills</a>
+            <a href="/dashboard/pages/social-links.html" class="nav-item"><i data-lucide="share-2" class="icon"></i> My Socials</a>
+            <div class="nav-divider"></div>
+            <a href="/dashboard/pages/portfolio.html" class="nav-item"><i data-lucide="layout-template" class="icon"></i> Portfolio</a>
+            <a href="/dashboard/pages/portfolio-edit.html" class="nav-item active"><i data-lucide="edit-3" class="icon"></i> Edit Portfolio</a>
+            <a href="/dashboard/pages/bot.html" class="nav-item"><i data-lucide="bot" class="icon"></i> Crevio Bot</a>
+            <div class="nav-divider"></div>
+            <a href="/dashboard/pages/messages.html" class="nav-item"><i data-lucide="mail" class="icon"></i> Messages</a>
+            <a href="/dashboard/pages/notifications.html" class="nav-item"><i data-lucide="bell" class="icon"></i> Notifications</a>
+            <div class="nav-divider"></div>
+            <a href="/dashboard/pages/billing.html" class="nav-item"><i data-lucide="credit-card" class="icon"></i> Billing</a>
+            <a href="/dashboard/pages/security.html" class="nav-item"><i data-lucide="shield" class="icon"></i> Security</a>
+            <a href="/dashboard/pages/settings.html" class="nav-item"><i data-lucide="settings" class="icon"></i> Settings</a>
+            <a href="/dashboard/pages/profile.html" class="nav-item"><i data-lucide="user" class="icon"></i> Profile</a>
+            <a href="/dashboard/pages/account-management.html" class="nav-item"><i data-lucide="user-cog" class="icon"></i> Account Management</a>
+            <div class="nav-divider"></div>
+            <a href="/" target="_blank" class="nav-item"><i data-lucide="globe" class="icon"></i> View Portfolio</a>
+        </nav>
+        <div class="sidebar-footer">
+            <span id="themeToggleBtn" class="theme-toggle-btn" onclick="toggleTheme()" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:8px;color:var(--text-secondary);font-size:18px;">
+                <i data-lucide="moon" class="icon"></i>
+            </span>
+            <button id="logoutButton" class="logout-button"><i data-lucide="log-out" class="icon"></i> Logout</button>
+        </div>
+    </aside>
+
+    <div id="sidebarOverlay" class="sidebar-overlay"></div>
+
+    <!-- MAIN -->
+    <main class="dashboard-main">
+
+        <header class="dashboard-header">
+            <div class="topbar-left">
+                <button id="mobileToggle" class="mobile-menu-toggle"><i data-lucide="menu"></i></button>
+                <div>
+                    <h2>Edit Portfolio</h2>
+                    <p class="header-description">Design and customize your public portfolio</p>
+                </div>
+            </div>
+            <div class="topbar-right">
+                <a href="/dashboard/pages/portfolio.html" class="secondary-button">
+                    <i data-lucide="arrow-left" class="icon"></i> Back
+                </a>
+                <div class="user-profile">
+                    <span class="user-avatar" id="userAvatar">C</span>
+                    <span class="user-name" id="userNameDisplay">Creator</span>
+                </div>
+            </div>
+        </header>
+
+        <div style="max-width:1200px;margin:0 auto;">
+
+            <!-- TABS -->
+            <div class="edit-tabs">
+                <button class="edit-tab active" data-tab="content">Content</button>
+                <button class="edit-tab" data-tab="design">Design</button>
+                <button class="edit-tab" data-tab="preview">Preview</button>
+                <button class="edit-tab" data-tab="publish">Publish</button>
+            </div>
+
+            <!-- PANEL: CONTENT -->
+            <div id="panel-content" class="edit-panel active">
+                <div class="card">
+                    <h3><i data-lucide="file-text" class="icon"></i> Portfolio Content</h3>
+                    <p style="color:var(--text-secondary);font-size:14px;margin-bottom:16px;">Manage the content that appears on your portfolio.</p>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                        <a href="/dashboard/pages/profile.html" class="secondary-button" style="justify-content:center;padding:14px;">
+                            <i data-lucide="user" class="icon"></i> Profile & About
+                        </a>
+                        <a href="/dashboard/pages/projects.html" class="secondary-button" style="justify-content:center;padding:14px;">
+                            <i data-lucide="folder-open" class="icon"></i> Projects
+                        </a>
+                        <a href="/dashboard/pages/services.html" class="secondary-button" style="justify-content:center;padding:14px;">
+                            <i data-lucide="briefcase" class="icon"></i> Services
+                        </a>
+                        <a href="/dashboard/pages/skills.html" class="secondary-button" style="justify-content:center;padding:14px;">
+                            <i data-lucide="star" class="icon"></i> Skills
+                        </a>
+                        <a href="/dashboard/pages/social-links.html" class="secondary-button" style="justify-content:center;padding:14px;grid-column:span 2;">
+                            <i data-lucide="share-2" class="icon"></i> Social Links
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PANEL: DESIGN -->
+            <div id="panel-design" class="edit-panel">
+                <div class="card">
+                    <h3><i data-lucide="palette" class="icon"></i> Choose Your Template</h3>
+                    <p style="color:var(--text-secondary);font-size:14px;margin-bottom:16px;">Select a template that matches your professional style.</p>
+                    <div id="templateGrid" class="template-grid">
+                        <div class="loading-state">Loading templates...</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3><i data-lucide="settings" class="icon"></i> Theme Settings</h3>
+                    <p style="color:var(--text-secondary);font-size:14px;margin-bottom:16px;">Customize the look and feel of your portfolio.</p>
+                    <div id="themeSettingsContainer">
+                        <div class="loading-state">Loading theme settings...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PANEL: PREVIEW -->
+            <div id="panel-preview" class="edit-panel">
+                <div class="card">
+                    <h3><i data-lucide="eye" class="icon"></i> Live Preview</h3>
+                    <p style="color:var(--text-secondary);font-size:14px;margin-bottom:16px;">See how your portfolio looks to visitors.</p>
+                    <div class="preview-container">
+                        <div class="preview-header">
+                            <span><i data-lucide="eye" style="width:14px;height:14px;vertical-align:middle;"></i> Preview Mode</span>
+                            <span class="preview-badge">
+                                <i data-lucide="refresh-cw" style="width:12px;height:12px;"></i>
+                                Auto‑refresh
+                            </span>
+                        </div>
+                        <div id="previewFrameWrapper" class="preview-frame">
+                            <div class="loading-state">Loading preview...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PANEL: PUBLISH -->
+            <div id="panel-publish" class="edit-panel">
+                <div class="card">
+                    <h3><i data-lucide="globe" class="icon"></i> Publish Your Portfolio</h3>
+                    <p style="color:var(--text-secondary);font-size:14px;margin-bottom:16px;">Make your portfolio live and share it with the world.</p>
+                    <div id="publishStatusContainer">
+                        <div class="loading-state">Loading publish status...</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <script src="/dashboard/js/portfolio-edit.js"></script>
+    <script>
+        // =========================================================
+        // THEME TOGGLE (self‑contained)
+        // =========================================================
+        function toggleTheme() {
+            const html = document.documentElement;
+            const current = html.getAttribute('data-theme');
+            const next = current === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', next);
+            localStorage.setItem('crevio_theme', next);
+            const icon = document.querySelector('#themeToggleBtn .icon');
+            if (icon) {
+                icon.setAttribute('data-lucide', next === 'dark' ? 'moon' : 'sun');
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            }
+        }
+
+        // Load saved theme on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const saved = localStorage.getItem('crevio_theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', saved);
+            const icon = document.querySelector('#themeToggleBtn .icon');
+            if (icon) {
+                icon.setAttribute('data-lucide', saved === 'dark' ? 'moon' : 'sun');
+            }
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+
+            // Set avatar and name from localStorage
+            const userData = localStorage.getItem('crevio_user');
+            if (userData) {
+                try {
+                    const user = JSON.parse(userData);
+                    const avatar = document.getElementById('userAvatar');
+                    const nameDisplay = document.getElementById('userNameDisplay');
+                    if (avatar && user.display_name) {
+                        avatar.textContent = user.display_name.charAt(0).toUpperCase();
+                    }
+                    if (nameDisplay && user.display_name) {
+                        nameDisplay.textContent = user.display_name;
+                    }
+                } catch (e) { console.error(e); }
+            }
+        });
+
+        // ---- Mobile toggle ----
+        document.getElementById('mobileToggle')?.addEventListener('click', function() {
+            document.getElementById('sidebar')?.classList.toggle('open');
+            document.getElementById('sidebarOverlay')?.classList.toggle('open');
+        });
+        document.getElementById('sidebarOverlay')?.addEventListener('click', function() {
+            document.getElementById('sidebar')?.classList.remove('open');
+            this.classList.remove('open');
+        });
+        document.getElementById('logoutButton')?.addEventListener('click', function() {
+            localStorage.removeItem('crevio_token');
+            localStorage.removeItem('crevio_user');
+            window.location.href = '/admin/pages/login.html';
+        });
+    </script>
+</body>
+</html>

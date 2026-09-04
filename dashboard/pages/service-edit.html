@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Service — Crevio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            transition: background 0.3s, color 0.3s;
+            display: flex;
+            min-height: 100vh;
+        }
+        a { text-decoration: none; color: inherit; }
+
+        [data-theme="dark"] {
+            --bg-primary: #0F172A;
+            --bg-secondary: #1E293B;
+            --bg-card: #1E293B;
+            --bg-input: #0F172A;
+            --border-color: #334155;
+            --text-primary: #F1F5F9;
+            --text-secondary: #94A3B8;
+            --text-muted: #64748B;
+            --accent: #2563EB;
+            --accent-hover: #1D4ED8;
+            --accent-dim: rgba(37,99,235,0.15);
+            --danger: #EF4444;
+            --danger-hover: #DC2626;
+            --success: #22C55E;
+            --warning: #F59E0B;
+            --shadow: 0 4px 24px rgba(0,0,0,0.4);
+        }
+        [data-theme="light"] {
+            --bg-primary: #F1F5F9;
+            --bg-secondary: #FFFFFF;
+            --bg-card: #FFFFFF;
+            --bg-input: #F8FAFC;
+            --border-color: #E2E8F0;
+            --text-primary: #0F172A;
+            --text-secondary: #475569;
+            --text-muted: #94A3B8;
+            --accent: #2563EB;
+            --accent-hover: #1D4ED8;
+            --accent-dim: rgba(37,99,235,0.1);
+            --danger: #EF4444;
+            --danger-hover: #DC2626;
+            --success: #22C55E;
+            --warning: #F59E0B;
+            --shadow: 0 4px 24px rgba(0,0,0,0.06);
+        }
+
+        .sidebar {
+            width: 240px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 24px 16px;
+            height: 100vh;
+            position: sticky;
+            top: 0;
+            flex-shrink: 0;
+            transition: background 0.3s, border-color 0.3s;
+            overflow-y: auto;
+        }
+        .sidebar-brand { padding-bottom: 20px; border-bottom: 1px solid var(--border-color); margin-bottom: 20px; }
+        .sidebar-brand h1 { font-size: 20px; font-weight: 700; color: var(--text-primary); }
+        .sidebar-brand span { font-size: 11px; font-weight: 500; text-transform: uppercase; color: var(--text-muted); }
+        .sidebar-nav { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+        .nav-item {
+            display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px;
+            color: var(--text-secondary); font-size: 14px; font-weight: 500; transition: all 0.15s;
+            text-decoration: none;
+        }
+        .nav-item:hover { background: var(--accent-dim); color: var(--text-primary); }
+        .nav-item.active { background: var(--accent-dim); color: var(--accent); }
+        .nav-item .icon { width: 20px; height: 20px; flex-shrink: 0; }
+        .nav-divider { height: 1px; background: var(--border-color); margin: 8px 12px; }
+        .sidebar-footer { padding-top: 16px; border-top: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 8px; }
+        .logout-button {
+            background: transparent; border: none; color: var(--danger); font-size: 13px; font-weight: 500;
+            padding: 10px 12px; border-radius: 8px; cursor: pointer; font-family: inherit;
+            display: flex; align-items: center; gap: 12px; transition: background 0.15s;
+            width: 100%;
+        }
+        .logout-button:hover { background: rgba(239,68,68,0.1); }
+        .theme-toggle-btn {
+            background: transparent; border: none; color: var(--text-secondary); font-size: 18px;
+            cursor: pointer; padding: 6px 10px; border-radius: 8px; transition: background 0.15s;
+            display: inline-flex; align-items: center; gap: 6px; width: fit-content;
+        }
+        .theme-toggle-btn:hover { background: var(--accent-dim); color: var(--text-primary); }
+        .theme-toggle-btn .icon { width: 18px; height: 18px; }
+        .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 199; }
+        .sidebar-overlay.open { display: block; }
+
+        .dashboard-main {
+            flex: 1; padding: 28px 36px; background: var(--bg-primary);
+            min-height: 100vh; transition: background 0.3s;
+        }
+
+        .dashboard-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 28px; flex-wrap: wrap; gap: 12px;
+        }
+        .topbar-left { display: flex; align-items: center; gap: 16px; }
+        .mobile-menu-toggle {
+            display: none; background: none; border: none;
+            color: var(--text-secondary); font-size: 24px; cursor: pointer;
+        }
+        .topbar-left h2 { font-size: 24px; font-weight: 700; color: var(--text-primary); }
+        .header-description { font-size: 14px; color: var(--text-secondary); }
+        .topbar-right { display: flex; align-items: center; gap: 16px; }
+        .primary-button {
+            padding: 8px 18px; border-radius: 8px; border: none;
+            background: var(--accent); color: #fff;
+            font-size: 13px; font-weight: 600; cursor: pointer;
+            display: inline-flex; align-items: center; gap: 6px;
+            transition: all 0.15s; text-decoration: none;
+        }
+        .primary-button:hover { background: var(--accent-hover); transform: translateY(-1px); }
+        .secondary-button {
+            padding: 8px 18px; border-radius: 8px; border: 1px solid var(--border-color);
+            background: transparent; color: var(--text-secondary);
+            font-size: 13px; font-weight: 500; cursor: pointer;
+            display: inline-flex; align-items: center; gap: 6px;
+            transition: all 0.15s; text-decoration: none;
+        }
+        .secondary-button:hover { background: var(--bg-card); color: var(--text-primary); }
+        .user-profile { display: flex; align-items: center; gap: 8px; }
+        .user-avatar {
+            width: 32px; height: 32px; border-radius: 50%;
+            background: var(--accent); color: #fff;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 600; font-size: 13px; flex-shrink: 0;
+            overflow: hidden;
+        }
+        .user-avatar img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+        .user-name { font-size: 14px; font-weight: 500; color: var(--text-primary); }
+
+        .editor-wrapper { max-width: 1300px; margin: 0 auto; }
+        .editor-grid {
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: 28px;
+            align-items: start;
+        }
+
+        .editor-form { display: flex; flex-direction: column; gap: 24px; }
+
+        .form-panel {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 24px 28px;
+            transition: background 0.3s, border-color 0.3s;
+        }
+        .form-panel h3 {
+            font-size: 16px; font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .form-panel h3 .icon { width: 20px; height: 20px; color: var(--text-secondary); }
+        .form-panel .subtitle { font-size: 13px; color: var(--text-secondary); margin-bottom: 14px; }
+
+        .form-group { margin-bottom: 16px; }
+        .form-group:last-child { margin-bottom: 0; }
+        .form-group label {
+            display: block; font-size: 13px; font-weight: 500; color: var(--text-secondary); margin-bottom: 4px;
+        }
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%; padding: 10px 14px; border-radius: 10px;
+            border: 1px solid var(--border-color); background: var(--bg-input);
+            color: var(--text-primary); font-size: 14px; font-family: inherit;
+            transition: border 0.2s, box-shadow 0.2s;
+        }
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim);
+        }
+        .form-group textarea { resize: vertical; min-height: 80px; }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .checkbox-group {
+            display: flex; align-items: center; gap: 10px; padding: 4px 0;
+        }
+        .checkbox-group input[type="checkbox"] {
+            width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer; flex-shrink: 0;
+        }
+        .checkbox-group label { font-size: 14px; color: var(--text-secondary); cursor: pointer; margin: 0; }
+
+        .item-list { margin-top: 6px; }
+        .item-row {
+            display: flex; align-items: center; gap: 10px; padding: 6px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .item-row .item-text { flex: 1; font-size: 14px; color: var(--text-primary); }
+        .item-row .btn-icon {
+            background: none; border: none; color: var(--text-muted);
+            cursor: pointer; padding: 2px; border-radius: 4px;
+            display: flex; align-items: center; justify-content: center;
+            transition: color 0.15s;
+        }
+        .item-row .btn-icon:hover { color: var(--danger); }
+
+        .add-row {
+            display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap;
+        }
+        .add-row input {
+            flex: 1; min-width: 120px; padding: 8px 12px; border-radius: 8px;
+            border: 1px solid var(--border-color); background: var(--bg-input);
+            color: var(--text-primary); font-size: 13px; font-family: inherit;
+        }
+        .add-row input:focus {
+            outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim);
+        }
+        .add-row .btn {
+            padding: 8px 16px; border-radius: 8px; font-weight: 500; font-size: 13px;
+            border: none; cursor: pointer; font-family: inherit; transition: all 0.15s;
+            background: var(--accent); color: #fff; white-space: nowrap;
+        }
+        .add-row .btn:hover { background: var(--accent-hover); }
+
+        .project-checkbox-list {
+            display: flex; flex-direction: column; gap: 4px; max-height: 180px; overflow-y: auto;
+        }
+        .project-checkbox-list .checkbox-group { padding: 4px 0; }
+
+        .form-actions {
+            display: flex; gap: 12px; justify-content: flex-end; flex-wrap: wrap;
+            margin-top: 8px; padding-top: 16px; border-top: 1px solid var(--border-color);
+        }
+        .form-actions .btn {
+            padding: 10px 24px; border-radius: 10px; font-weight: 600; font-size: 14px;
+            cursor: pointer; border: none; font-family: inherit; transition: all 0.15s;
+        }
+        .btn-primary { background: var(--accent); color: #fff; }
+        .btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); }
+        .btn-secondary { background: transparent; border: 1px solid var(--border-color); color: var(--text-secondary); }
+        .btn-secondary:hover { background: var(--bg-card); color: var(--text-primary); }
+
+        .message {
+            padding: 10px 14px; border-radius: 10px; font-size: 14px; margin-top: 8px; display: none;
+        }
+        .message.success {
+            display: block; background: rgba(34,197,94,0.1); color: var(--success);
+            border: 1px solid rgba(34,197,94,0.2);
+        }
+        .message.error {
+            display: block; background: rgba(239,68,68,0.1); color: var(--danger);
+            border: 1px solid rgba(239,68,68,0.2);
+        }
+
+        .preview-panel { position: sticky; top: 28px; }
+        .preview-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 24px;
+        }
+        .preview-card .preview-header {
+            font-size: 14px; font-weight: 600; color: var(--text-secondary);
+            margin-bottom: 16px; display: flex; align-items: center; gap: 8px;
+        }
+        .preview-card .preview-header .icon { width: 18px; height: 18px; color: var(--text-muted); }
+        .preview-card .preview-category {
+            font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;
+            color: var(--accent); background: var(--accent-dim);
+            padding: 2px 10px; border-radius: 999px; display: inline-block; margin-bottom: 8px;
+        }
+        .preview-card .preview-title { font-size: 20px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; }
+        .preview-card .preview-desc { font-size: 14px; color: var(--text-secondary); margin-bottom: 10px; line-height: 1.5; }
+        .preview-card .preview-price { font-size: 17px; font-weight: 600; color: var(--text-primary); margin-bottom: 12px; }
+        .preview-card .preview-items { margin: 10px 0 14px; }
+        .preview-card .preview-items .item {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 14px; color: var(--text-secondary); padding: 3px 0;
+        }
+        .preview-card .preview-items .item .check { color: var(--success); font-weight: 700; }
+        .preview-card .preview-cta { margin-top: 16px; }
+        .preview-card .preview-cta .btn {
+            padding: 10px 24px; border-radius: 10px; font-weight: 600; font-size: 14px;
+            border: none; cursor: default; font-family: inherit; background: var(--accent); color: #fff; width: 100%;
+        }
+
+        .loading-state { text-align: center; padding: 40px 0; color: var(--text-muted); }
+
+        @media (max-width: 1024px) {
+            .editor-grid { grid-template-columns: 1fr; }
+            .preview-panel { position: static; }
+        }
+        @media (max-width: 768px) {
+            .form-row { grid-template-columns: 1fr; }
+            .form-panel { padding: 18px; }
+            .form-actions { flex-direction: column; align-items: stretch; }
+            .form-actions .btn { justify-content: center; }
+            .add-row { flex-direction: column; }
+            .add-row input { min-width: unset; }
+            .sidebar { display: none; }
+            .dashboard-main { padding: 16px 20px; }
+            .mobile-menu-toggle { display: block; }
+            .topbar-right { width: 100%; justify-content: space-between; }
+            .user-name { display: none; }
+        }
+        @media (max-width: 480px) {
+            .form-panel { padding: 14px; }
+            .preview-card { padding: 16px; }
+            .preview-card .preview-title { font-size: 18px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand"><h1>Crevio</h1><span>Creator Dashboard</span></div>
+        <nav class="sidebar-nav">
+            <a href="/dashboard/" class="nav-item"><i data-lucide="layout-dashboard" class="icon"></i> Overview</a>
+            <a href="/dashboard/pages/projects.html" class="nav-item"><i data-lucide="folder-open" class="icon"></i> Projects</a>
+            <a href="/dashboard/pages/media.html" class="nav-item"><i data-lucide="image" class="icon"></i> Media</a>
+            <a href="/dashboard/pages/services.html" class="nav-item"><i data-lucide="briefcase" class="icon"></i> Services</a>
+            <a href="/dashboard/pages/skills.html" class="nav-item"><i data-lucide="star" class="icon"></i> Skills</a>
+            <a href="/dashboard/pages/social-links.html" class="nav-item"><i data-lucide="share-2" class="icon"></i> My Socials</a>
+            <div class="nav-divider"></div>
+            <a href="/dashboard/pages/portfolio.html" class="nav-item"><i data-lucide="layout-template" class="icon"></i> Portfolio</a>
+            <a href="/dashboard/pages/portfolio-edit.html" class="nav-item"><i data-lucide="edit-3" class="icon"></i> Edit Portfolio</a>
+            <a href="/dashboard/pages/bot.html" class="nav-item"><i data-lucide="bot" class="icon"></i> Crevio Bot</a>
+            <div class="nav-divider"></div>
+            <a href="/dashboard/pages/messages.html" class="nav-item"><i data-lucide="mail" class="icon"></i> Messages</a>
+            <a href="/dashboard/pages/notifications.html" class="nav-item"><i data-lucide="bell" class="icon"></i> Notifications</a>
+            <div class="nav-divider"></div>
+            <a href="/dashboard/pages/billing.html" class="nav-item"><i data-lucide="credit-card" class="icon"></i> Billing</a>
+            <a href="/dashboard/pages/security.html" class="nav-item"><i data-lucide="shield" class="icon"></i> Security</a>
+            <a href="/dashboard/pages/settings.html" class="nav-item"><i data-lucide="settings" class="icon"></i> Settings</a>
+            <a href="/dashboard/pages/profile.html" class="nav-item"><i data-lucide="user" class="icon"></i> Profile</a>
+            <a href="/dashboard/pages/account-management.html" class="nav-item"><i data-lucide="user-cog" class="icon"></i> Account Management</a>
+            <div class="nav-divider"></div>
+            <a href="/" target="_blank" class="nav-item"><i data-lucide="globe" class="icon"></i> View Portfolio</a>
+        </nav>
+        <div class="sidebar-footer">
+            <span id="themeToggleBtn" class="theme-toggle-btn" onclick="toggleTheme()" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:8px;color:var(--text-secondary);font-size:18px;">
+                <i data-lucide="moon" class="icon"></i>
+            </span>
+            <button id="logoutButton" class="logout-button"><i data-lucide="log-out" class="icon"></i> Logout</button>
+        </div>
+    </aside>
+
+    <div id="sidebarOverlay" class="sidebar-overlay"></div>
+
+    <!-- MAIN -->
+    <main class="dashboard-main">
+
+        <header class="dashboard-header">
+            <div class="topbar-left">
+                <button id="mobileToggle" class="mobile-menu-toggle"><i data-lucide="menu"></i></button>
+                <div>
+                    <h2 id="pageTitle">Create Service</h2>
+                    <p class="header-description">Create or edit a service to showcase what you offer.</p>
+                </div>
+            </div>
+            <div class="topbar-right">
+                <div class="user-profile">
+                    <span class="user-avatar" id="userAvatar">C</span>
+                    <span class="user-name" id="userNameDisplay">Creator</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="editor-wrapper">
+
+            <div id="statusMessage" class="message"></div>
+
+            <div class="editor-grid">
+
+                <!-- LEFT: Form panels -->
+                <div class="editor-form">
+
+                    <!-- 1. Basic Information -->
+                    <div class="form-panel">
+                        <h3><i data-lucide="file-text" class="icon"></i> Basic Information</h3>
+                        <div class="form-group">
+                            <label for="serviceTitle">Service Name <span style="color:var(--danger);">*</span></label>
+                            <input type="text" id="serviceTitle" placeholder="e.g. Commercial Video Production">
+                        </div>
+                        <div class="form-group">
+                            <label for="serviceDescription">Description <span style="color:var(--danger);">*</span></label>
+                            <textarea id="serviceDescription" rows="3" placeholder="Describe what this service includes..."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="serviceCategory">Category</label>
+                            <select id="serviceCategory">
+                                <option value="">Select category</option>
+                                <option value="Video Production">Video Production</option>
+                                <option value="Photography">Photography</option>
+                                <option value="Graphic Design">Graphic Design</option>
+                                <option value="Web Development">Web Development</option>
+                                <option value="Branding">Branding</option>
+                                <option value="Consulting">Consulting</option>
+                                <option value="Writing">Writing</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- 2. Pricing & Availability -->
+                    <div class="form-panel">
+                        <h3><i data-lucide="dollar-sign" class="icon"></i> Pricing & Availability</h3>
+                        <div class="form-group">
+                            <label for="pricingType">Pricing Model</label>
+                            <select id="pricingType">
+                                <option value="fixed">Fixed Price</option>
+                                <option value="starting_from">Starting From</option>
+                                <option value="range">Price Range</option>
+                                <option value="custom_quote">Custom Quote</option>
+                                <option value="contact">Contact for Pricing</option>
+                            </select>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="price">Price</label>
+                                <input type="number" id="price" placeholder="0">
+                            </div>
+                            <div class="form-group">
+                                <label for="currency">Currency</label>
+                                <select id="currency">
+                                    <option value="USD">USD ($)</option>
+                                    <option value="EUR">EUR (€)</option>
+                                    <option value="GBP">GBP (£)</option>
+                                    <option value="NGN">NGN (₦)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row" id="rangeFields" style="display:none;">
+                            <div class="form-group">
+                                <label for="minPrice">Min Price</label>
+                                <input type="number" id="minPrice" placeholder="0">
+                            </div>
+                            <div class="form-group">
+                                <label for="maxPrice">Max Price</label>
+                                <input type="number" id="maxPrice" placeholder="0">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="deliveryTime">Typical Delivery</label>
+                                <input type="text" id="deliveryTime" placeholder="e.g. 7–14 days">
+                            </div>
+                            <div class="form-group">
+                                <label for="revisions">Revisions</label>
+                                <input type="number" id="revisions" placeholder="e.g. 2">
+                            </div>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="availability" checked>
+                            <label for="availability">Available for bookings</label>
+                        </div>
+                    </div>
+
+                    <!-- 3. What's Included -->
+                    <div class="form-panel">
+                        <h3><i data-lucide="list-check" class="icon"></i> What's Included</h3>
+                        <p class="subtitle">Add deliverables or services included in this offering.</p>
+                        <div id="includedItemsContainer">
+                            <div id="includedItemsList">
+                                <div style="color:var(--text-muted);font-size:14px;padding:6px 0;">No items added yet.</div>
+                            </div>
+                            <div class="add-row">
+                                <input type="text" id="newItemInput" placeholder="Add an item...">
+                                <button class="btn" id="addItemBtn">Add</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 4. Related Projects -->
+                    <div class="form-panel">
+                        <h3><i data-lucide="folder-open" class="icon"></i> Related Projects</h3>
+                        <p class="subtitle">Select projects that demonstrate this service.</p>
+                        <div id="projectsSelector">
+                            <div class="loading-state">Loading projects...</div>
+                        </div>
+                    </div>
+
+                    <!-- 5. FAQs -->
+                    <div class="form-panel">
+                        <h3><i data-lucide="help-circle" class="icon"></i> FAQs</h3>
+                        <p class="subtitle">Add frequently asked questions about this service.</p>
+                        <div id="faqsContainer">
+                            <div id="faqsList">
+                                <div style="color:var(--text-muted);font-size:14px;padding:6px 0;">No FAQs added yet.</div>
+                            </div>
+                            <div class="add-row">
+                                <input type="text" id="faqQuestion" placeholder="Question...">
+                                <input type="text" id="faqAnswer" placeholder="Answer...">
+                                <button class="btn" id="addFaqBtn">Add FAQ</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 6. CTA & Visibility -->
+                    <div class="form-panel">
+                        <h3><i data-lucide="megaphone" class="icon"></i> CTA & Visibility</h3>
+                        <div class="form-group">
+                            <label for="ctaType">Primary Action</label>
+                            <select id="ctaType">
+                                <option value="quote">Request a Quote</option>
+                                <option value="contact">Contact Me</option>
+                                <option value="start">Start a Project</option>
+                                <option value="book">Book a Consultation</option>
+                                <option value="custom">Custom Link</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="customCtaGroup" style="display:none;">
+                            <label for="ctaUrl">Custom URL</label>
+                            <input type="url" id="ctaUrl" placeholder="https://...">
+                        </div>
+                        <div class="form-group">
+                            <label for="ctaLabel">CTA Label (optional)</label>
+                            <input type="text" id="ctaLabel" placeholder="e.g. Let's work together">
+                        </div>
+                        <div class="form-row">
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="showOnPortfolio" checked>
+                                <label for="showOnPortfolio">Show on my portfolio</label>
+                            </div>
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="featuredService">
+                                <label for="featuredService">Feature this service</label>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="serviceStatus">Status</label>
+                            <select id="serviceStatus">
+                                <option value="draft">Draft</option>
+                                <option value="published">Published</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="form-actions">
+                        <a href="/dashboard/pages/services.html" class="btn btn-secondary">Cancel</a>
+                        <button class="btn btn-secondary" id="saveDraftBtn">Save Draft</button>
+                        <button class="btn btn-primary" id="publishBtn">Publish</button>
+                    </div>
+
+                </div>
+
+                <!-- RIGHT: Live Preview -->
+                <div class="preview-panel">
+                    <div class="preview-card">
+                        <div class="preview-header">
+                            <i data-lucide="eye" class="icon"></i> Live Preview
+                        </div>
+                        <div id="previewContent">
+                            <div class="preview-category" id="previewCategory">Category</div>
+                            <div class="preview-title" id="previewTitle">Service Name</div>
+                            <div class="preview-desc" id="previewDesc">Description goes here.</div>
+                            <div class="preview-price" id="previewPrice">Pricing not set</div>
+                            <div class="preview-items" id="previewItems">
+                                <div class="item"><span class="check">✓</span> Pre-production planning</div>
+                                <div class="item"><span class="check">✓</span> Creative direction</div>
+                            </div>
+                            <div class="preview-cta">
+                                <button class="btn" id="previewCtaBtn">Request a Quote</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </main>
+
+    <script>
+        // =========================================================
+        // ALL JAVASCRIPT INLINE (no external file needed)
+        // =========================================================
+
+        console.log('✅ Service Editor loaded (inline)');
+
+        // ---- DOM refs ----
+        const title = document.getElementById('serviceTitle');
+        const description = document.getElementById('serviceDescription');
+        const category = document.getElementById('serviceCategory');
+        const pricingType = document.getElementById('pricingType');
+        const price = document.getElementById('price');
+        const currency = document.getElementById('currency');
+        const minPrice = document.getElementById('minPrice');
+        const maxPrice = document.getElementById('maxPrice');
+        const deliveryTime = document.getElementById('deliveryTime');
+        const revisions = document.getElementById('revisions');
+        const availability = document.getElementById('availability');
+        const status = document.getElementById('serviceStatus');
+        const featured = document.getElementById('featuredService');
+        const showOnPortfolio = document.getElementById('showOnPortfolio');
+        const ctaType = document.getElementById('ctaType');
+        const ctaLabel = document.getElementById('ctaLabel');
+        const ctaUrl = document.getElementById('ctaUrl');
+
+        const previewCategory = document.getElementById('previewCategory');
+        const previewTitle = document.getElementById('previewTitle');
+        const previewDesc = document.getElementById('previewDesc');
+        const previewPrice = document.getElementById('previewPrice');
+        const previewItems = document.getElementById('previewItems');
+        const previewCtaBtn = document.getElementById('previewCtaBtn');
+
+        const saveDraftBtn = document.getElementById('saveDraftBtn');
+        const publishBtn = document.getElementById('publishBtn');
+        const statusMsg = document.getElementById('statusMessage');
+
+        const itemsList = document.getElementById('includedItemsList');
+        const newItemInput = document.getElementById('newItemInput');
+        const addItemBtn = document.getElementById('addItemBtn');
+
+        const faqsList = document.getElementById('faqsList');
+        const faqQuestion = document.getElementById('faqQuestion');
+        const faqAnswer = document.getElementById('faqAnswer');
+        const addFaqBtn = document.getElementById('addFaqBtn');
+
+        const projectsSelector = document.getElementById('projectsSelector');
+
+        let serviceId = null;
+        let includedItems = [];
+        let faqs = [];
+        let selectedProjects = [];
+        let allProjects = [];
+
+        function getToken() {
+            const token = localStorage.getItem('crevio_token');
+            if (!token) {
+                window.location.href = '/admin/pages/login.html';
+                return null;
+            }
+            return token;
+        }
+
+        async function apiFetch(endpoint, options = {}) {
+            const token = getToken();
+            if (!token) return null;
+            const res = await fetch(endpoint, {
+                ...options,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token,
+                    ...options.headers
+                }
+            });
+            if (res.status === 401) {
+                localStorage.removeItem('crevio_token');
+                window.location.href = '/admin/pages/login.html';
+                return null;
+            }
+            return res;
+        }
+
+        function getServiceIdFromURL() {
+            const params = new URLSearchParams(window.location.search);
+            return params.get('id') ? parseInt(params.get('id')) : null;
+        }
+
+        // ---- LOAD SERVICE (if editing) ----
+        async function loadService(id) {
+            try {
+                const res = await apiFetch(`/api/services/${id}`);
+                const data = await res.json();
+                if (!data.success) throw new Error('Failed to load service');
+                const service = data.service;
+                serviceId = service.id;
+                fillForm(service);
+                document.getElementById('pageTitle').textContent = 'Edit Service';
+            } catch (err) {
+                console.error(err);
+                showMessage('Unable to load service.', 'error');
+            }
+        }
+
+        function fillForm(service) {
+            title.value = service.title || '';
+            description.value = service.description || '';
+            category.value = service.category || '';
+            pricingType.value = service.pricing_type || 'fixed';
+            price.value = service.price || '';
+            currency.value = service.currency || 'USD';
+            minPrice.value = service.min_price || '';
+            maxPrice.value = service.max_price || '';
+            deliveryTime.value = service.delivery_time || '';
+            revisions.value = service.revisions || '';
+            availability.checked = service.availability === 1;
+            status.value = service.status || 'draft';
+            featured.checked = service.featured === 1;
+            showOnPortfolio.checked = service.show_on_portfolio !== 0;
+            ctaType.value = service.cta_type || 'quote';
+            ctaLabel.value = service.cta_label || '';
+            ctaUrl.value = service.cta_url || '';
+
+            if (service.included_items) {
+                includedItems = service.included_items.map(i => i.item);
+                renderIncludedItems();
+            }
+            if (service.faqs) {
+                faqs = service.faqs.map(f => ({ question: f.question, answer: f.answer }));
+                renderFaqs();
+            }
+            if (service.projects) {
+                selectedProjects = service.projects.map(p => p.id);
+            }
+
+            updatePreview();
+            loadProjectsForSelector();
+        }
+
+        // ---- UPDATE PREVIEW (real data) ----
+        function updatePreview() {
+            // Category
+            previewCategory.textContent = category.value || 'Category';
+
+            // Title
+            previewTitle.textContent = title.value || 'Service Name';
+
+            // Description
+            previewDesc.textContent = description.value || 'Description goes here.';
+
+            // Pricing
+            const pType = pricingType.value;
+            const curr = currency.value || 'USD';
+            const symbol = curr === 'USD' ? '$' : curr === 'EUR' ? '€' : curr === 'GBP' ? '£' : '₦';
+            let priceText = '';
+            if (pType === 'fixed' && price.value) {
+                priceText = `${symbol}${parseInt(price.value).toLocaleString()}`;
+            } else if (pType === 'starting_from' && price.value) {
+                priceText = `Starting from ${symbol}${parseInt(price.value).toLocaleString()}`;
+            } else if (pType === 'range' && minPrice.value && maxPrice.value) {
+                priceText = `${symbol}${parseInt(minPrice.value).toLocaleString()} — ${symbol}${parseInt(maxPrice.value).toLocaleString()}`;
+            } else if (pType === 'custom_quote') {
+                priceText = 'Custom Quote';
+            } else if (pType === 'contact') {
+                priceText = 'Contact for pricing';
+            }
+            previewPrice.textContent = priceText || 'Pricing not set';
+
+            // Included items
+            let itemsHtml = '';
+            if (includedItems.length) {
+                includedItems.forEach(item => {
+                    itemsHtml += `<div class="item"><span class="check">✓</span> ${item}</div>`;
+                });
+            } else {
+                itemsHtml = '<div class="item" style="color:var(--text-muted);">No items added yet.</div>';
+            }
+            previewItems.innerHTML = itemsHtml;
+
+            // CTA label
+            const ctaLabelText = ctaLabel.value || getDefaultCtaLabel(ctaType.value);
+            previewCtaBtn.textContent = ctaLabelText;
+        }
+
+        function getDefaultCtaLabel(type) {
+            const map = {
+                'quote': 'Request a Quote',
+                'contact': 'Contact Me',
+                'start': 'Start a Project',
+                'book': 'Book a Consultation',
+                'custom': 'Learn More'
+            };
+            return map[type] || 'Request a Quote';
+        }
+
+        // ---- INCLUDED ITEMS ----
+        function renderIncludedItems() {
+            if (!includedItems.length) {
+                itemsList.innerHTML = '<div style="color:var(--text-muted);font-size:14px;padding:6px 0;">No items added yet.</div>';
+                return;
+            }
+            let html = '';
+            includedItems.forEach((item, idx) => {
+                html += `
+                    <div class="item-row">
+                        <span class="item-text">${item}</span>
+                        <button class="btn-icon" data-index="${idx}" title="Remove"><i data-lucide="x" style="width:16px;height:16px;"></i></button>
+                    </div>
+                `;
+            });
+            itemsList.innerHTML = html;
+            itemsList.querySelectorAll('.btn-icon').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const idx = parseInt(this.dataset.index);
+                    includedItems.splice(idx, 1);
+                    renderIncludedItems();
+                    updatePreview();
+                });
+            });
+            refreshIcons();
+        }
+
+        addItemBtn.addEventListener('click', function() {
+            const val = newItemInput.value.trim();
+            if (!val) return;
+            includedItems.push(val);
+            newItemInput.value = '';
+            renderIncludedItems();
+            updatePreview();
+        });
+        newItemInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') addItemBtn.click();
+        });
+
+        // ---- FAQS ----
+        function renderFaqs() {
+            if (!faqs.length) {
+                faqsList.innerHTML = '<div style="color:var(--text-muted);font-size:14px;padding:6px 0;">No FAQs added yet.</div>';
+                return;
+            }
+            let html = '';
+            faqs.forEach((faq, idx) => {
+                html += `
+                    <div class="item-row">
+                        <span class="item-text"><strong>Q:</strong> ${faq.question}<br><span style="font-size:13px;color:var(--text-secondary);"><strong>A:</strong> ${faq.answer}</span></span>
+                        <button class="btn-icon" data-index="${idx}" title="Remove"><i data-lucide="x" style="width:16px;height:16px;"></i></button>
+                    </div>
+                `;
+            });
+            faqsList.innerHTML = html;
+            faqsList.querySelectorAll('.btn-icon').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const idx = parseInt(this.dataset.index);
+                    faqs.splice(idx, 1);
+                    renderFaqs();
+                });
+            });
+            refreshIcons();
+        }
+
+        addFaqBtn.addEventListener('click', function() {
+            const q = faqQuestion.value.trim();
+            const a = faqAnswer.value.trim();
+            if (!q || !a) return;
+            faqs.push({ question: q, answer: a });
+            faqQuestion.value = '';
+            faqAnswer.value = '';
+            renderFaqs();
+        });
+
+        // ---- PROJECTS ----
+        async function loadProjectsForSelector() {
+            try {
+                const res = await apiFetch('/api/projects');
+                const data = await res.json();
+                if (!data.success) throw new Error('Failed to load projects');
+                allProjects = data.projects || [];
+                renderProjectsSelector();
+            } catch (err) {
+                console.error(err);
+                projectsSelector.innerHTML = '<div style="color:var(--danger);">Unable to load projects.</div>';
+            }
+        }
+
+        function renderProjectsSelector() {
+            if (!allProjects.length) {
+                projectsSelector.innerHTML = '<div style="color:var(--text-muted);">No projects found. <a href="/dashboard/pages/project-create.html" style="color:var(--accent);">Create a project first</a></div>';
+                return;
+            }
+            let html = '';
+            allProjects.forEach(proj => {
+                const checked = selectedProjects.includes(proj.id) ? 'checked' : '';
+                html += `
+                    <div class="checkbox-group" style="padding:4px 0;">
+                        <input type="checkbox" id="proj_${proj.id}" value="${proj.id}" ${checked}>
+                        <label for="proj_${proj.id}">${proj.name}</label>
+                    </div>
+                `;
+            });
+            projectsSelector.innerHTML = html;
+            projectsSelector.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+                cb.addEventListener('change', function() {
+                    const id = parseInt(this.value);
+                    if (this.checked) {
+                        if (!selectedProjects.includes(id)) selectedProjects.push(id);
+                    } else {
+                        selectedProjects = selectedProjects.filter(p => p !== id);
+                    }
+                });
+            });
+            refreshIcons();
+        }
+
+        // ---- SAVE ----
+        async function saveService(statusToSet) {
+            const data = {
+                title: title.value.trim(),
+                description: description.value.trim(),
+                category: category.value,
+                pricing_type: pricingType.value,
+                price: price.value ? parseFloat(price.value) : null,
+                currency: currency.value,
+                min_price: minPrice.value ? parseFloat(minPrice.value) : null,
+                max_price: maxPrice.value ? parseFloat(maxPrice.value) : null,
+                delivery_time: deliveryTime.value.trim(),
+                revisions: revisions.value ? parseInt(revisions.value) : null,
+                availability: availability.checked ? 1 : 0,
+                featured: featured.checked ? 1 : 0,
+                show_on_portfolio: showOnPortfolio.checked ? 1 : 0,
+                cta_type: ctaType.value,
+                cta_label: ctaLabel.value.trim(),
+                cta_url: ctaUrl.value.trim(),
+                status: statusToSet
+            };
+
+            if (!data.title) { showMessage('Service name is required.', 'error'); return; }
+            if (!data.description) { showMessage('Description is required.', 'error'); return; }
+
+            try {
+                const method = serviceId ? 'PUT' : 'POST';
+                const endpoint = serviceId ? `/api/services/${serviceId}` : '/api/services';
+                const res = await apiFetch(endpoint, { method, body: JSON.stringify(data) });
+                const result = await res.json();
+                if (!res.ok || !result.success) throw new Error(result.message || 'Save failed.');
+                serviceId = result.service.id;
+
+                await Promise.all([
+                    apiFetch(`/api/services/${serviceId}/included-items`, {
+                        method: 'PUT', body: JSON.stringify({ items: includedItems })
+                    }),
+                    apiFetch(`/api/services/${serviceId}/faqs`, {
+                        method: 'PUT', body: JSON.stringify({ faqs })
+                    }),
+                    apiFetch(`/api/services/${serviceId}/projects`, {
+                        method: 'PUT', body: JSON.stringify({ projectIds: selectedProjects })
+                    })
+                ]);
+
+                showMessage(`Service ${statusToSet === 'published' ? 'published' : 'saved as draft'} successfully!`, 'success');
+                if (!window.location.search.includes('id=')) {
+                    const url = new URL(window.location);
+                    url.searchParams.set('id', serviceId);
+                    window.history.replaceState({}, '', url);
+                }
+                setTimeout(() => loadService(serviceId), 800);
+            } catch (err) {
+                console.error(err);
+                showMessage(err.message, 'error');
+            }
+        }
+
+        // ---- EVENT LISTENERS ----
+        // Update preview on any change
+        title.addEventListener('input', updatePreview);
+        description.addEventListener('input', updatePreview);
+        category.addEventListener('input', updatePreview);
+        pricingType.addEventListener('change', function() {
+            document.getElementById('rangeFields').style.display = this.value === 'range' ? 'grid' : 'none';
+            updatePreview();
+        });
+        price.addEventListener('input', updatePreview);
+        minPrice.addEventListener('input', updatePreview);
+        maxPrice.addEventListener('input', updatePreview);
+        currency.addEventListener('change', updatePreview);
+        ctaType.addEventListener('change', function() {
+            document.getElementById('customCtaGroup').style.display = this.value === 'custom' ? 'block' : 'none';
+            updatePreview();
+        });
+        ctaLabel.addEventListener('input', updatePreview);
+
+        saveDraftBtn.addEventListener('click', () => saveService('draft'));
+        publishBtn.addEventListener('click', () => saveService('published'));
+
+        // ---- HELPERS ----
+        function showMessage(text, type = 'success') {
+            statusMsg.textContent = text;
+            statusMsg.className = 'message ' + type;
+            setTimeout(() => {
+                statusMsg.className = 'message';
+                statusMsg.textContent = '';
+            }, 5000);
+        }
+
+        function refreshIcons() {
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+
+        // ---- THEME TOGGLE ----
+        function toggleTheme() {
+            var current = document.documentElement.getAttribute('data-theme');
+            var next = current === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('crevio_theme', next);
+            var icon = document.querySelector('#themeToggleBtn .icon');
+            if (icon) {
+                icon.setAttribute('data-lucide', next === 'dark' ? 'moon' : 'sun');
+                refreshIcons();
+            }
+        }
+        window.toggleTheme = toggleTheme;
+
+        // ---- INIT ----
+        document.addEventListener('DOMContentLoaded', function() {
+            var saved = localStorage.getItem('crevio_theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', saved);
+            var icon = document.querySelector('#themeToggleBtn .icon');
+            if (icon) icon.setAttribute('data-lucide', saved === 'dark' ? 'moon' : 'sun');
+            refreshIcons();
+
+            // Avatar
+            var userData = localStorage.getItem('crevio_user');
+            if (userData) {
+                try {
+                    var user = JSON.parse(userData);
+                    var avatar = document.getElementById('userAvatar');
+                    var nameDisplay = document.getElementById('userNameDisplay');
+                    if (avatar) {
+                        if (user.profile_image) {
+                            avatar.innerHTML = '<img src="' + user.profile_image + '" alt="Profile">';
+                        } else if (user.display_name) {
+                            avatar.textContent = user.display_name.charAt(0).toUpperCase();
+                        } else {
+                            avatar.textContent = 'C';
+                        }
+                    }
+                    if (nameDisplay && user.display_name) nameDisplay.textContent = user.display_name;
+                } catch (e) {}
+            }
+
+            // Mobile toggle
+            document.getElementById('mobileToggle').addEventListener('click', function() {
+                document.getElementById('sidebar').classList.toggle('open');
+                document.getElementById('sidebarOverlay').classList.toggle('open');
+            });
+            document.getElementById('sidebarOverlay').addEventListener('click', function() {
+                document.getElementById('sidebar').classList.remove('open');
+                this.classList.remove('open');
+            });
+            document.getElementById('logoutButton').addEventListener('click', function() {
+                localStorage.removeItem('crevio_token');
+                localStorage.removeItem('crevio_user');
+                window.location.href = '/admin/pages/login.html';
+            });
+
+            // Load data
+            const id = getServiceIdFromURL();
+            if (id) {
+                loadService(id);
+            } else {
+                document.getElementById('pageTitle').textContent = 'Create Service';
+                loadProjectsForSelector();
+                updatePreview();
+                if (pricingType.value === 'range') {
+                    document.getElementById('rangeFields').style.display = 'grid';
+                }
+            }
+        });
+    </script>
+</body>
+</html>

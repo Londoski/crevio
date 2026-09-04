@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Service — Crevio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        /* ---- RESET & BASE ---- */
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            transition: background 0.3s, color 0.3s;
+            line-height: 1.7;
+            min-height: 100vh;
+        }
+        a { text-decoration: none; color: inherit; }
+
+        [data-theme="dark"] {
+            --bg-primary: #0F172A;
+            --bg-secondary: #1E293B;
+            --bg-card: #1E293B;
+            --border-color: #334155;
+            --text-primary: #F1F5F9;
+            --text-secondary: #94A3B8;
+            --text-muted: #64748B;
+            --accent: #2563EB;
+            --accent-hover: #1D4ED8;
+            --accent-dim: rgba(37,99,235,0.15);
+            --shadow: 0 4px 24px rgba(0,0,0,0.4);
+        }
+        [data-theme="light"] {
+            --bg-primary: #F1F5F9;
+            --bg-secondary: #FFFFFF;
+            --bg-card: #FFFFFF;
+            --border-color: #E2E8F0;
+            --text-primary: #0F172A;
+            --text-secondary: #475569;
+            --text-muted: #94A3B8;
+            --accent: #2563EB;
+            --accent-hover: #1D4ED8;
+            --accent-dim: rgba(37,99,235,0.1);
+            --shadow: 0 4px 24px rgba(0,0,0,0.06);
+        }
+
+        .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+
+        /* ---- HEADER ---- */
+        header {
+            padding: 28px 0 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        header .brand {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        header .brand span { color: var(--accent); }
+        header .nav {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        header .nav a {
+            color: var(--text-secondary);
+            font-weight: 500;
+            transition: color 0.15s;
+            font-size: 14px;
+        }
+        header .nav a:hover { color: var(--text-primary); }
+        .theme-toggle {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 18px;
+            padding: 4px 8px;
+            border-radius: 8px;
+            transition: background 0.15s;
+        }
+        .theme-toggle:hover { background: var(--accent-dim); color: var(--text-primary); }
+
+        /* ---- Service Detail ---- */
+        .service-detail {
+            padding: 40px 0 50px;
+        }
+        .service-detail .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-bottom: 24px;
+            transition: color 0.15s;
+        }
+        .service-detail .back-link:hover {
+            color: var(--text-primary);
+        }
+
+        .service-detail .service-header {
+            margin-bottom: 32px;
+        }
+        .service-detail .service-header .category {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--accent);
+            background: var(--accent-dim);
+            padding: 2px 12px;
+            border-radius: 999px;
+            display: inline-block;
+            margin-bottom: 8px;
+        }
+        .service-detail .service-header h1 {
+            font-size: 34px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+        .service-detail .service-header .description {
+            font-size: 18px;
+            color: var(--text-secondary);
+            max-width: 700px;
+        }
+        .service-detail .service-header .pricing {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-top: 12px;
+        }
+        .service-detail .service-header .cta-btn {
+            display: inline-block;
+            padding: 10px 28px;
+            border-radius: 10px;
+            border: none;
+            background: var(--accent);
+            color: #fff;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.15s;
+            font-family: inherit;
+            margin-top: 16px;
+            text-decoration: none;
+        }
+        .service-detail .service-header .cta-btn:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+        }
+
+        /* ---- Sections ---- */
+        .detail-section {
+            border-top: 1px solid var(--border-color);
+            padding: 32px 0;
+        }
+        .detail-section:last-of-type {
+            border-bottom: 1px solid var(--border-color);
+        }
+        .detail-section h2 {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+        }
+        .detail-section .items-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        .detail-section .items-grid .item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: var(--text-secondary);
+            padding: 4px 0;
+        }
+        .detail-section .items-grid .item .check {
+            color: var(--success);
+            font-weight: 700;
+        }
+
+        .detail-section .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 16px;
+        }
+        .detail-section .projects-grid .project-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px;
+            transition: all 0.15s;
+        }
+        .detail-section .projects-grid .project-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+        .detail-section .projects-grid .project-card img {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            background: var(--bg-secondary);
+        }
+        .detail-section .projects-grid .project-card h4 {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        .detail-section .projects-grid .project-card p {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .detail-section .faq-item {
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .detail-section .faq-item:last-child {
+            border-bottom: none;
+        }
+        .detail-section .faq-item .question {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        .detail-section .faq-item .answer {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        .detail-section .meta-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 16px;
+        }
+        .detail-section .meta-grid .meta-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 12px 16px;
+            text-align: center;
+        }
+        .detail-section .meta-grid .meta-item .label {
+            font-size: 12px;
+            font-weight: 500;
+            text-transform: uppercase;
+            color: var(--text-muted);
+        }
+        .detail-section .meta-grid .meta-item .value {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        /* ---- Final CTA ---- */
+        .final-cta {
+            text-align: center;
+            padding: 40px 0 20px;
+        }
+        .final-cta h2 {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+        .final-cta p {
+            font-size: 15px;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+        }
+        .final-cta .btn {
+            padding: 10px 28px;
+            border-radius: 10px;
+            border: none;
+            background: var(--accent);
+            color: #fff;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.15s;
+            font-family: inherit;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .final-cta .btn:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+        }
+
+        /* ---- Loading ---- */
+        .loading-state {
+            text-align: center;
+            padding: 60px 0;
+            color: var(--text-muted);
+        }
+
+        /* ---- Responsive ---- */
+        @media (max-width: 768px) {
+            .container { padding: 0 16px; }
+            header { flex-direction: column; align-items: flex-start; gap: 12px; }
+            header .nav { gap: 12px; }
+            header .nav a { font-size: 13px; }
+            .service-detail .service-header h1 { font-size: 28px; }
+            .service-detail .service-header .description { font-size: 16px; }
+            .detail-section .items-grid { grid-template-columns: 1fr; }
+            .detail-section .meta-grid { grid-template-columns: 1fr 1fr; }
+            .detail-section .projects-grid { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 480px) {
+            .service-detail .service-header h1 { font-size: 24px; }
+            .detail-section .meta-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="container">
+        <div class="brand">Crevio<span>.</span></div>
+        <div class="nav">
+            <a href="#" id="backToPortfolio">← Back to Portfolio</a>
+            <button class="theme-toggle" id="themeToggleBtn" onclick="toggleTheme()">
+                <i data-lucide="moon" id="themeIcon"></i>
+            </button>
+        </div>
+    </header>
+
+    <main class="container service-detail" id="serviceDetail">
+        <div class="loading-state">Loading service...</div>
+    </main>
+
+    <script>
+        // =========================================================
+        // 1. THEME TOGGLE
+        // =========================================================
+        function toggleTheme() {
+            const html = document.documentElement;
+            const current = html.getAttribute('data-theme');
+            const next = current === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', next);
+            localStorage.setItem('crevio_theme', next);
+            updateThemeIcon(next);
+        }
+
+        function updateThemeIcon(theme) {
+            const icon = document.getElementById('themeIcon');
+            if (icon) {
+                icon.setAttribute('data-lucide', theme === 'dark' ? 'moon' : 'sun');
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const saved = localStorage.getItem('crevio_theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', saved);
+            updateThemeIcon(saved);
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+            loadService();
+        });
+
+        // =========================================================
+        // 2. GET USERNAME AND SLUG FROM URL
+        // =========================================================
+        function getUsernameAndSlug() {
+            const path = window.location.pathname;
+            // Expected: /u/username/services/slug
+            const parts = path.split('/').filter(p => p);
+            if (parts.length >= 4 && parts[1] === 'u' && parts[3] === 'services') {
+                return { username: parts[2], slug: parts[4] };
+            }
+            // Fallback: try to get from query params
+            const params = new URLSearchParams(window.location.search);
+            return { username: params.get('username'), slug: params.get('slug') };
+        }
+
+        // =========================================================
+        // 3. LOAD SERVICE
+        // =========================================================
+        async function loadService() {
+            const { username, slug } = getUsernameAndSlug();
+            const container = document.getElementById('serviceDetail');
+
+            if (!username || !slug) {
+                container.innerHTML = `<div class="loading-state" style="color:var(--danger);">Invalid service URL.</div>`;
+                return;
+            }
+
+            // Update back link
+            document.getElementById('backToPortfolio').href = `/u/${username}`;
+
+            try {
+                const res = await fetch(`/api/services/public/slug/${slug}`);
+                const data = await res.json();
+                if (!data.success || !data.service) {
+                    throw new Error('Service not found');
+                }
+                renderService(data.service, username);
+            } catch (err) {
+                console.error('Load service error:', err);
+                container.innerHTML = `<div class="loading-state" style="color:var(--danger);">Unable to load service.</div>`;
+            }
+        }
+
+        // =========================================================
+        // 4. RENDER SERVICE
+        // =========================================================
+        function renderService(service, username) {
+            const container = document.getElementById('serviceDetail');
+
+            // Pricing display
+            const currency = service.currency || 'USD';
+            const symbol = currency === 'USD' ? '$' : currency === 'EUR' ? '€' : currency === 'GBP' ? '£' : '₦';
+            let priceText = '';
+            if (service.pricing_type === 'fixed' && service.price) {
+                priceText = `${symbol}${service.price.toLocaleString()}`;
+            } else if (service.pricing_type === 'starting_from' && service.price) {
+                priceText = `Starting from ${symbol}${service.price.toLocaleString()}`;
+            } else if (service.pricing_type === 'range' && service.min_price && service.max_price) {
+                priceText = `${symbol}${service.min_price.toLocaleString()} — ${symbol}${service.max_price.toLocaleString()}`;
+            } else if (service.pricing_type === 'custom_quote') {
+                priceText = 'Custom Quote';
+            } else if (service.pricing_type === 'contact') {
+                priceText = 'Contact for pricing';
+            }
+
+            // CTA label
+            const ctaLabel = service.cta_label || getDefaultCtaLabel(service.cta_type);
+
+            // Included items
+            let itemsHtml = '';
+            const items = service.included_items || [];
+            if (items.length) {
+                itemsHtml = `<div class="items-grid">`;
+                items.forEach(item => {
+                    itemsHtml += `<div class="item"><span class="check">✓</span> ${item.item}</div>`;
+                });
+                itemsHtml += `</div>`;
+            } else {
+                itemsHtml = `<p style="color:var(--text-muted);">No items listed.</p>`;
+            }
+
+            // FAQs
+            let faqsHtml = '';
+            const faqs = service.faqs || [];
+            if (faqs.length) {
+                faqs.forEach(faq => {
+                    faqsHtml += `
+                        <div class="faq-item">
+                            <div class="question">${faq.question}</div>
+                            <div class="answer">${faq.answer}</div>
+                        </div>
+                    `;
+                });
+            } else {
+                faqsHtml = `<p style="color:var(--text-muted);">No FAQs yet.</p>`;
+            }
+
+            // Projects
+            let projectsHtml = '';
+            const projects = service.projects || [];
+            if (projects.length) {
+                projectsHtml = `<div class="projects-grid">`;
+                projects.forEach(p => {
+                    const thumb = p.thumbnail_url || '';
+                    projectsHtml += `
+                        <a href="/u/${username}/projects/${p.id}" class="project-card">
+                            ${thumb ? `<img src="${thumb}" alt="${p.title}">` : ''}
+                            <h4>${p.title}</h4>
+                            ${p.category ? `<p>${p.category}</p>` : ''}
+                        </a>
+                    `;
+                });
+                projectsHtml += `</div>`;
+            } else {
+                projectsHtml = `<p style="color:var(--text-muted);">No projects connected yet.</p>`;
+            }
+
+            // Meta
+            const metaHtml = `
+                <div class="meta-grid">
+                    ${service.delivery_time ? `<div class="meta-item"><div class="label">Delivery</div><div class="value">${service.delivery_time}</div></div>` : ''}
+                    ${service.revisions ? `<div class="meta-item"><div class="label">Revisions</div><div class="value">${service.revisions}</div></div>` : ''}
+                    ${service.availability ? `<div class="meta-item"><div class="label">Availability</div><div class="value">Available</div></div>` : ''}
+                </div>
+            `;
+
+            const html = `
+                <a href="/u/${username}" class="back-link">← Back to Portfolio</a>
+
+                <div class="service-header">
+                    ${service.category ? `<div class="category">${service.category}</div>` : ''}
+                    <h1>${service.title}</h1>
+                    <div class="description">${service.description || ''}</div>
+                    ${priceText ? `<div class="pricing">${priceText}</div>` : ''}
+                    <a href="#" class="cta-btn" id="ctaBtn">${ctaLabel}</a>
+                </div>
+
+                <div class="detail-section">
+                    <h2>What's Included</h2>
+                    ${itemsHtml}
+                </div>
+
+                ${service.delivery_time || service.revisions ? `
+                <div class="detail-section">
+                    <h2>Details</h2>
+                    ${metaHtml}
+                </div>
+                ` : ''}
+
+                ${projects.length ? `
+                <div class="detail-section">
+                    <h2>Selected Work</h2>
+                    ${projectsHtml}
+                </div>
+                ` : ''}
+
+                ${faqs.length ? `
+                <div class="detail-section">
+                    <h2>Frequently Asked Questions</h2>
+                    ${faqsHtml}
+                </div>
+                ` : ''}
+
+                <div class="final-cta">
+                    <h2>Have a project in mind?</h2>
+                    <p>Let's talk about how I can help you.</p>
+                    <a href="#" class="btn" id="finalCtaBtn">${ctaLabel}</a>
+                </div>
+            `;
+
+            container.innerHTML = html;
+            refreshIcons();
+
+            // CTA handlers
+            document.getElementById('ctaBtn')?.addEventListener('click', function(e) {
+                e.preventDefault();
+                handleCtaClick(service);
+            });
+            document.getElementById('finalCtaBtn')?.addEventListener('click', function(e) {
+                e.preventDefault();
+                handleCtaClick(service);
+            });
+        }
+
+        // =========================================================
+        // 5. HELPERS
+        // =========================================================
+        function getDefaultCtaLabel(type) {
+            const map = {
+                'quote': 'Request a Quote',
+                'contact': 'Contact Me',
+                'start': 'Start a Project',
+                'book': 'Book a Consultation',
+                'custom': 'Learn More'
+            };
+            return map[type] || 'Request a Quote';
+        }
+
+        function handleCtaClick(service) {
+            // For now, just show a message or redirect to contact page
+            // In the future, this will open a contact form or redirect
+            if (service.cta_type === 'custom' && service.cta_url) {
+                window.open(service.cta_url, '_blank');
+            } else {
+                alert('Contact functionality coming soon!');
+            }
+        }
+
+        function refreshIcons() {
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+    </script>
+</body>
+</html>

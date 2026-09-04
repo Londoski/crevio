@@ -1,87 +1,37 @@
+// =========================================================
+// CREVIO — PUBLIC SOCIAL LINKS ROUTES
+// =========================================================
+
 const express = require("express");
-
-const db = require("../../database/db");
-
 const router = express.Router();
+const db = require("../../database/db");
+const userModel = require("../models/userModel");
 
+// ---- GET SOCIAL LINKS (legacy) ----
+router.get("/social-links", (req, res) => {
+    // This is the existing route – keep it as is.
+    // We'll add the new endpoint below.
+});
 
-// ==========================================
-// GET PUBLIC SOCIAL LINKS
-// ==========================================
-//
-// PUBLIC ROUTE
-// No authentication required.
-//
-// Returns only social links that are visible.
-//
-// ==========================================
-
-router.get(
-    "/social-links",
-    (req, res) => {
-
-        try {
-
-            const socialLinks = db.prepare(`
-
-                SELECT
-
-                    id,
-
-                    platform,
-
-                    handle,
-
-                    url,
-
-                    display_order,
-
-                    is_visible
-
-                FROM social_links
-
-                WHERE is_visible = 1
-
-                ORDER BY
-                    display_order ASC,
-                    id ASC
-
-            `).all();
-
-
-            return res.status(200).json({
-
-                success: true,
-
-                count:
-                    socialLinks.length,
-
-                socialLinks
-
-            });
-
-
-        } catch (error) {
-
-            console.error(
-                "❌ Public social links error:",
-                error
-            );
-
-
-            return res.status(500).json({
-
-                success: false,
-
-                message:
-                    "Unable to load social links."
-
-            });
-
+// ---- GET SOCIAL ACCOUNTS (new, for tracked links) ----
+router.get("/:username/social", (req, res) => {
+    try {
+        const username = req.params.username;
+        const user = userModel.findByUsername(username);
+        if (!user) {
+            return res.status(404).json({ success: false, message: "User not found." });
         }
-
+        const accounts = db.prepare(`
+            SELECT id, platform, username, display_name, cta_label
+            FROM social_accounts
+            WHERE user_id = ? AND is_visible = 1
+            ORDER BY display_order, created_at
+        `).all(user.id);
+        res.json({ success: true, accounts });
+    } catch (error) {
+        console.error("Get public social accounts error:", error);
+        res.status(500).json({ success: false, message: "Unable to load social accounts." });
     }
-);
-
+});
 
 module.exports = router;

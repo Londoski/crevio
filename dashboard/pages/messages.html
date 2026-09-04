@@ -1,0 +1,1490 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Messages — Crevio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        /* =========================================================
+           RESET & BASE
+           ========================================================= */
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            transition: background 0.3s, color 0.3s;
+            display: flex;
+            min-height: 100vh;
+        }
+        a { text-decoration: none; color: inherit; }
+
+        /* =========================================================
+           THEME VARIABLES
+           ========================================================= */
+        [data-theme="dark"] {
+            --bg-primary: #0F172A;
+            --bg-secondary: #1E293B;
+            --bg-card: #1E293B;
+            --bg-input: #0F172A;
+            --border-color: #334155;
+            --text-primary: #F1F5F9;
+            --text-secondary: #94A3B8;
+            --text-muted: #64748B;
+            --accent: #2563EB;
+            --accent-hover: #1D4ED8;
+            --accent-dim: rgba(37,99,235,0.15);
+            --danger: #EF4444;
+            --danger-hover: #DC2626;
+            --success: #22C55E;
+            --warning: #F59E0B;
+            --shadow: 0 4px 24px rgba(0,0,0,0.4);
+        }
+        [data-theme="light"] {
+            --bg-primary: #F1F5F9;
+            --bg-secondary: #FFFFFF;
+            --bg-card: #FFFFFF;
+            --bg-input: #F8FAFC;
+            --border-color: #E2E8F0;
+            --text-primary: #0F172A;
+            --text-secondary: #475569;
+            --text-muted: #94A3B8;
+            --accent: #2563EB;
+            --accent-hover: #1D4ED8;
+            --accent-dim: rgba(37,99,235,0.1);
+            --danger: #EF4444;
+            --danger-hover: #DC2626;
+            --success: #22C55E;
+            --warning: #F59E0B;
+            --shadow: 0 4px 24px rgba(0,0,0,0.06);
+        }
+
+        /* =========================================================
+           SIDEBAR (standard)
+           ========================================================= */
+        .sidebar {
+            width: 240px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 24px 16px;
+            height: 100vh;
+            position: sticky;
+            top: 0;
+            flex-shrink: 0;
+            transition: background 0.3s, border-color 0.3s;
+            overflow-y: auto;
+        }
+        .sidebar-brand { padding-bottom: 20px; border-bottom: 1px solid var(--border-color); margin-bottom: 20px; }
+        .sidebar-brand h1 { font-size: 20px; font-weight: 700; color: var(--text-primary); }
+        .sidebar-brand span { font-size: 11px; font-weight: 500; text-transform: uppercase; color: var(--text-muted); }
+        .sidebar-nav { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+        .nav-item {
+            display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px;
+            color: var(--text-secondary); font-size: 14px; font-weight: 500; transition: all 0.15s;
+            text-decoration: none;
+        }
+        .nav-item:hover { background: var(--accent-dim); color: var(--text-primary); }
+        .nav-item.active { background: var(--accent-dim); color: var(--accent); }
+        .nav-item .icon { width: 20px; height: 20px; flex-shrink: 0; }
+        .nav-divider { height: 1px; background: var(--border-color); margin: 8px 12px; }
+        .sidebar-footer { padding-top: 16px; border-top: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 8px; }
+        .logout-button {
+            background: transparent; border: none; color: var(--danger); font-size: 13px; font-weight: 500;
+            padding: 10px 12px; border-radius: 8px; cursor: pointer; font-family: inherit;
+            display: flex; align-items: center; gap: 12px; transition: background 0.15s;
+            width: 100%;
+        }
+        .logout-button:hover { background: rgba(239,68,68,0.1); }
+        .theme-toggle-btn {
+            background: transparent; border: none; color: var(--text-secondary); font-size: 18px;
+            cursor: pointer; padding: 6px 10px; border-radius: 8px; transition: background 0.15s;
+            display: inline-flex; align-items: center; gap: 6px; width: fit-content;
+        }
+        .theme-toggle-btn:hover { background: var(--accent-dim); color: var(--text-primary); }
+        .theme-toggle-btn .icon { width: 18px; height: 18px; }
+        .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 199; }
+        .sidebar-overlay.open { display: block; }
+
+        /* =========================================================
+           MAIN
+           ========================================================= */
+        .dashboard-main {
+            flex: 1; padding: 28px 36px; background: var(--bg-primary);
+            min-height: 100vh; transition: background 0.3s;
+        }
+
+        .dashboard-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 28px; flex-wrap: wrap; gap: 12px;
+        }
+        .topbar-left { display: flex; align-items: center; gap: 16px; }
+        .mobile-menu-toggle {
+            display: none; background: none; border: none;
+            color: var(--text-secondary); font-size: 24px; cursor: pointer;
+        }
+        .topbar-left h2 { font-size: 24px; font-weight: 700; color: var(--text-primary); }
+        .header-description { font-size: 14px; color: var(--text-secondary); }
+        .topbar-right { display: flex; align-items: center; gap: 16px; }
+        .primary-button {
+            padding: 8px 18px; border-radius: 8px; border: none;
+            background: var(--accent); color: #fff;
+            font-size: 13px; font-weight: 600; cursor: pointer;
+            display: inline-flex; align-items: center; gap: 6px;
+            transition: all 0.15s; text-decoration: none;
+        }
+        .primary-button:hover { background: var(--accent-hover); transform: translateY(-1px); }
+        .secondary-button {
+            padding: 8px 18px; border-radius: 8px; border: 1px solid var(--border-color);
+            background: transparent; color: var(--text-secondary);
+            font-size: 13px; font-weight: 500; cursor: pointer;
+            display: inline-flex; align-items: center; gap: 6px;
+            transition: all 0.15s; text-decoration: none;
+        }
+        .secondary-button:hover { background: var(--bg-card); color: var(--text-primary); }
+        .user-profile { display: flex; align-items: center; gap: 8px; }
+        .user-avatar {
+            width: 32px; height: 32px; border-radius: 50%;
+            background: var(--accent); color: #fff;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 600; font-size: 13px; flex-shrink: 0;
+            overflow: hidden;
+        }
+        .user-avatar img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+        .user-name { font-size: 14px; font-weight: 500; color: var(--text-primary); }
+
+        /* =========================================================
+           MESSAGES CONTAINER
+           ========================================================= */
+        .messages-container {
+            max-width: 100%;
+            margin: 0 auto;
+            display: flex;
+            height: calc(100vh - 180px);
+            min-height: 500px;
+            gap: 0;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        /* ---- Inbox Navigation ---- */
+        .inbox-nav {
+            width: 220px;
+            flex-shrink: 0;
+            padding: 20px 16px;
+            border-right: 1px solid var(--border-color);
+            overflow-y: auto;
+            background: var(--bg-secondary);
+        }
+        .inbox-nav .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
+            text-decoration: none;
+        }
+        .inbox-nav .nav-item:hover {
+            background: var(--accent-dim);
+            color: var(--text-primary);
+        }
+        .inbox-nav .nav-item.active {
+            background: var(--accent-dim);
+            color: var(--accent);
+        }
+        .inbox-nav .nav-item .badge {
+            margin-left: auto;
+            background: var(--accent);
+            color: #fff;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 1px 8px;
+            border-radius: 999px;
+        }
+        .inbox-nav .nav-divider {
+            height: 1px;
+            background: var(--border-color);
+            margin: 12px 0;
+        }
+        .inbox-nav .nav-label {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--text-muted);
+            padding: 8px 12px 4px;
+        }
+
+        /* ---- Conversation List ---- */
+        .conversation-list {
+            width: 340px;
+            flex-shrink: 0;
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-card);
+        }
+        .conversation-list .list-header {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+        .conversation-list .list-header .search-wrap {
+            position: relative;
+            margin-bottom: 10px;
+        }
+        .conversation-list .list-header .search-wrap input {
+            width: 100%;
+            padding: 6px 12px 6px 32px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-input);
+            color: var(--text-primary);
+            font-size: 13px;
+            font-family: inherit;
+        }
+        .conversation-list .list-header .search-wrap input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-dim);
+        }
+        .conversation-list .list-header .search-wrap .search-icon {
+            position: absolute;
+            left: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            width: 16px;
+            height: 16px;
+        }
+        .conversation-list .list-header .filters {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+        .conversation-list .list-header .filters .filter-btn {
+            padding: 4px 12px;
+            border-radius: 999px;
+            border: 1px solid var(--border-color);
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
+            font-family: inherit;
+        }
+        .conversation-list .list-header .filters .filter-btn.active {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+        }
+        .conversation-list .list-header .filters .filter-btn:hover:not(.active) {
+            border-color: var(--accent);
+            color: var(--text-primary);
+        }
+        .conversation-list .list-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 4px 0;
+        }
+        .conversation-item {
+            display: flex;
+            align-items: stretch;
+            padding: 10px 16px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border-color);
+            transition: background 0.15s;
+            gap: 12px;
+        }
+        .conversation-item:hover {
+            background: var(--accent-dim);
+        }
+        .conversation-item.active {
+            background: var(--accent-dim);
+            border-left: 3px solid var(--accent);
+        }
+        .conversation-item .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--accent-dim);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 16px;
+            color: var(--accent);
+            flex-shrink: 0;
+        }
+        .conversation-item .info {
+            flex: 1;
+            min-width: 0;
+        }
+        .conversation-item .info .top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+        }
+        .conversation-item .info .top .name {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 14px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .conversation-item .info .top .time {
+            font-size: 12px;
+            color: var(--text-muted);
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .conversation-item .info .context {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 1px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .conversation-item .info .preview {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .conversation-item .info .status {
+            font-size: 11px;
+            font-weight: 500;
+            display: inline-block;
+            padding: 1px 8px;
+            border-radius: 999px;
+            margin-top: 2px;
+        }
+        .status-new_inquiry { background: rgba(37,99,235,0.15); color: var(--accent); }
+        .status-contacted { background: rgba(245,158,11,0.15); color: var(--warning); }
+        .status-discussing { background: rgba(37,99,235,0.15); color: var(--accent); }
+        .status-quoted { background: rgba(34,197,94,0.15); color: var(--success); }
+        .status-won { background: rgba(34,197,94,0.15); color: var(--success); }
+        .status-lost { background: rgba(239,68,68,0.15); color: var(--danger); }
+        .conversation-item .unread-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent);
+            flex-shrink: 0;
+            align-self: center;
+        }
+        .conversation-item .star-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 2px;
+            transition: color 0.15s;
+        }
+        .conversation-item .star-btn:hover {
+            color: var(--warning);
+        }
+        .conversation-item .star-btn.active {
+            color: var(--warning);
+        }
+
+        /* ---- Active Conversation ---- */
+        .active-conversation {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            background: var(--bg-primary);
+        }
+        .active-conversation .conv-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--border-color);
+            background: var(--bg-card);
+            flex-shrink: 0;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .active-conversation .conv-header .left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 0;
+        }
+        .active-conversation .conv-header .left .back-btn {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 20px;
+            padding: 0 4px;
+        }
+        .active-conversation .conv-header .left .name {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 16px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .active-conversation .conv-header .left .sub {
+            font-size: 13px;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .active-conversation .conv-header .right {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        .active-conversation .conv-header .right .btn-icon {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 6px;
+            transition: all 0.15s;
+        }
+        .active-conversation .conv-header .right .btn-icon:hover {
+            background: var(--accent-dim);
+            color: var(--text-primary);
+        }
+        .active-conversation .conv-header .right .btn-icon.active {
+            color: var(--warning);
+        }
+
+        .active-conversation .messages-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .message-bubble {
+            max-width: 80%;
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-size: 14px;
+            line-height: 1.6;
+            word-wrap: break-word;
+        }
+        .message-bubble.client {
+            align-self: flex-start;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-bottom-left-radius: 4px;
+            color: var(--text-primary);
+        }
+        .message-bubble.creator {
+            align-self: flex-end;
+            background: var(--accent);
+            color: #fff;
+            border-bottom-right-radius: 4px;
+        }
+        .message-bubble .time {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 4px;
+            text-align: right;
+        }
+        .message-bubble.creator .time {
+            color: rgba(255,255,255,0.7);
+        }
+        .message-bubble .sender-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 2px;
+        }
+        .message-bubble.creator .sender-label {
+            color: rgba(255,255,255,0.8);
+        }
+
+        .active-conversation .composer {
+            padding: 12px 20px;
+            border-top: 1px solid var(--border-color);
+            background: var(--bg-card);
+            flex-shrink: 0;
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+        .active-conversation .composer textarea {
+            flex: 1;
+            resize: none;
+            padding: 8px 12px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-input);
+            color: var(--text-primary);
+            font-size: 14px;
+            font-family: inherit;
+            min-height: 40px;
+            max-height: 120px;
+            line-height: 1.5;
+        }
+        .active-conversation .composer textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-dim);
+        }
+        .active-conversation .composer .send-btn {
+            padding: 8px 16px;
+            border-radius: 10px;
+            border: none;
+            background: var(--accent);
+            color: #fff;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+            font-family: inherit;
+            height: 40px;
+            align-self: flex-end;
+        }
+        .active-conversation .composer .send-btn:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+        }
+        .active-conversation .composer .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* ---- Client Context ---- */
+        .client-context {
+            width: 300px;
+            flex-shrink: 0;
+            border-left: 1px solid var(--border-color);
+            padding: 20px;
+            overflow-y: auto;
+            background: var(--bg-secondary);
+            display: none;
+        }
+        .client-context.open {
+            display: block;
+        }
+        .client-context .context-close {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 20px;
+            cursor: pointer;
+            float: right;
+        }
+        .client-context .client-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 2px;
+        }
+        .client-context .client-email {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+        }
+        .client-context .field {
+            margin-bottom: 12px;
+        }
+        .client-context .field .label {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--text-muted);
+            display: block;
+        }
+        .client-context .field .value {
+            font-size: 14px;
+            color: var(--text-primary);
+            word-break: break-word;
+        }
+        .client-context .status-badge {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .client-context .actions {
+            margin-top: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .client-context .actions .btn {
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: 13px;
+            border: none;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.15s;
+            text-align: center;
+        }
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+        .btn-outline:hover {
+            background: var(--bg-card);
+            color: var(--text-primary);
+        }
+
+        /* ---- Empty state ---- */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+            grid-column: 1 / -1;
+        }
+        .empty-state .icon {
+            width: 48px;
+            height: 48px;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+        .empty-state h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+        .empty-state p {
+            font-size: 14px;
+            margin-bottom: 16px;
+        }
+        .loading-state {
+            text-align: center;
+            padding: 40px 0;
+            color: var(--text-muted);
+        }
+
+        /* ---- Responsive ---- */
+        @media (max-width: 1024px) {
+            .inbox-nav { width: 180px; }
+            .conversation-list { width: 280px; }
+            .client-context { width: 260px; }
+        }
+        @media (max-width: 768px) {
+            .messages-container { flex-direction: column; height: calc(100vh - 140px); border-radius: 12px; }
+            .inbox-nav { width: 100%; flex-direction: row; flex-wrap: wrap; padding: 12px 16px; border-right: none; border-bottom: 1px solid var(--border-color); gap: 4px; height: auto; }
+            .inbox-nav .nav-item { padding: 6px 12px; font-size: 13px; }
+            .inbox-nav .nav-divider { display: none; }
+            .inbox-nav .nav-label { display: none; }
+            .conversation-list { width: 100%; border-right: none; border-bottom: 1px solid var(--border-color); flex: none; height: 200px; }
+            .active-conversation { flex: 1; min-height: 300px; }
+            .active-conversation .conv-header .left .back-btn { display: block; }
+            .client-context { width: 100%; border-left: none; border-top: 1px solid var(--border-color); }
+            .client-context .context-close { display: block; }
+            .conversation-list .list-body { height: auto; }
+        }
+        @media (max-width: 480px) {
+            .conversation-list .list-header .filters .filter-btn { font-size: 11px; padding: 2px 10px; }
+            .conversation-item { padding: 8px 12px; }
+            .active-conversation .conv-header { padding: 10px 14px; }
+            .active-conversation .messages-body { padding: 12px 14px; }
+            .active-conversation .composer { padding: 10px 14px; flex-wrap: wrap; }
+            .active-conversation .composer textarea { min-height: 36px; }
+            .active-conversation .composer .send-btn { height: 36px; padding: 6px 14px; }
+            .message-bubble { max-width: 95%; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand"><h1>Crevio</h1><span>Creator Dashboard</span></div>
+        <nav class="sidebar-nav">
+            <a href="/dashboard/" class="nav-item"><i data-lucide="layout-dashboard" class="icon"></i> Overview</a>
+            <a href="/dashboard/pages/projects.html" class="nav-item"><i data-lucide="folder-open" class="icon"></i> Projects</a>
+            <a href="/dashboard/pages/media.html" class="nav-item"><i data-lucide="image" class="icon"></i> Media</a>
+            <a href="/dashboard/pages/services.html" class="nav-item"><i data-lucide="briefcase" class="icon"></i> Services</a>
+            <a href="/dashboard/pages/skills.html" class="nav-item"><i data-lucide="star" class="icon"></i> Skills</a>
+            <a href="/dashboard/pages/social-links.html" class="nav-item"><i data-lucide="share-2" class="icon"></i> My Socials</a>
+            <div class="nav-divider"></div>
+            <a href="/dashboard/pages/portfolio.html" class="nav-item"><i data-lucide="layout-template" class="icon"></i> Portfolio</a>
+            <a href="/dashboard/pages/portfolio-edit.html" class="nav-item"><i data-lucide="edit-3" class="icon"></i> Edit Portfolio</a>
+            <a href="/dashboard/pages/bot.html" class="nav-item"><i data-lucide="bot" class="icon"></i> Crevio Bot</a>
+            <div class="nav-divider"></div>
+            <a href="/dashboard/pages/messages.html" class="nav-item active"><i data-lucide="mail" class="icon"></i> Messages</a>
+            <a href="/dashboard/pages/notifications.html" class="nav-item"><i data-lucide="bell" class="icon"></i> Notifications</a>
+            <div class="nav-divider"></div>
+            <a href="/dashboard/pages/billing.html" class="nav-item"><i data-lucide="credit-card" class="icon"></i> Billing</a>
+            <a href="/dashboard/pages/security.html" class="nav-item"><i data-lucide="shield" class="icon"></i> Security</a>
+            <a href="/dashboard/pages/settings.html" class="nav-item"><i data-lucide="settings" class="icon"></i> Settings</a>
+            <a href="/dashboard/pages/profile.html" class="nav-item"><i data-lucide="user" class="icon"></i> Profile</a>
+            <a href="/dashboard/pages/account-management.html" class="nav-item"><i data-lucide="user-cog" class="icon"></i> Account Management</a>
+            <div class="nav-divider"></div>
+            <a href="/" target="_blank" class="nav-item"><i data-lucide="globe" class="icon"></i> View Portfolio</a>
+        </nav>
+        <div class="sidebar-footer">
+            <span id="themeToggleBtn" class="theme-toggle-btn" onclick="toggleTheme()" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:8px;color:var(--text-secondary);font-size:18px;">
+                <i data-lucide="moon" class="icon"></i>
+            </span>
+            <button id="logoutButton" class="logout-button"><i data-lucide="log-out" class="icon"></i> Logout</button>
+        </div>
+    </aside>
+
+    <div id="sidebarOverlay" class="sidebar-overlay"></div>
+
+    <!-- MAIN -->
+    <main class="dashboard-main">
+
+        <header class="dashboard-header">
+            <div class="topbar-left">
+                <button id="mobileToggle" class="mobile-menu-toggle"><i data-lucide="menu"></i></button>
+                <div>
+                    <h2>Messages</h2>
+                    <p class="header-description">Manage conversations and client inquiries from your portfolio.</p>
+                </div>
+            </div>
+            <div class="topbar-right">
+                <div class="user-profile">
+                    <span class="user-avatar" id="userAvatar">C</span>
+                    <span class="user-name" id="userNameDisplay">Creator</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- MESSAGES CONTAINER -->
+        <div class="messages-container" id="messagesContainer">
+
+            <!-- INBOX NAVIGATION -->
+            <nav class="inbox-nav" id="inboxNav">
+                <div class="nav-label">Mailbox</div>
+                <div class="nav-item active" data-filter="inbox">
+                    <i data-lucide="inbox" style="width:18px;height:18px;"></i> Inbox
+                    <span class="badge" id="unreadBadge">0</span>
+                </div>
+                <div class="nav-item" data-filter="unread">
+                    <i data-lucide="mail" style="width:18px;height:18px;"></i> Unread
+                    <span class="badge" id="unreadBadge2">0</span>
+                </div>
+                <div class="nav-item" data-filter="starred">
+                    <i data-lucide="star" style="width:18px;height:18px;"></i> Starred
+                </div>
+                <div class="nav-item" data-filter="archived">
+                    <i data-lucide="archive" style="width:18px;height:18px;"></i> Archived
+                </div>
+                <div class="nav-divider"></div>
+                <div class="nav-label">Lifecycle</div>
+                <div class="nav-item" data-filter="status:new_inquiry">
+                    <i data-lucide="circle" style="width:18px;height:18px;color:var(--accent);"></i> New Inquiry
+                </div>
+                <div class="nav-item" data-filter="status:discussing">
+                    <i data-lucide="message-circle" style="width:18px;height:18px;"></i> Discussing
+                </div>
+                <div class="nav-item" data-filter="status:quoted">
+                    <i data-lucide="file-text" style="width:18px;height:18px;"></i> Quoted
+                </div>
+                <div class="nav-item" data-filter="status:won">
+                    <i data-lucide="check-circle" style="width:18px;height:18px;color:var(--success);"></i> Won
+                </div>
+                <div class="nav-item" data-filter="status:lost">
+                    <i data-lucide="x-circle" style="width:18px;height:18px;color:var(--danger);"></i> Lost
+                </div>
+            </nav>
+
+            <!-- CONVERSATION LIST -->
+            <div class="conversation-list" id="conversationList">
+                <div class="list-header">
+                    <div class="search-wrap">
+                        <i data-lucide="search" class="search-icon"></i>
+                        <input type="text" id="searchInput" placeholder="Search conversations…">
+                    </div>
+                    <div class="filters">
+                        <button class="filter-btn active" data-filter="all">All</button>
+                        <button class="filter-btn" data-filter="unread">Unread</button>
+                        <button class="filter-btn" data-filter="starred">Starred</button>
+                    </div>
+                </div>
+                <div class="list-body" id="conversationListBody">
+                    <div class="loading-state">Loading conversations...</div>
+                </div>
+            </div>
+
+            <!-- ACTIVE CONVERSATION -->
+            <div class="active-conversation" id="activeConversation">
+                <div class="conv-header" id="convHeader">
+                    <div class="left">
+                        <button class="back-btn" id="backToListBtn"><i data-lucide="arrow-left"></i></button>
+                        <div>
+                            <div class="name" id="convName">Select a conversation</div>
+                            <div class="sub" id="convSub">—</div>
+                        </div>
+                    </div>
+                    <div class="right">
+                        <button class="btn-icon" id="starBtn" title="Star"><i data-lucide="star"></i></button>
+                        <button class="btn-icon" id="archiveBtn" title="Archive"><i data-lucide="archive"></i></button>
+                        <button class="btn-icon" id="contextToggle" title="Client details"><i data-lucide="info"></i></button>
+                        <button class="btn-icon" id="moreBtn" title="More"><i data-lucide="more-vertical"></i></button>
+                    </div>
+                </div>
+                <div class="messages-body" id="messagesBody">
+                    <div class="empty-state">
+                        <i data-lucide="message-square" class="icon"></i>
+                        <h3>No conversation selected</h3>
+                        <p>Select a conversation from the list to start reading.</p>
+                    </div>
+                </div>
+                <div class="composer" id="composer">
+                    <textarea id="messageInput" rows="1" placeholder="Type a message…" disabled></textarea>
+                    <button class="send-btn" id="sendBtn" disabled>Send</button>
+                </div>
+            </div>
+
+            <!-- CLIENT CONTEXT PANEL -->
+            <div class="client-context" id="clientContext">
+                <button class="context-close" id="contextClose">&times;</button>
+                <div class="client-name" id="ctxName">—</div>
+                <div class="client-email" id="ctxEmail">—</div>
+                <div class="field">
+                    <span class="label">Status</span>
+                    <span class="status-badge status-new_inquiry" id="ctxStatus">New Inquiry</span>
+                </div>
+                <div class="field">
+                    <span class="label">Service</span>
+                    <span class="value" id="ctxService">—</span>
+                </div>
+                <div class="field">
+                    <span class="label">Project</span>
+                    <span class="value" id="ctxProject">—</span>
+                </div>
+                <div class="field">
+                    <span class="label">Budget</span>
+                    <span class="value" id="ctxBudget">—</span>
+                </div>
+                <div class="field">
+                    <span class="label">Timeline</span>
+                    <span class="value" id="ctxTimeline">—</span>
+                </div>
+                <div class="field">
+                    <span class="label">Source</span>
+                    <span class="value" id="ctxSource">—</span>
+                </div>
+                <div class="field">
+                    <span class="label">Notes</span>
+                    <span class="value" id="ctxNotes">—</span>
+                </div>
+                <div class="actions">
+                    <select id="ctxStatusSelect" class="btn btn-outline" style="width:100%;padding:6px 12px;border-radius:8px;border:1px solid var(--border-color);background:var(--bg-input);color:var(--text-primary);font-family:inherit;">
+                        <option value="new_inquiry">New Inquiry</option>
+                        <option value="contacted">Contacted</option>
+                        <option value="discussing">Discussing</option>
+                        <option value="quoted">Quoted</option>
+                        <option value="won">Won</option>
+                        <option value="lost">Lost</option>
+                    </select>
+                    <button class="btn btn-outline" id="saveStatusBtn">Update Status</button>
+                    <button class="btn btn-outline" id="convertProjectBtn" style="border-color:var(--accent);color:var(--accent);">Convert to Project</button>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <script>
+        // =========================================================
+        // ALL JAVASCRIPT (self-contained)
+        // =========================================================
+
+        console.log('✅ Messages page loaded');
+
+        // ---- DOM refs ----
+        const listBody = document.getElementById('conversationListBody');
+        const messagesBody = document.getElementById('messagesBody');
+        const searchInput = document.getElementById('searchInput');
+        const filterBtns = document.querySelectorAll('.filters .filter-btn');
+        const navItems = document.querySelectorAll('.inbox-nav .nav-item');
+        const convName = document.getElementById('convName');
+        const convSub = document.getElementById('convSub');
+        const messageInput = document.getElementById('messageInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const starBtn = document.getElementById('starBtn');
+        const archiveBtn = document.getElementById('archiveBtn');
+        const contextToggle = document.getElementById('contextToggle');
+        const contextClose = document.getElementById('contextClose');
+        const clientContext = document.getElementById('clientContext');
+        const backBtn = document.getElementById('backToListBtn');
+        const unreadBadge = document.getElementById('unreadBadge');
+        const unreadBadge2 = document.getElementById('unreadBadge2');
+
+        // Context fields
+        const ctxName = document.getElementById('ctxName');
+        const ctxEmail = document.getElementById('ctxEmail');
+        const ctxStatus = document.getElementById('ctxStatus');
+        const ctxService = document.getElementById('ctxService');
+        const ctxProject = document.getElementById('ctxProject');
+        const ctxBudget = document.getElementById('ctxBudget');
+        const ctxTimeline = document.getElementById('ctxTimeline');
+        const ctxSource = document.getElementById('ctxSource');
+        const ctxNotes = document.getElementById('ctxNotes');
+        const ctxStatusSelect = document.getElementById('ctxStatusSelect');
+        const saveStatusBtn = document.getElementById('saveStatusBtn');
+
+        let conversations = [];
+        let activeConversationId = null;
+        let currentFilter = 'all';
+        let currentNavFilter = 'inbox';
+        let currentSearch = '';
+
+        // ---- AUTH ----
+        function getToken() {
+            const token = localStorage.getItem('crevio_token');
+            if (!token) {
+                window.location.href = '/admin/pages/login.html';
+                return null;
+            }
+            return token;
+        }
+
+        // ---- API ----
+        async function apiFetch(endpoint, options = {}) {
+            const token = getToken();
+            if (!token) return null;
+            const res = await fetch(endpoint, {
+                ...options,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token,
+                    ...options.headers
+                }
+            });
+            if (res.status === 401) {
+                localStorage.removeItem('crevio_token');
+                window.location.href = '/admin/pages/login.html';
+                return null;
+            }
+            return res;
+        }
+
+        // ---- LOAD CONVERSATIONS ----
+        async function loadConversations() {
+            const params = new URLSearchParams();
+            if (currentNavFilter === 'unread') params.append('unread', 'true');
+            else if (currentNavFilter === 'starred') params.append('starred', 'true');
+            else if (currentNavFilter === 'archived') params.append('archived', 'true');
+            else if (currentNavFilter.startsWith('status:')) {
+                params.append('status', currentNavFilter.split(':')[1]);
+            }
+            if (currentSearch) params.append('search', currentSearch);
+
+            try {
+                const res = await apiFetch('/api/messages?' + params.toString());
+                if (!res) return;
+                const data = await res.json();
+                if (!data.success) throw new Error('Failed to load conversations');
+                conversations = data.conversations || [];
+                renderConversationList(conversations);
+                updateBadges(data.unreadCount || 0);
+                if (activeConversationId) {
+                    const active = conversations.find(c => c.id === activeConversationId);
+                    if (active) {
+                        loadConversation(activeConversationId);
+                    } else {
+                        // Active conversation not in list (maybe archived/filtered)
+                        // Keep it open if it exists, or clear
+                        if (activeConversationId) {
+                            loadConversation(activeConversationId);
+                        } else {
+                            clearActiveConversation();
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error('Load conversations error:', err);
+                listBody.innerHTML =
+                    `<div class="empty-state" style="color:var(--danger);"><i data-lucide="alert-circle" class="icon"></i><h3>Unable to load conversations</h3><p>Please refresh the page.</p></div>`;
+                refreshIcons();
+            }
+        }
+
+        // ---- RENDER CONVERSATION LIST ----
+        function renderConversationList(convs) {
+            if (!convs || convs.length === 0) {
+                listBody.innerHTML = `
+                    <div class="empty-state">
+                        <i data-lucide="inbox" class="icon"></i>
+                        <h3>No conversations yet</h3>
+                        <p>When visitors contact you through your portfolio, they'll appear here.</p>
+                    </div>
+                `;
+                refreshIcons();
+                return;
+            }
+            let html = '';
+            convs.forEach(c => {
+                const isActive = c.id === activeConversationId;
+                const unread = c.unread_count || 0;
+                const statusClass = 'status-' + (c.status || 'new_inquiry');
+                const statusLabel = (c.status || 'New Inquiry').replace('_', ' ').replace(/\b\w/g, l => l
+                .toUpperCase());
+                const initials = c.client_name ? c.client_name.split(' ').map(n => n[0]).join('').toUpperCase().slice(
+                0, 2) : '?';
+                const time = new Date(c.created_at).toLocaleDateString();
+                const lastMsg = c.last_message || 'No messages yet';
+                const starActive = c.starred ? 'active' : '';
+
+                html += `
+                    <div class="conversation-item ${isActive ? 'active' : ''}" data-id="${c.id}">
+                        <div class="avatar">${initials}</div>
+                        <div class="info">
+                            <div class="top">
+                                <span class="name">${c.client_name}</span>
+                                <span class="time">${time}</span>
+                            </div>
+                            <div class="context">${c.service_title || c.project_title || 'General Inquiry'}</div>
+                            <div class="preview">${lastMsg.substring(0, 60)}${lastMsg.length > 60 ? '…' : ''}</div>
+                            <span class="status ${statusClass}">${statusLabel}</span>
+                        </div>
+                        ${unread > 0 ? `<div class="unread-dot"></div>` : ''}
+                        <button class="star-btn ${starActive}" data-id="${c.id}" title="Star"><i data-lucide="star" style="width:14px;height:14px;"></i></button>
+                    </div>
+                `;
+            });
+            listBody.innerHTML = html;
+            refreshIcons();
+
+            // Attach events
+            listBody.querySelectorAll('.conversation-item').forEach(item => {
+                item.addEventListener('click', function(e) {
+                    if (e.target.closest('.star-btn')) return;
+                    const id = parseInt(this.dataset.id);
+                    openConversation(id);
+                });
+                const star = item.querySelector('.star-btn');
+                if (star) {
+                    star.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        const id = parseInt(this.dataset.id);
+                        toggleStar(id);
+                    });
+                }
+            });
+        }
+
+        // ---- OPEN CONVERSATION ----
+        async function openConversation(id) {
+            if (activeConversationId === id) return;
+            activeConversationId = id;
+            // Update list highlight
+            listBody.querySelectorAll('.conversation-item').forEach(el => {
+                el.classList.toggle('active', parseInt(el.dataset.id) === id);
+            });
+            await loadConversation(id);
+        }
+
+        // ---- LOAD SINGLE CONVERSATION ----
+        async function loadConversation(id) {
+            try {
+                const res = await apiFetch(`/api/messages/${id}`);
+                if (!res) return;
+                const data = await res.json();
+                if (!data.success) throw new Error('Failed to load conversation');
+                const conv = data.conversation;
+                const messages = data.messages || [];
+                renderActiveConversation(conv, messages);
+                renderClientContext(conv);
+                // Enable composer
+                messageInput.disabled = false;
+                sendBtn.disabled = false;
+                messageInput.focus();
+                // Update star button
+                starBtn.classList.toggle('active', conv.starred === 1);
+                // Update archive button
+                archiveBtn.innerHTML = conv.archived === 1 ?
+                    '<i data-lucide="archive" style="width:18px;height:18px;color:var(--success);"></i>' :
+                    '<i data-lucide="archive" style="width:18px;height:18px;"></i>';
+                refreshIcons();
+            } catch (err) {
+                console.error('Load conversation error:', err);
+                messagesBody.innerHTML =
+                    `<div class="empty-state" style="color:var(--danger);"><i data-lucide="alert-circle" class="icon"></i><h3>Unable to load conversation</h3><p>Please try again.</p></div>`;
+                refreshIcons();
+            }
+        }
+
+        // ---- RENDER ACTIVE CONVERSATION ----
+        function renderActiveConversation(conv, messages) {
+            convName.textContent = conv.client_name;
+            convSub.textContent = conv.service_title || conv.project_title || 'General Inquiry';
+
+            if (!messages || messages.length === 0) {
+                messagesBody.innerHTML = `
+                    <div class="empty-state" style="padding:30px 0;">
+                        <i data-lucide="message-square" class="icon"></i>
+                        <h3>No messages yet</h3>
+                        <p>Start the conversation by sending a message.</p>
+                    </div>
+                `;
+                refreshIcons();
+                return;
+            }
+
+            let html = '';
+            messages.forEach(msg => {
+                const isCreator = msg.sender_type === 'creator';
+                const senderLabel = isCreator ? 'You' : conv.client_name;
+                const time = new Date(msg.created_at).toLocaleString();
+                html += `
+                    <div class="message-bubble ${isCreator ? 'creator' : 'client'}">
+                        <div class="sender-label">${senderLabel}</div>
+                        ${msg.content}
+                        <div class="time">${time}</div>
+                    </div>
+                `;
+            });
+            messagesBody.innerHTML = html;
+            // Scroll to bottom
+            messagesBody.scrollTop = messagesBody.scrollHeight;
+            refreshIcons();
+        }
+
+        // ---- RENDER CLIENT CONTEXT ----
+        function renderClientContext(conv) {
+            ctxName.textContent = conv.client_name;
+            ctxEmail.textContent = conv.client_email || '—';
+            const status = conv.status || 'new_inquiry';
+            ctxStatus.textContent = status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+            ctxStatus.className = 'status-badge status-' + status;
+            ctxStatusSelect.value = status;
+            ctxService.textContent = conv.service_title || '—';
+            ctxProject.textContent = conv.project_title || '—';
+            ctxBudget.textContent = conv.budget || '—';
+            ctxTimeline.textContent = conv.timeline || '—';
+            ctxSource.textContent = conv.source || 'Portfolio';
+            ctxNotes.textContent = conv.notes || '—';
+        }
+
+        // ---- CLEAR ACTIVE CONVERSATION ----
+        function clearActiveConversation() {
+            activeConversationId = null;
+            convName.textContent = 'Select a conversation';
+            convSub.textContent = '—';
+            messagesBody.innerHTML = `
+                <div class="empty-state">
+                    <i data-lucide="message-square" class="icon"></i>
+                    <h3>No conversation selected</h3>
+                    <p>Select a conversation from the list to start reading.</p>
+                </div>
+            `;
+            refreshIcons();
+            messageInput.disabled = true;
+            sendBtn.disabled = true;
+            clientContext.classList.remove('open');
+        }
+
+        // ---- UPDATE BADGES ----
+        function updateBadges(count) {
+            unreadBadge.textContent = count;
+            unreadBadge2.textContent = count;
+        }
+
+        // ---- TOGGLE STAR ----
+        async function toggleStar(conversationId) {
+            try {
+                const conv = conversations.find(c => c.id === conversationId);
+                if (!conv) return;
+                const newStar = conv.starred ? 0 : 1;
+                const res = await apiFetch(`/api/messages/${conversationId}`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ starred: newStar })
+                });
+                const data = await res.json();
+                if (!data.success) throw new Error('Failed to toggle star');
+                // Update local list
+                conv.starred = newStar;
+                renderConversationList(conversations);
+                // If active, update header
+                if (activeConversationId === conversationId) {
+                    starBtn.classList.toggle('active', newStar === 1);
+                }
+            } catch (err) {
+                console.error('Toggle star error:', err);
+            }
+        }
+
+        // ---- SEND MESSAGE ----
+        async function sendMessage() {
+            const content = messageInput.value.trim();
+            if (!content || !activeConversationId) return;
+            try {
+                const res = await apiFetch(`/api/messages/${activeConversationId}/messages`, {
+                    method: 'POST',
+                    body: JSON.stringify({ content, sender_type: 'creator' })
+                });
+                const data = await res.json();
+                if (!data.success) throw new Error('Failed to send message');
+                messageInput.value = '';
+                // Reload conversation
+                await loadConversation(activeConversationId);
+                // Reload list to update last message
+                await loadConversations();
+            } catch (err) {
+                console.error('Send message error:', err);
+                alert('❌ ' + err.message);
+            }
+        }
+
+        // ---- UPDATE STATUS ----
+        async function updateStatus() {
+            const status = ctxStatusSelect.value;
+            if (!activeConversationId) return;
+            try {
+                const res = await apiFetch(`/api/messages/${activeConversationId}`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ status })
+                });
+                const data = await res.json();
+                if (!data.success) throw new Error('Failed to update status');
+                // Reload
+                await loadConversation(activeConversationId);
+                await loadConversations();
+            } catch (err) {
+                console.error('Update status error:', err);
+                alert('❌ ' + err.message);
+            }
+        }
+
+        // ---- EVENT LISTENERS ----
+
+        // Send message
+        sendBtn.addEventListener('click', sendMessage);
+        messageInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        // Search
+        searchInput.addEventListener('input', function() {
+            currentSearch = this.value.trim();
+            loadConversations();
+        });
+
+        // Filter buttons (conversation list)
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                filterBtns.forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                const filter = this.dataset.filter;
+                // Map filter to nav filter logic
+                if (filter === 'all') currentNavFilter = 'inbox';
+                else if (filter === 'unread') currentNavFilter = 'unread';
+                else if (filter === 'starred') currentNavFilter = 'starred';
+                // Reset other filters in nav
+                navItems.forEach(n => n.classList.remove('active'));
+                const targetNav = document.querySelector(
+                    `.inbox-nav .nav-item[data-filter="${currentNavFilter}"]`);
+                if (targetNav) targetNav.classList.add('active');
+                loadConversations();
+            });
+        });
+
+        // Navigation items (inbox nav)
+        navItems.forEach(item => {
+            item.addEventListener('click', function() {
+                navItems.forEach(n => n.classList.remove('active'));
+                this.classList.add('active');
+                const filter = this.dataset.filter;
+                if (filter === 'inbox') currentNavFilter = 'inbox';
+                else if (filter === 'unread') currentNavFilter = 'unread';
+                else if (filter === 'starred') currentNavFilter = 'starred';
+                else if (filter === 'archived') currentNavFilter = 'archived';
+                else if (filter.startsWith('status:')) currentNavFilter = filter;
+                // Update filter buttons
+                filterBtns.forEach(b => b.classList.remove('active'));
+                const map = { 'inbox': 'all', 'unread': 'unread', 'starred': 'starred' };
+                const target = map[currentNavFilter] || 'all';
+                const activeFilter = document.querySelector(`.filters .filter-btn[data-filter="${target}"]`);
+                if (activeFilter) activeFilter.classList.add('active');
+                loadConversations();
+            });
+        });
+
+        // Star button (header)
+        starBtn.addEventListener('click', function() {
+            if (activeConversationId) {
+                toggleStar(activeConversationId);
+            }
+        });
+
+        // Archive button (header)
+        archiveBtn.addEventListener('click', async function() {
+            if (!activeConversationId) return;
+            const conv = conversations.find(c => c.id === activeConversationId);
+            if (!conv) return;
+            const newArchived = conv.archived ? 0 : 1;
+            try {
+                const res = await apiFetch(`/api/messages/${activeConversationId}`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ archived: newArchived })
+                });
+                const data = await res.json();
+                if (!data.success) throw new Error('Failed to archive');
+                conv.archived = newArchived;
+                await loadConversations();
+                if (newArchived) {
+                    clearActiveConversation();
+                } else {
+                    await loadConversation(activeConversationId);
+                }
+            } catch (err) {
+                console.error('Archive error:', err);
+                alert('❌ ' + err.message);
+            }
+        });
+
+        // Context toggle
+        contextToggle.addEventListener('click', function() {
+            clientContext.classList.toggle('open');
+        });
+        contextClose.addEventListener('click', function() {
+            clientContext.classList.remove('open');
+        });
+
+        // Back button (mobile)
+        backBtn.addEventListener('click', function() {
+            // On mobile, we want to show the list again
+            const list = document.querySelector('.conversation-list');
+            const active = document.querySelector('.active-conversation');
+            if (window.innerWidth <= 768) {
+                list.style.display = 'block';
+                active.style.display = 'none';
+            }
+        });
+
+        // Save status
+        saveStatusBtn.addEventListener('click', updateStatus);
+
+        // ---- THEME TOGGLE ----
+        function toggleTheme() {
+            var current = document.documentElement.getAttribute('data-theme');
+            var next = current === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('crevio_theme', next);
+            var icon = document.querySelector('#themeToggleBtn .icon');
+            if (icon) {
+                icon.setAttribute('data-lucide', next === 'dark' ? 'moon' : 'sun');
+                refreshIcons();
+            }
+        }
+        window.toggleTheme = toggleTheme;
+
+        // ---- HELPERS ----
+        function refreshIcons() {
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+
+        // ---- RESPONSIVE: show/hide list on mobile ----
+        function handleResize() {
+            if (window.innerWidth <= 768) {
+                const list = document.querySelector('.conversation-list');
+                const active = document.querySelector('.active-conversation');
+                if (!activeConversationId) {
+                    list.style.display = 'block';
+                    active.style.display = 'none';
+                } else {
+                    list.style.display = 'none';
+                    active.style.display = 'flex';
+                }
+            } else {
+                document.querySelector('.conversation-list').style.display = 'flex';
+                document.querySelector('.active-conversation').style.display = 'flex';
+            }
+        }
+        window.addEventListener('resize', handleResize);
+
+        // ---- INIT ----
+        document.addEventListener('DOMContentLoaded', function() {
+            var saved = localStorage.getItem('crevio_theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', saved);
+            var icon = document.querySelector('#themeToggleBtn .icon');
+            if (icon) icon.setAttribute('data-lucide', saved === 'dark' ? 'moon' : 'sun');
+            refreshIcons();
+
+            // Avatar
+            var userData = localStorage.getItem('crevio_user');
+            if (userData) {
+                try {
+                    var user = JSON.parse(userData);
+                    var avatar = document.getElementById('userAvatar');
+                    var nameDisplay = document.getElementById('userNameDisplay');
+                    if (avatar && user.display_name) {
+                        if (user.profile_image) {
+                            avatar.innerHTML = '<img src="' + user.profile_image + '" alt="Profile">';
+                        } else {
+                            avatar.textContent = user.display_name.charAt(0).toUpperCase();
+                        }
+                    }
+                    if (nameDisplay && user.display_name) nameDisplay.textContent = user.display_name;
+                } catch (e) {}
+            }
+
+            // Mobile toggle
+            document.getElementById('mobileToggle').addEventListener('click', function() {
+                document.getElementById('sidebar').classList.toggle('open');
+                document.getElementById('sidebarOverlay').classList.toggle('open');
+            });
+            document.getElementById('sidebarOverlay').addEventListener('click', function() {
+                document.getElementById('sidebar').classList.remove('open');
+                this.classList.remove('open');
+            });
+            document.getElementById('logoutButton').addEventListener('click', function() {
+                localStorage.removeItem('crevio_token');
+                localStorage.removeItem('crevio_user');
+                window.location.href = '/admin/pages/login.html';
+            });
+
+            // Load conversations
+            loadConversations();
+            // Handle resize for mobile
+            handleResize();
+
+            // On mobile, clicking a conversation should hide the list
+            document.addEventListener('click', function(e) {
+                if (window.innerWidth <= 768 && e.target.closest('.conversation-item')) {
+                    const list = document.querySelector('.conversation-list');
+                    const active = document.querySelector('.active-conversation');
+                    list.style.display = 'none';
+                    active.style.display = 'flex';
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>

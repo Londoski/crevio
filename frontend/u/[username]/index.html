@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio — Crevio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        /* ---- RESET & BASE ---- */
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            transition: background 0.3s, color 0.3s;
+            line-height: 1.6;
+        }
+        a { text-decoration: none; color: inherit; }
+
+        /* ---- THEME VARIABLES ---- */
+        [data-theme="dark"] {
+            --bg-primary: #0F172A;
+            --bg-secondary: #1E293B;
+            --bg-card: #1E293B;
+            --border-color: #334155;
+            --text-primary: #F1F5F9;
+            --text-secondary: #94A3B8;
+            --text-muted: #64748B;
+            --accent: #2563EB;
+            --accent-hover: #1D4ED8;
+            --accent-dim: rgba(37,99,235,0.15);
+            --danger: #EF4444;
+            --success: #22C55E;
+            --warning: #F59E0B;
+            --shadow: 0 4px 24px rgba(0,0,0,0.4);
+        }
+        [data-theme="light"] {
+            --bg-primary: #F1F5F9;
+            --bg-secondary: #FFFFFF;
+            --bg-card: #FFFFFF;
+            --border-color: #E2E8F0;
+            --text-primary: #0F172A;
+            --text-secondary: #475569;
+            --text-muted: #94A3B8;
+            --accent: #2563EB;
+            --accent-hover: #1D4ED8;
+            --accent-dim: rgba(37,99,235,0.1);
+            --danger: #EF4444;
+            --success: #22C55E;
+            --warning: #F59E0B;
+            --shadow: 0 4px 24px rgba(0,0,0,0.06);
+        }
+
+        /* ---- CONTAINER ---- */
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* ---- HEADER ---- */
+        header {
+            padding: 32px 0 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        header .brand {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        header .brand span {
+            color: var(--accent);
+        }
+        header .nav a {
+            color: var(--text-secondary);
+            margin-left: 24px;
+            font-weight: 500;
+            transition: color 0.15s;
+        }
+        header .nav a:hover {
+            color: var(--text-primary);
+        }
+        .theme-toggle {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 20px;
+            padding: 4px 8px;
+            border-radius: 8px;
+            transition: background 0.15s;
+        }
+        .theme-toggle:hover {
+            background: var(--accent-dim);
+            color: var(--text-primary);
+        }
+
+        /* ---- HERO ---- */
+        .hero {
+            padding: 60px 0 40px;
+            text-align: center;
+        }
+        .hero .avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: 3px solid var(--border-color);
+            object-fit: cover;
+            margin-bottom: 16px;
+        }
+        .hero h1 {
+            font-size: 36px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        .hero .tagline {
+            font-size: 18px;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 8px auto 0;
+        }
+        .hero .location {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        /* ---- SECTIONS ---- */
+        section {
+            padding: 40px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        section:last-of-type {
+            border-bottom: none;
+        }
+        section h2 {
+            font-size: 22px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 20px;
+        }
+
+        /* ---- SKILLS ---- */
+        .skill-group {
+            margin-bottom: 1.5rem;
+        }
+        .skill-group h4 {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-bottom: 6px;
+        }
+        .skill-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .skill-tag {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 999px;
+            padding: 4px 14px;
+            font-size: 13px;
+            color: var(--text-primary);
+            transition: border-color 0.15s;
+        }
+        .skill-tag:hover {
+            border-color: var(--accent);
+        }
+
+        /* ---- PROJECTS (placeholder) ---- */
+        .project-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        .project-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px;
+            transition: all 0.15s;
+        }
+        .project-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-4px);
+            box-shadow: var(--shadow);
+        }
+        .project-card img {
+            width: 100%;
+            height: 160px;
+            object-fit: cover;
+            border-radius: 8px;
+            background: var(--bg-secondary);
+        }
+        .project-card h4 {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-top: 10px;
+        }
+        .project-card p {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        /* ---- SOCIAL LINKS (placeholder) ---- */
+        .social-links {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .social-links a {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 16px;
+            border-radius: 999px;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            transition: all 0.15s;
+            font-size: 14px;
+        }
+        .social-links a:hover {
+            border-color: var(--accent);
+            color: var(--text-primary);
+            background: var(--accent-dim);
+        }
+
+        /* ---- FOOTER ---- */
+        footer {
+            padding: 24px 0;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 14px;
+            border-top: 1px solid var(--border-color);
+            margin-top: 20px;
+        }
+
+        /* ---- RESPONSIVE ---- */
+        @media (max-width: 768px) {
+            header .nav a { margin-left: 12px; font-size: 14px; }
+            .hero h1 { font-size: 28px; }
+            .project-grid { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 480px) {
+            .container { padding: 0 16px; }
+            header { flex-direction: column; align-items: flex-start; }
+            header .nav { margin-top: 8px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- HEADER -->
+    <header class="container">
+        <div class="brand">Crevio<span>.</span></div>
+        <div class="nav">
+            <a href="#about">About</a>
+            <a href="#skills">Skills</a>
+            <a href="#projects">Projects</a>
+            <a href="#social">Social</a>
+            <button class="theme-toggle" id="themeToggleBtn" onclick="toggleTheme()">
+                <i data-lucide="moon" id="themeIcon"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- HERO -->
+    <section class="hero container" id="about">
+        <img class="avatar" id="profileAvatar" src="" alt="Profile picture" style="display:none;">
+        <div id="profileInitials" style="width:120px;height:120px;border-radius:50%;background:var(--accent-dim);display:flex;align-items:center;justify-content:center;font-size:40px;font-weight:700;color:var(--accent);margin:0 auto 16px;">JD</div>
+        <h1 id="displayName">Creator</h1>
+        <p class="tagline" id="bio">A professional creator building amazing work.</p>
+        <p class="location" id="location">📍 Worldwide</p>
+    </section>
+
+    <!-- SKILLS -->
+    <section class="container" id="skills">
+        <h2>Skills</h2>
+        <div id="skillList">
+            <p style="color: var(--text-muted);">Loading skills...</p>
+        </div>
+    </section>
+
+    <!-- PROJECTS (placeholder) -->
+    <section class="container" id="projects">
+        <h2>Projects</h2>
+        <div id="projectList" class="project-grid">
+            <p style="color: var(--text-muted); grid-column: 1 / -1;">Projects will appear here.</p>
+        </div>
+    </section>
+
+    <!-- SOCIAL LINKS (placeholder) -->
+    <section class="container" id="social">
+        <h2>Connect</h2>
+        <div class="social-links" id="socialLinks">
+            <p style="color: var(--text-muted);">Social links will appear here.</p>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="container">
+        &copy; <span id="footerName">Creator</span> — Built with Crevio
+    </footer>
+
+    <script>
+        // =========================================================
+        // 1. THEME TOGGLE
+        // =========================================================
+        function toggleTheme() {
+            const html = document.documentElement;
+            const current = html.getAttribute('data-theme');
+            const next = current === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', next);
+            localStorage.setItem('crevio_theme', next);
+            updateThemeIcon(next);
+        }
+
+        function updateThemeIcon(theme) {
+            const icon = document.getElementById('themeIcon');
+            if (icon) {
+                icon.setAttribute('data-lucide', theme === 'dark' ? 'moon' : 'sun');
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            }
+        }
+
+        // Load saved theme
+        document.addEventListener('DOMContentLoaded', function() {
+            const saved = localStorage.getItem('crevio_theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', saved);
+            updateThemeIcon(saved);
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        });
+
+        // =========================================================
+        // 2. GET USERNAME FROM URL
+        // =========================================================
+        function getUsernameFromURL() {
+            const pathParts = window.location.pathname.split('/');
+            // If URL is /u/joseph_test → 'joseph_test'
+            // If URL is /profile?user=... we can handle fallback
+            const last = pathParts[pathParts.length - 1];
+            // If the last part is empty (trailing slash), use the previous one
+            if (!last || last === '') {
+                return pathParts[pathParts.length - 2] || '';
+            }
+            return last;
+        }
+
+        const username = getUsernameFromURL();
+
+        // =========================================================
+        // 3. LOAD PROFILE DATA
+        // =========================================================
+        async function loadProfile() {
+            if (!username) {
+                console.warn('No username found in URL.');
+                return;
+            }
+            try {
+                const res = await fetch(`/api/public/${username}/profile`);
+                const data = await res.json();
+                if (!data.success) return;
+
+                const user = data.user;
+                // Display name
+                document.getElementById('displayName').textContent = user.display_name || user.username || 'Creator';
+                document.getElementById('footerName').textContent = user.display_name || user.username || 'Creator';
+
+                // Bio
+                if (user.bio) {
+                    document.getElementById('bio').textContent = user.bio;
+                }
+
+                // Location
+                if (user.location) {
+                    document.getElementById('location').textContent = '📍 ' + user.location;
+                }
+
+                // Profile picture
+                const avatar = document.getElementById('profileAvatar');
+                const initials = document.getElementById('profileInitials');
+                if (user.profile_image) {
+                    avatar.src = user.profile_image + '?t=' + Date.now();
+                    avatar.style.display = 'block';
+                    initials.style.display = 'none';
+                } else {
+                    avatar.style.display = 'none';
+                    initials.style.display = 'flex';
+                    const name = user.display_name || user.username || 'C';
+                    const initial = name.charAt(0).toUpperCase();
+                    initials.textContent = initial;
+                }
+
+            } catch (err) {
+                console.error('Error loading profile:', err);
+            }
+        }
+
+        // =========================================================
+        // 4. LOAD PUBLIC SKILLS
+        // =========================================================
+        async function loadPublicSkills() {
+            const container = document.getElementById('skillList');
+            if (!username) {
+                container.innerHTML = '<p style="color: var(--text-muted);">No username found.</p>';
+                return;
+            }
+
+            try {
+                const res = await fetch(`/api/public/${username}/skills`);
+                const data = await res.json();
+                if (!data.success) {
+                    container.innerHTML = '<p style="color: var(--text-muted);">No skills to show.</p>';
+                    return;
+                }
+                const skills = data.skills || [];
+                if (skills.length === 0) {
+                    container.innerHTML = '<p style="color: var(--text-muted);">No skills added yet.</p>';
+                    return;
+                }
+
+                // Group by category
+                const grouped = {};
+                skills.forEach(s => {
+                    const cat = s.category_name || 'Other';
+                    if (!grouped[cat]) grouped[cat] = [];
+                    grouped[cat].push(s.name);
+                });
+
+                let html = '';
+                for (const [cat, names] of Object.entries(grouped)) {
+                    html += `
+                        <div class="skill-group">
+                            <h4>${cat}</h4>
+                            <div class="skill-tags">
+                    `;
+                    names.forEach(name => {
+                        html += `<span class="skill-tag">${name}</span>`;
+                    });
+                    html += `</div></div>`;
+                }
+                container.innerHTML = html;
+
+            } catch (err) {
+                console.error('Error loading skills:', err);
+                container.innerHTML = '<p style="color: var(--danger);">Unable to load skills.</p>';
+            }
+        }
+
+        // =========================================================
+        // 5. LOAD PUBLIC PROJECTS (optional)
+        // =========================================================
+        async function loadPublicProjects() {
+            if (!username) return;
+            try {
+                const res = await fetch(`/api/public/${username}/projects`);
+                const data = await res.json();
+                if (!data.success || !data.projects || data.projects.length === 0) {
+                    document.getElementById('projectList').innerHTML = '<p style="color: var(--text-muted); grid-column: 1 / -1;">No projects yet.</p>';
+                    return;
+                }
+                let html = '';
+                data.projects.forEach(p => {
+                    html += `
+                        <div class="project-card">
+                            ${p.thumbnail_url ? `<img src="${p.thumbnail_url}" alt="${p.title}">` : ''}
+                            <h4>${p.title}</h4>
+                            ${p.description ? `<p>${p.description.substring(0, 120)}${p.description.length > 120 ? '…' : ''}</p>` : ''}
+                            ${p.category ? `<p style="font-size:12px;color:var(--text-muted);margin-top:4px;">${p.category}</p>` : ''}
+                        </div>
+                    `;
+                });
+                document.getElementById('projectList').innerHTML = html;
+            } catch (err) {
+                console.error('Error loading projects:', err);
+            }
+        }
+
+        // =========================================================
+        // 6. LOAD PUBLIC SOCIAL LINKS (optional)
+        // =========================================================
+        async function loadPublicSocialLinks() {
+            if (!username) return;
+            try {
+                const res = await fetch(`/api/public/${username}/social-links`);
+                const data = await res.json();
+                if (!data.success || !data.socialLinks || data.socialLinks.length === 0) {
+                    document.getElementById('socialLinks').innerHTML = '<p style="color: var(--text-muted);">No social links yet.</p>';
+                    return;
+                }
+                let html = '';
+                data.socialLinks.forEach(link => {
+                    const icon = link.platform.toLowerCase() === 'instagram' ? 'instagram' :
+                                link.platform.toLowerCase() === 'twitter' ? 'twitter' :
+                                link.platform.toLowerCase() === 'youtube' ? 'youtube' :
+                                link.platform.toLowerCase() === 'linkedin' ? 'linkedin' :
+                                link.platform.toLowerCase() === 'github' ? 'github' : 'link';
+                    html += `
+                        <a href="${link.url}" target="_blank" rel="noopener">
+                            <i data-lucide="${icon}" style="width:16px;height:16px;"></i> ${link.platform}
+                        </a>
+                    `;
+                });
+                document.getElementById('socialLinks').innerHTML = html;
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            } catch (err) {
+                console.error('Error loading social links:', err);
+            }
+        }
+
+        // =========================================================
+        // 7. INIT
+        // =========================================================
+        document.addEventListener('DOMContentLoaded', function() {
+            if (username) {
+                loadProfile();
+                loadPublicSkills();
+                loadPublicProjects();
+                loadPublicSocialLinks();
+            } else {
+                document.getElementById('skillList').innerHTML = '<p style="color: var(--text-muted);">No username provided.</p>';
+                document.getElementById('projectList').innerHTML = '<p style="color: var(--text-muted);">No username provided.</p>';
+                document.getElementById('socialLinks').innerHTML = '<p style="color: var(--text-muted);">No username provided.</p>';
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,831 +1,115 @@
-const path = require("path");
-const fs = require("fs");
+// =========================================================
+// CREVIO — PROJECT MEDIA CONTROLLER
+// =========================================================
 
-const projectModel = require("../models/projectModel");
-const projectMediaModel = require("../models/projectMediaModel");
+const db = require("../../database/db");
 
-
-// ==========================================
-// UPLOAD MEDIA TO PROJECT
-// ==========================================
-
-const uploadMedia = (req, res) => {
-    try {
-
-        const user_id = req.user.id;
-        const project_id = Number(req.params.id);
-
-        // ------------------------------------------
-        // Validate project ID
-        // ------------------------------------------
-
-        if (!Number.isInteger(project_id)) {
-            return res.status(400).json({
-                success: false,
-                message: "Invalid project ID."
-            });
-        }
-
-
-        // ------------------------------------------
-        // Find project
-        // ------------------------------------------
-
-        const project =
-            projectModel.findById(project_id);
-
-        if (!project) {
-            return res.status(404).json({
-                success: false,
-                message: "Project not found."
-            });
-        }
-
-
-        // ------------------------------------------
-        // Security check
-        // ------------------------------------------
-
-        if (project.user_id !== user_id) {
-            return res.status(403).json({
-                success: false,
-                message:
-                    "You do not have permission to modify this project."
-            });
-        }
-
-
-        // ------------------------------------------
-        // Check uploaded file
-        // ------------------------------------------
-
-        if (!req.file) {
-            return res.status(400).json({
-                success: false,
-                message: "Please select an image or video file."
-            });
-        }
-
-
-        // ------------------------------------------
-        // Get form fields
-        // ------------------------------------------
-
-        const {
-            title,
-            description,
-            sort_order
-        } = req.body;
-
-
-        // ------------------------------------------
-        // Determine media type
-        // ------------------------------------------
-
-        let media_type;
-
-        if (req.file.mimetype.startsWith("image/")) {
-            media_type = "image";
-        }
-
-        else if (req.file.mimetype.startsWith("video/")) {
-            media_type = "video";
-        }
-
-        else {
-
-            // Remove uploaded file if unsupported
-            if (fs.existsSync(req.file.path)) {
-                fs.unlinkSync(req.file.path);
-            }
-
-            return res.status(400).json({
-                success: false,
-                message: "Only image and video files are allowed."
-            });
-        }
-
-
-        // ------------------------------------------
-        // Create URL for browser
-        // ------------------------------------------
-
-        const media_url =
-            `/uploads/projects/${req.file.filename}`;
-
-
-        // ------------------------------------------
-        // Create database record
-        // ------------------------------------------
-
-        const media =
-            projectMediaModel.create({
-                project_id,
-                media_type,
-                media_url,
-                title,
-                description,
-                sort_order: sort_order
-                    ? Number(sort_order)
-                    : 0
-            });
-
-
-        // ------------------------------------------
-        // Response
-        // ------------------------------------------
-
-        return res.status(201).json({
-            success: true,
-            message: "Media uploaded successfully.",
-            media
-        });
-
-
-    } catch (error) {
-
-        console.error(
-            "Upload media error:",
-            error
-        );
-
-
-        // Try to remove uploaded file
-        if (
-            req.file &&
-            req.file.path &&
-            fs.existsSync(req.file.path)
-        ) {
-            try {
-                fs.unlinkSync(req.file.path);
-            } catch (deleteError) {
-                console.error(
-                    "Unable to remove uploaded file:",
-                    deleteError
-                );
-            }
-        }
-
-
-        return res.status(500).json({
-            success: false,
-            message: "Unable to upload media."
-        });
-
-    }
-};
-
-
-
-// ==========================================
-// ADD MEDIA USING URL
-// ==========================================
-
-const addMedia = (req, res) => {
-
-    try {
-
-        const user_id = req.user.id;
-        const project_id = Number(req.params.id);
-
-
-        if (!Number.isInteger(project_id)) {
-
-            return res.status(400).json({
-                success: false,
-                message: "Invalid project ID."
-            });
-
-        }
-
-
-        const project =
-            projectModel.findById(project_id);
-
-
-        if (!project) {
-
-            return res.status(404).json({
-                success: false,
-                message: "Project not found."
-            });
-
-        }
-
-
-        if (project.user_id !== user_id) {
-
-            return res.status(403).json({
-                success: false,
-                message:
-                    "You do not have permission to modify this project."
-            });
-
-        }
-
-
-        const {
-            media_type,
-            media_url,
-            title,
-            description,
-            sort_order
-        } = req.body;
-
-
-        if (
-            !media_type ||
-            !["image", "video"].includes(media_type)
-        ) {
-
-            return res.status(400).json({
-                success: false,
-                message:
-                    "Media type must be either image or video."
-            });
-
-        }
-
-
-        if (!media_url) {
-
-            return res.status(400).json({
-                success: false,
-                message:
-                    "Media URL is required."
-            });
-
-        }
-
-
-        const media =
-            projectMediaModel.create({
-                project_id,
-                media_type,
-                media_url,
-                title,
-                description,
-                sort_order
-            });
-
-
-        return res.status(201).json({
-            success: true,
-            message: "Media added successfully.",
-            media
-        });
-
-
-    } catch (error) {
-
-        console.error(
-            "Add media error:",
-            error
-        );
-
-
-        return res.status(500).json({
-            success: false,
-            message:
-                "Unable to add media."
-        });
-
-    }
-
-};
-
-
-
-// ==========================================
-// GET PROJECT MEDIA
-// ==========================================
-
+// ---- Get media for a specific project ----
 const getProjectMedia = (req, res) => {
-
     try {
+        const userId = req.user.id;
+        const projectId = parseInt(req.params.projectId);
 
-        const user_id = req.user.id;
-        const project_id = Number(req.params.id);
+        const media = db.prepare(`
+            SELECT * FROM project_media
+            WHERE project_id = ? AND user_id = ?
+            ORDER BY sort_order, created_at
+        `).all(projectId, userId);
 
-
-        if (!Number.isInteger(project_id)) {
-
-            return res.status(400).json({
-                success: false,
-                message: "Invalid project ID."
-            });
-
-        }
-
-
-        const project =
-            projectModel.findById(project_id);
-
-
-        if (!project) {
-
-            return res.status(404).json({
-                success: false,
-                message: "Project not found."
-            });
-
-        }
-
-
-        if (project.user_id !== user_id) {
-
-            return res.status(403).json({
-                success: false,
-                message:
-                    "You do not have permission to access this project."
-            });
-
-        }
-
-
-        const media =
-            projectMediaModel.findByProjectId(
-                project_id
-            );
-
-
-        return res.json({
-            success: true,
-            count: media.length,
-            media
-        });
-
-
+        res.json({ success: true, media });
     } catch (error) {
-
-        console.error(
-            "Get project media error:",
-            error
-        );
-
-
-        return res.status(500).json({
-            success: false,
-            message:
-                "Unable to retrieve project media."
-        });
-
+        console.error("Get project media error:", error);
+        res.status(500).json({ success: false, message: "Unable to load media." });
     }
-
 };
 
-
-
-// ==========================================
-// UPDATE MEDIA
-// ==========================================
-
-const updateMedia = (req, res) => {
-
+// ---- Add media to a project ----
+const addProjectMedia = (req, res) => {
     try {
+        const userId = req.user.id;
+        const projectId = parseInt(req.params.projectId);
+        const { media_id } = req.body;
 
-        const user_id = req.user.id;
-
-        const project_id =
-            Number(req.params.id);
-
-        const media_id =
-            Number(req.params.mediaId);
-
-
-        if (
-            !Number.isInteger(project_id) ||
-            !Number.isInteger(media_id)
-        ) {
-
-            return res.status(400).json({
-                success: false,
-                message:
-                    "Invalid project or media ID."
-            });
-
+        if (!media_id) {
+            return res.status(400).json({ success: false, message: "Media ID required." });
         }
 
-
-        const project =
-            projectModel.findById(project_id);
-
-
-        if (!project) {
-
-            return res.status(404).json({
-                success: false,
-                message:
-                    "Project not found."
-            });
-
+        // Check if media belongs to user and is not already assigned
+        const media = db.prepare(`SELECT * FROM project_media WHERE id = ? AND user_id = ?`).get(media_id, userId);
+        if (!media) {
+            return res.status(404).json({ success: false, message: "Media not found." });
         }
 
+        db.prepare(`UPDATE project_media SET project_id = ? WHERE id = ?`).run(projectId, media_id);
 
-        if (project.user_id !== user_id) {
-
-            return res.status(403).json({
-                success: false,
-                message:
-                    "You do not have permission to modify this project."
-            });
-
-        }
-
-
-        const media =
-            projectMediaModel.findById(
-                media_id
-            );
-
-
-        if (
-            !media ||
-            media.project_id !== project_id
-        ) {
-
-            return res.status(404).json({
-                success: false,
-                message:
-                    "Media not found."
-            });
-
-        }
-
-
-        const {
-            media_type,
-            media_url,
-            title,
-            description,
-            sort_order
-        } = req.body;
-
-
-        if (
-            !media_type ||
-            !["image", "video"].includes(media_type)
-        ) {
-
-            return res.status(400).json({
-                success: false,
-                message:
-                    "Media type must be either image or video."
-            });
-
-        }
-
-
-        if (!media_url) {
-
-            return res.status(400).json({
-                success: false,
-                message:
-                    "Media URL is required."
-            });
-
-        }
-
-
-        const updatedMedia =
-            projectMediaModel.update(
-                media_id,
-                {
-                    media_type,
-                    media_url,
-                    title,
-                    description,
-                    sort_order
-                }
-            );
-
-
-        return res.json({
-            success: true,
-            message:
-                "Media updated successfully.",
-            media: updatedMedia
-        });
-
-
+        const updated = db.prepare(`SELECT * FROM project_media WHERE id = ?`).get(media_id);
+        res.json({ success: true, media: updated });
     } catch (error) {
-
-        console.error(
-            "Update media error:",
-            error
-        );
-
-
-        return res.status(500).json({
-            success: false,
-            message:
-                "Unable to update media."
-        });
-
+        console.error("Add project media error:", error);
+        res.status(500).json({ success: false, message: "Unable to add media to project." });
     }
-
 };
 
-
-
-// ==========================================
-// DELETE MEDIA
-// ==========================================
-
-const deleteMedia = (req, res) => {
-
+// ---- Remove media from a project (unassign) ----
+const removeProjectMedia = (req, res) => {
     try {
+        const userId = req.user.id;
+        const projectId = parseInt(req.params.projectId);
+        const mediaId = parseInt(req.params.mediaId);
 
-        const user_id = req.user.id;
-
-        const project_id =
-            Number(req.params.id);
-
-        const media_id =
-            Number(req.params.mediaId);
-
-
-        if (
-            !Number.isInteger(project_id) ||
-            !Number.isInteger(media_id)
-        ) {
-
-            return res.status(400).json({
-                success: false,
-                message:
-                    "Invalid project or media ID."
-            });
-
+        // Verify ownership
+        const media = db.prepare(`SELECT * FROM project_media WHERE id = ? AND user_id = ? AND project_id = ?`).get(mediaId, userId, projectId);
+        if (!media) {
+            return res.status(404).json({ success: false, message: "Media not found in this project." });
         }
 
-
-        const project =
-            projectModel.findById(project_id);
-
-
-        if (!project) {
-
-            return res.status(404).json({
-                success: false,
-                message:
-                    "Project not found."
-            });
-
-        }
-
-
-        if (project.user_id !== user_id) {
-
-            return res.status(403).json({
-                success: false,
-                message:
-                    "You do not have permission to modify this project."
-            });
-
-        }
-
-
-        const media =
-            projectMediaModel.findById(
-                media_id
-            );
-
-
-        if (
-            !media ||
-            media.project_id !== project_id
-        ) {
-
-            return res.status(404).json({
-                success: false,
-                message:
-                    "Media not found."
-            });
-
-        }
-
-
-        // ------------------------------------------
-        // Delete physical file if locally uploaded
-        // ------------------------------------------
-
-        if (
-            media.media_url &&
-            media.media_url.startsWith(
-                "/uploads/projects/"
-            )
-        ) {
-
-            const fileName =
-                path.basename(
-                    media.media_url
-                );
-
-
-            const filePath =
-                path.join(
-                    __dirname,
-                    "../../uploads/projects",
-                    fileName
-                );
-
-
-            if (fs.existsSync(filePath)) {
-
-                try {
-
-                    fs.unlinkSync(
-                        filePath
-                    );
-
-                } catch (fileError) {
-
-                    console.error(
-                        "Unable to delete media file:",
-                        fileError
-                    );
-
-                }
-
-            }
-
-        }
-
-
-        // ------------------------------------------
-        // Delete database record
-        // ------------------------------------------
-
-        const deleted =
-            projectMediaModel.delete(
-                media_id
-            );
-
-
-        if (!deleted) {
-
-            return res.status(500).json({
-                success: false,
-                message:
-                    "Unable to delete media."
-            });
-
-        }
-
-
-        return res.json({
-            success: true,
-            message:
-                "Media deleted successfully."
-        });
-
-
+        db.prepare(`UPDATE project_media SET project_id = NULL WHERE id = ?`).run(mediaId);
+        res.json({ success: true, message: "Media removed from project." });
     } catch (error) {
-
-        console.error(
-            "Delete media error:",
-            error
-        );
-
-
-        return res.status(500).json({
-            success: false,
-            message:
-                "Unable to delete media."
-        });
-
+        console.error("Remove project media error:", error);
+        res.status(500).json({ success: false, message: "Unable to remove media." });
     }
-
-};
-// ==========================================
-// UPDATE MEDIA ORDER
-// ==========================================
-
-const updateMediaOrder = (req, res) => {
-
-    try {
-
-        const user_id = req.user.id;
-
-        const project_id =
-            Number(req.params.id);
-
-        const media_id =
-            Number(req.params.mediaId);
-
-        const { sort_order } = req.body;
-
-
-        if (
-            !Number.isInteger(project_id) ||
-            !Number.isInteger(media_id)
-        ) {
-
-            return res.status(400).json({
-                success: false,
-                message:
-                    "Invalid project or media ID."
-            });
-
-        }
-
-
-        const project =
-            projectModel.findById(project_id);
-
-
-        if (!project) {
-
-            return res.status(404).json({
-                success: false,
-                message:
-                    "Project not found."
-            });
-
-        }
-
-
-        if (project.user_id !== user_id) {
-
-            return res.status(403).json({
-                success: false,
-                message:
-                    "You do not have permission to modify this project."
-            });
-
-        }
-
-
-        const media =
-            projectMediaModel.findById(
-                media_id
-            );
-
-
-        if (
-            !media ||
-            media.project_id !== project_id
-        ) {
-
-            return res.status(404).json({
-                success: false,
-                message:
-                    "Media not found."
-            });
-
-        }
-
-
-        const updatedMedia =
-            projectMediaModel.updateOrder(
-                media_id,
-                sort_order
-            );
-
-
-        return res.json({
-            success: true,
-            message:
-                "Media order updated successfully.",
-            media: updatedMedia
-        });
-
-
-    } catch (error) {
-
-        console.error(
-            "Update media order error:",
-            error
-        );
-
-
-        return res.status(500).json({
-            success: false,
-            message:
-                "Unable to update media order."
-        });
-
-    }
-
 };
 
+// ---- Update media details within project (e.g., sort_order) ----
+const updateProjectMedia = (req, res) => {
+    try {
+        const userId = req.user.id;
+        const projectId = parseInt(req.params.projectId);
+        const mediaId = parseInt(req.params.mediaId);
+        const { sort_order, title, description } = req.body;
 
-// ==========================================
-// EXPORTS
-// ==========================================
+        // Verify ownership
+        const media = db.prepare(`SELECT * FROM project_media WHERE id = ? AND user_id = ? AND project_id = ?`).get(mediaId, userId, projectId);
+        if (!media) {
+            return res.status(404).json({ success: false, message: "Media not found in this project." });
+        }
+
+        let updates = [];
+        let params = [];
+        if (sort_order !== undefined) { updates.push("sort_order = ?"); params.push(sort_order); }
+        if (title !== undefined) { updates.push("title = ?"); params.push(title); }
+        if (description !== undefined) { updates.push("description = ?"); params.push(description); }
+
+        if (updates.length === 0) {
+            return res.json({ success: true, media });
+        }
+
+        params.push(mediaId);
+        const sql = `UPDATE project_media SET ${updates.join(", ")} WHERE id = ?`;
+        db.prepare(sql).run(...params);
+
+        const updated = db.prepare(`SELECT * FROM project_media WHERE id = ?`).get(mediaId);
+        res.json({ success: true, media: updated });
+    } catch (error) {
+        console.error("Update project media error:", error);
+        res.status(500).json({ success: false, message: "Unable to update media." });
+    }
+};
 
 module.exports = {
-
-    uploadMedia,
-
-    addMedia,
-
     getProjectMedia,
-
-    updateMedia,
-
-    deleteMedia,
-
-    updateMediaOrder   // <--- Add this!
-
+    addProjectMedia,
+    removeProjectMedia,
+    updateProjectMedia
 };

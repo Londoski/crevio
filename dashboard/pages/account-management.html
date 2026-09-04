@@ -1,0 +1,763 @@
+﻿<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Management — Crevio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        /* ---- RESET & BASE ---- */
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            transition: background 0.3s, color 0.3s;
+            display: flex;
+            min-height: 100vh;
+        }
+        a { text-decoration: none; color: inherit; }
+
+        /* ---- THEME ---- */
+        [data-theme="dark"] {
+            --bg-primary: #0F172A;
+            --bg-secondary: #1E293B;
+            --bg-card: #1E293B;
+            --bg-input: #0F172A;
+            --border-color: #334155;
+            --text-primary: #F1F5F9;
+            --text-secondary: #94A3B8;
+            --text-muted: #64748B;
+            --accent: #2563EB;
+            --accent-hover: #1D4ED8;
+            --accent-dim: rgba(37,99,235,0.15);
+            --danger: #EF4444;
+            --danger-hover: #DC2626;
+            --success: #22C55E;
+            --warning: #F59E0B;
+            --shadow: 0 4px 24px rgba(0,0,0,0.4);
+        }
+        [data-theme="light"] {
+            --bg-primary: #F1F5F9;
+            --bg-secondary: #FFFFFF;
+            --bg-card: #FFFFFF;
+            --bg-input: #F8FAFC;
+            --border-color: #E2E8F0;
+            --text-primary: #0F172A;
+            --text-secondary: #475569;
+            --text-muted: #94A3B8;
+            --accent: #2563EB;
+            --accent-hover: #1D4ED8;
+            --accent-dim: rgba(37,99,235,0.1);
+            --danger: #EF4444;
+            --danger-hover: #DC2626;
+            --success: #22C55E;
+            --warning: #F59E0B;
+            --shadow: 0 4px 24px rgba(0,0,0,0.06);
+        }
+
+        /* ---- SIDEBAR ---- */
+        .sidebar {
+            width: 240px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 24px 16px;
+            height: 100vh;
+            position: sticky;
+            top: 0;
+            flex-shrink: 0;
+            transition: background 0.3s, border-color 0.3s;
+            overflow-y: auto;
+        }
+        .sidebar-brand { padding-bottom: 20px; border-bottom: 1px solid var(--border-color); margin-bottom: 20px; }
+        .sidebar-brand h1 { font-size: 20px; font-weight: 700; color: var(--text-primary); }
+        .sidebar-brand span { font-size: 11px; font-weight: 500; text-transform: uppercase; color: var(--text-muted); }
+        .sidebar-nav { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+        .nav-item {
+            display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px;
+            color: var(--text-secondary); font-size: 14px; font-weight: 500; transition: all 0.15s;
+            text-decoration: none;
+        }
+        .nav-item:hover { background: var(--accent-dim); color: var(--text-primary); }
+        .nav-item.active { background: var(--accent-dim); color: var(--accent); }
+        .nav-item .icon { width: 20px; height: 20px; flex-shrink: 0; }
+        .nav-divider { height: 1px; background: var(--border-color); margin: 8px 12px; }
+        .sidebar-footer { padding-top: 16px; border-top: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 8px; }
+        .logout-button {
+            background: transparent; border: none; color: var(--danger); font-size: 13px; font-weight: 500;
+            padding: 10px 12px; border-radius: 8px; cursor: pointer; font-family: inherit;
+            display: flex; align-items: center; gap: 12px; transition: background 0.15s;
+            width: 100%;
+        }
+        .logout-button:hover { background: rgba(239,68,68,0.1); }
+
+        .theme-toggle-btn {
+            background: transparent; border: none; color: var(--text-secondary); font-size: 18px;
+            cursor: pointer; padding: 6px 10px; border-radius: 8px; transition: background 0.15s;
+            display: inline-flex; align-items: center; gap: 6px; width: fit-content;
+        }
+        .theme-toggle-btn:hover { background: var(--accent-dim); color: var(--text-primary); }
+        .theme-toggle-btn .icon { width: 18px; height: 18px; }
+
+        .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 199; }
+        .sidebar-overlay.open { display: block; }
+
+        /* ---- MAIN ---- */
+        .dashboard-main {
+            flex: 1; padding: 28px 36px; background: var(--bg-primary);
+            min-height: 100vh; transition: background 0.3s;
+        }
+
+        /* ---- HEADER ---- */
+        .dashboard-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 28px; flex-wrap: wrap; gap: 12px;
+        }
+        .topbar-left { display: flex; align-items: center; gap: 16px; }
+        .mobile-menu-toggle { display: none; background: none; border: none; color: var(--text-secondary); font-size: 24px; cursor: pointer; }
+        .topbar-left h2 { font-size: 24px; font-weight: 700; color: var(--text-primary); }
+        .header-description { font-size: 14px; color: var(--text-secondary); }
+        .topbar-right { display: flex; align-items: center; gap: 16px; }
+        .primary-button {
+            padding: 8px 18px; border-radius: 8px; border: none; background: var(--accent); color: #fff;
+            font-size: 13px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+            transition: all 0.15s; text-decoration: none;
+        }
+        .primary-button:hover { background: var(--accent-hover); transform: translateY(-1px); }
+        .secondary-button {
+            padding: 8px 18px; border-radius: 8px; border: 1px solid var(--border-color);
+            background: transparent; color: var(--text-secondary); font-size: 13px; font-weight: 500;
+            cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+            transition: all 0.15s; text-decoration: none;
+        }
+        .secondary-button:hover { background: var(--bg-card); color: var(--text-primary); }
+        .user-profile { display: flex; align-items: center; gap: 8px; }
+        .user-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 13px; }
+        .user-name { font-size: 14px; font-weight: 500; color: var(--text-primary); }
+
+        /* ---- CARDS ---- */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            transition: background 0.3s, border-color 0.3s;
+        }
+        .card h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .card h3 .icon { width: 20px; height: 20px; color: var(--text-secondary); }
+
+        /* ---- TABS ---- */
+        .tab-bar {
+            display: flex;
+            gap: 4px;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 4px;
+            margin-bottom: 24px;
+            border: 1px solid var(--border-color);
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 10px 16px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        .tab-btn.active {
+            background: var(--accent);
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(37,99,235,0.3);
+        }
+        .tab-btn:hover:not(.active) {
+            background: var(--accent-dim);
+            color: var(--text-primary);
+        }
+
+        /* ---- CONTROL ITEMS ---- */
+        .control-item {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .control-item .info { flex: 1; }
+        .control-item .info .title { font-weight: 500; color: var(--text-primary); }
+        .control-item .info .desc { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
+
+        .btn {
+            padding: 8px 18px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 13px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.15s;
+            font-family: inherit;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-danger { background: var(--danger); color: #fff; }
+        .btn-danger:hover { background: var(--danger-hover); transform: translateY(-1px); }
+        .btn-secondary { background: transparent; border: 1px solid var(--border-color); color: var(--text-secondary); }
+        .btn-secondary:hover { background: var(--bg-card); color: var(--text-primary); }
+        .btn-primary { background: var(--accent); color: #fff; }
+        .btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); }
+
+        /* ---- INFO GRID ---- */
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        .info-item {
+            padding: 12px 16px;
+            background: var(--bg-primary);
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+        }
+        .info-item .label {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        .info-item .value {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-top: 2px;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+        .badge-verified {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 600;
+            background: rgba(34,197,94,0.15);
+            color: var(--success);
+            margin-left: 4px;
+        }
+        .badge-unverified {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 600;
+            background: rgba(245,158,11,0.15);
+            color: var(--warning);
+            margin-left: 4px;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .status-badge.active { background: rgba(34,197,94,0.15); color: var(--success); }
+        .status-badge.deactivated { background: rgba(245,158,11,0.15); color: var(--warning); }
+        .status-badge.pending_deletion { background: rgba(239,68,68,0.15); color: var(--danger); }
+
+        /* ---- MODALS ---- */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 32px;
+            max-width: 560px;
+            width: 100%;
+            box-shadow: var(--shadow);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal-box h2 { font-size: 20px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px; }
+        .modal-box p { color: var(--text-secondary); font-size: 14px; line-height: 1.6; margin-bottom: 16px; }
+        .modal-box ul { list-style: none; padding: 0; margin: 12px 0 20px; }
+        .modal-box ul li { padding: 6px 0; font-size: 14px; color: var(--text-secondary); display: flex; gap: 8px; align-items: flex-start; }
+        .modal-box ul li::before { content: "•"; color: var(--accent); font-weight: bold; }
+        .modal-box .actions { display: flex; gap: 12px; justify-content: flex-end; flex-wrap: wrap; margin-top: 16px; }
+
+        .loading-state { text-align: center; padding: 20px 0; color: var(--text-muted); font-size: 14px; }
+        .error-state { text-align: center; padding: 20px 0; color: var(--danger); font-size: 14px; }
+
+        @media (max-width: 768px) {
+            .info-grid { grid-template-columns: 1fr; }
+            .tab-bar { flex-direction: column; }
+            .control-item { flex-direction: column; align-items: stretch; }
+            .control-item .info { margin-bottom: 8px; }
+            .modal-box { padding: 24px; }
+            .sidebar { display: none; }
+            .dashboard-main { padding: 16px 20px; }
+            .mobile-menu-toggle { display: block; }
+            .topbar-right { width: 100%; justify-content: space-between; }
+            .user-name { display: none; }
+        }
+        @media (max-width: 480px) {
+            .card { padding: 16px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand"><h1>Crevio</h1><span>Creator Dashboard</span></div>
+        <nav class="sidebar-nav">
+            <a href="/dashboard/" class="nav-item"><i data-lucide="layout-dashboard" class="icon"></i> Overview</a>
+            <a href="/dashboard/pages/projects.html" class="nav-item"><i data-lucide="folder-open" class="icon"></i> Projects</a>
+            <a href="/dashboard/pages/media.html" class="nav-item"><i data-lucide="image" class="icon"></i> Media</a>
+            <a href="/dashboard/pages/services.html" class="nav-item"><i data-lucide="briefcase" class="icon"></i> Services</a>
+            <a href="/dashboard/pages/skills.html" class="nav-item"><i data-lucide="star" class="icon"></i> Skills</a>
+            <a href="/dashboard/pages/social-links.html" class="nav-item"><i data-lucide="share-2" class="icon"></i> My Socials</a>
+            <div class="nav-divider"></div>
+            <a href="/dashboard/pages/portfolio.html" class="nav-item"><i data-lucide="layout-template" class="icon"></i> Portfolio</a>
+            <a href="/dashboard/pages/portfolio-edit.html" class="nav-item"><i data-lucide="edit-3" class="icon"></i> Edit Portfolio</a>
+            <a href="/dashboard/pages/bot.html" class="nav-item"><i data-lucide="bot" class="icon"></i> Crevio Bot</a>
+            <div class="nav-divider"></div>
+            <a href="/dashboard/pages/messages.html" class="nav-item"><i data-lucide="mail" class="icon"></i> Messages</a>
+            <a href="/dashboard/pages/notifications.html" class="nav-item"><i data-lucide="bell" class="icon"></i> Notifications</a>
+            <div class="nav-divider"></div>
+            <a href="/dashboard/pages/billing.html" class="nav-item"><i data-lucide="credit-card" class="icon"></i> Billing</a>
+            <a href="/dashboard/pages/security.html" class="nav-item"><i data-lucide="shield" class="icon"></i> Security</a>
+            <a href="/dashboard/pages/settings.html" class="nav-item"><i data-lucide="settings" class="icon"></i> Settings</a>
+            <a href="/dashboard/pages/profile.html" class="nav-item"><i data-lucide="user" class="icon"></i> Profile</a>
+            <a href="/dashboard/pages/account-management.html" class="nav-item active"><i data-lucide="user-cog" class="icon"></i> Account Management</a>
+            <div class="nav-divider"></div>
+            <a href="/" target="_blank" class="nav-item"><i data-lucide="globe" class="icon"></i> View Portfolio</a>
+        </nav>
+        <div class="sidebar-footer">
+            <span id="themeToggleBtn" class="theme-toggle-btn" onclick="toggleTheme()" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:8px;color:var(--text-secondary);font-size:18px;">
+                <i data-lucide="moon" class="icon"></i>
+            </span>
+            <button id="logoutButton" class="logout-button"><i data-lucide="log-out" class="icon"></i> Logout</button>
+        </div>
+    </aside>
+
+    <div id="sidebarOverlay" class="sidebar-overlay"></div>
+
+    <!-- MAIN -->
+    <main class="dashboard-main">
+
+        <header class="dashboard-header">
+            <div class="topbar-left">
+                <button id="mobileToggle" class="mobile-menu-toggle"><i data-lucide="menu"></i></button>
+                <div>
+                    <h2>Account Management</h2>
+                    <p class="header-description">Control your account and personal data</p>
+                </div>
+            </div>
+            <div class="topbar-right">
+                <div class="user-profile">
+                    <span class="user-avatar" id="userAvatar">C</span>
+                    <span class="user-name" id="userNameDisplay">Creator</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- TABS -->
+        <div class="tab-bar" id="tabBar">
+            <button class="tab-btn active" data-tab="control">Account Control</button>
+            <button class="tab-btn" data-tab="info">Account Information</button>
+        </div>
+
+        <!-- CONTENT -->
+        <div id="tabContent">
+
+            <!-- ACCOUNT CONTROL -->
+            <div id="panel-control" style="display:block;">
+                <div class="card">
+                    <h3><i data-lucide="shield-alert" class="icon"></i> Deactivate or Delete Account</h3>
+                    <p style="color:var(--text-secondary);font-size:14px;margin-bottom:16px;">Manage your account status. Deactivation hides your portfolio temporarily; deletion is permanent after 30 days.</p>
+
+                    <div class="control-item">
+                        <div class="info">
+                            <div class="title">Deactivate Account</div>
+                            <div class="desc">Hide your portfolio and content temporarily. You can reactivate anytime.</div>
+                        </div>
+                        <button class="btn btn-secondary" id="deactivateBtn">Deactivate</button>
+                    </div>
+
+                    <div class="control-item">
+                        <div class="info">
+                            <div class="title">Delete Account Permanently</div>
+                            <div class="desc">Request permanent deletion. You can cancel within 30 days.</div>
+                        </div>
+                        <button class="btn btn-danger" id="deleteBtn">Delete Account</button>
+                    </div>
+
+                    <div class="control-item">
+                        <div class="info">
+                            <div class="title">Logout</div>
+                            <div class="desc">End your current session and return to the login page.</div>
+                        </div>
+                        <button class="btn btn-secondary" id="logoutBtn">Logout</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ACCOUNT INFORMATION -->
+            <div id="panel-info" style="display:none;">
+                <div class="card">
+                    <h3><i data-lucide="user" class="icon"></i> Account Information</h3>
+                    <div id="accountInfoContainer">
+                        <div class="loading-state">Loading account information...</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- DEACTIVATION MODAL -->
+    <div id="deactivateModal" class="modal-overlay">
+        <div class="modal-box">
+            <h2 id="deactivateTitle">Deactivate this account?</h2>
+            <p>If you deactivate your account:</p>
+            <ul>
+                <li>No one will see your account and content.</li>
+                <li>Information that isn't stored in your account, such as direct messages, may still be visible to clients (others).</li>
+                <li>Crevio will continue to keep your data so that you can recover it when you reactivate your account.</li>
+                <li>You can reactivate your account and recover all content anytime by using the same login details.</li>
+            </ul>
+            <div class="actions">
+                <button class="btn btn-secondary" id="cancelDeactivateBtn">Cancel</button>
+                <button class="btn btn-danger" id="confirmDeactivateBtn">Deactivate</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- DELETION MODAL -->
+    <div id="deleteModal" class="modal-overlay">
+        <div class="modal-box">
+            <h2>Delete account permanently?</h2>
+            <p>Your account and content will be deleted permanently. You may cancel the deletion request by reactivating your account within 30 days.</p>
+            <div class="actions">
+                <button class="btn btn-secondary" id="cancelDeleteModalBtn">Cancel</button>
+                <button class="btn btn-danger" id="confirmDeleteBtn">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/dashboard/js/theme.js"></script>
+    <script>
+        // =========================================================
+        // ACCOUNT MANAGEMENT JS (COMPLETE)
+        // =========================================================
+
+        // ---- DOM refs ----
+        const tabControl = document.getElementById('panel-control');
+        const tabInfo = document.getElementById('panel-info');
+        const tabBtns = document.querySelectorAll('.tab-btn');
+
+        const deactivateModal = document.getElementById('deactivateModal');
+        const deleteModal = document.getElementById('deleteModal');
+
+        const deactivateBtn = document.getElementById('deactivateBtn');
+        const deleteBtn = document.getElementById('deleteBtn');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const cancelDeactivateBtn = document.getElementById('cancelDeactivateBtn');
+        const confirmDeactivateBtn = document.getElementById('confirmDeactivateBtn');
+        const cancelDeleteModalBtn = document.getElementById('cancelDeleteModalBtn');
+        const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+
+        // ---- AUTH ----
+        function getToken() {
+            const token = localStorage.getItem('crevio_token');
+            if (!token) {
+                window.location.href = '/admin/pages/login.html';
+                return null;
+            }
+            return token;
+        }
+
+        // ---- HELPERS ----
+        function refreshIcons() {
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+
+        // ---- TABS ----
+        tabBtns.forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                tabBtns.forEach(function(b) { b.classList.remove('active'); });
+                this.classList.add('active');
+                var tab = this.dataset.tab;
+                if (tab === 'control') {
+                    tabControl.style.display = 'block';
+                    tabInfo.style.display = 'none';
+                } else {
+                    tabControl.style.display = 'none';
+                    tabInfo.style.display = 'block';
+                    loadAccountInfo();
+                }
+            });
+        });
+
+        // ---- LOAD ACCOUNT INFO ----
+        async function loadAccountInfo() {
+            var token = getToken();
+            if (!token) return;
+            var container = document.getElementById('accountInfoContainer');
+            if (!container) return;
+
+            container.innerHTML = '<div class="loading-state">Loading account information...</div>';
+
+            try {
+                var res = await fetch('/api/account/info', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+
+                if (res.status === 401) {
+                    localStorage.removeItem('crevio_token');
+                    window.location.href = '/admin/pages/login.html';
+                    return;
+                }
+
+                var data = await res.json();
+                if (!data.success) {
+                    throw new Error(data.message || 'Failed to load account info');
+                }
+
+                renderAccountInfo(data.account);
+
+            } catch (err) {
+                console.error('Account info error:', err);
+                container.innerHTML = '<div class="error-state">Unable to load account information. Please try again.</div>';
+            }
+        }
+
+        // ---- RENDER ACCOUNT INFO ----
+        function renderAccountInfo(account) {
+            var statusClass = account.account_status === 'active' ? 'active' :
+                           account.account_status === 'deactivated' ? 'deactivated' :
+                           account.account_status === 'pending_deletion' ? 'pending_deletion' : '';
+            var statusLabel = account.account_status ? account.account_status.charAt(0).toUpperCase() + account.account_status.slice(1).replace('_', ' ') : '—';
+
+            function getVerificationBadge(verified) {
+                return verified ? '<span class="badge-verified">Verified</span>' : '<span class="badge-unverified">Not Verified</span>';
+            }
+
+            var html = `
+                <div class="info-grid">
+                    <div class="info-item"><div class="label">Username</div><div class="value">${account.username || '—'}</div></div>
+                    <div class="info-item"><div class="label">Display Name</div><div class="value">${account.display_name || '—'}</div></div>
+                    <div class="info-item"><div class="label">Email</div><div class="value">${account.email || '—'} ${getVerificationBadge(account.email_verified)}</div></div>
+                    <div class="info-item"><div class="label">Phone</div><div class="value">${account.phone || '—'} ${getVerificationBadge(account.phone_verified)}</div></div>
+                    <div class="info-item"><div class="label">Location</div><div class="value">${account.location || '—'}</div></div>
+                    <div class="info-item"><div class="label">Country / Region</div><div class="value">${account.country || account.region || '—'}</div></div>
+                    <div class="info-item"><div class="label">Account Created</div><div class="value">${new Date(account.created_at).toLocaleDateString()}</div></div>
+                    <div class="info-item"><div class="label">Account Status</div><div class="value"><span class="status-badge ${statusClass}">${statusLabel}</span></div></div>
+                    <div class="info-item"><div class="label">Two-Factor Authentication</div><div class="value">${account.two_factor_enabled ? 'Enabled' : 'Disabled'}</div></div>
+                    ${account.deactivated_at ? `<div class="info-item"><div class="label">Deactivated On</div><div class="value">${new Date(account.deactivated_at).toLocaleDateString()}</div></div>` : ''}
+                    ${account.deletion_requested_at ? `<div class="info-item"><div class="label">Deletion Requested</div><div class="value">${new Date(account.deletion_requested_at).toLocaleDateString()}</div></div>` : ''}
+                    ${account.deletion_scheduled_for ? `<div class="info-item"><div class="label">Scheduled Deletion</div><div class="value">${new Date(account.deletion_scheduled_for).toLocaleDateString()}</div></div>` : ''}
+                </div>
+            `;
+            document.getElementById('accountInfoContainer').innerHTML = html;
+            refreshIcons();
+        }
+
+        // ---- DEACTIVATE ----
+        deactivateBtn.addEventListener('click', function() {
+            var userData = localStorage.getItem('crevio_user');
+            var username = 'User';
+            if (userData) {
+                try {
+                    var user = JSON.parse(userData);
+                    username = user.username || 'User';
+                } catch (e) {}
+            }
+            document.getElementById('deactivateTitle').textContent = username + ': Deactivate this account?';
+            deactivateModal.classList.add('open');
+        });
+
+        cancelDeactivateBtn.addEventListener('click', function() {
+            deactivateModal.classList.remove('open');
+        });
+
+        confirmDeactivateBtn.addEventListener('click', async function() {
+            var token = getToken();
+            if (!token) return;
+            try {
+                var res = await fetch('/api/account/deactivate', {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                var data = await res.json();
+                if (!res.ok || !data.success) {
+                    throw new Error(data.message || 'Deactivation failed.');
+                }
+                alert('✅ Account deactivated. You can reactivate by logging in again.');
+                localStorage.removeItem('crevio_token');
+                localStorage.removeItem('crevio_user');
+                window.location.href = '/admin/pages/login.html';
+            } catch (err) {
+                console.error(err);
+                alert('❌ ' + err.message);
+            }
+            deactivateModal.classList.remove('open');
+        });
+
+        // ---- DELETE ----
+        deleteBtn.addEventListener('click', function() {
+            deleteModal.classList.add('open');
+        });
+
+        cancelDeleteModalBtn.addEventListener('click', function() {
+            deleteModal.classList.remove('open');
+        });
+
+        confirmDeleteBtn.addEventListener('click', async function() {
+            var token = getToken();
+            if (!token) return;
+            try {
+                var res = await fetch('/api/account/request-deletion', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify({ reason: 'User requested deletion' })
+                });
+                var data = await res.json();
+                if (!res.ok || !data.success) {
+                    throw new Error(data.message || 'Deletion request failed.');
+                }
+                alert('✅ Deletion requested. You have 30 days to cancel. Your account will be permanently deleted after that.');
+                localStorage.removeItem('crevio_token');
+                localStorage.removeItem('crevio_user');
+                window.location.href = '/admin/pages/login.html';
+            } catch (err) {
+                console.error(err);
+                alert('❌ ' + err.message);
+            }
+            deleteModal.classList.remove('open');
+        });
+
+        // ---- LOGOUT ----
+        logoutBtn.addEventListener('click', function() {
+            var token = getToken();
+            if (token) {
+                fetch('/api/auth/logout', {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + token }
+                }).catch(function() {});
+            }
+            localStorage.removeItem('crevio_token');
+            localStorage.removeItem('crevio_user');
+            window.location.href = '/admin/pages/login.html';
+        });
+
+        // ---- SIDEBAR LOGOUT ----
+        document.getElementById('logoutButton')?.addEventListener('click', function() {
+            localStorage.removeItem('crevio_token');
+            localStorage.removeItem('crevio_user');
+            window.location.href = '/admin/pages/login.html';
+        });
+
+        // ---- MOBILE TOGGLE ----
+        document.getElementById('mobileToggle')?.addEventListener('click', function() {
+            document.getElementById('sidebar')?.classList.toggle('open');
+            document.getElementById('sidebarOverlay')?.classList.toggle('open');
+        });
+        document.getElementById('sidebarOverlay')?.addEventListener('click', function() {
+            document.getElementById('sidebar')?.classList.remove('open');
+            this.classList.remove('open');
+        });
+
+        // ---- THEME TOGGLE ----
+        function toggleTheme() {
+            var current = document.documentElement.getAttribute('data-theme');
+            var next = current === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('crevio_theme', next);
+            var icon = document.querySelector('#themeToggleBtn .icon');
+            if (icon) {
+                icon.setAttribute('data-lucide', next === 'dark' ? 'moon' : 'sun');
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            }
+        }
+        window.toggleTheme = toggleTheme;
+
+        // ---- INIT ----
+        document.addEventListener('DOMContentLoaded', function() {
+            // Apply theme
+            var saved = localStorage.getItem('crevio_theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', saved);
+            var btn = document.getElementById('themeToggleBtn');
+            if (btn) {
+                var icon = btn.querySelector('.icon');
+                if (icon) icon.setAttribute('data-lucide', saved === 'dark' ? 'moon' : 'sun');
+            }
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+
+            // Set user avatar and name
+            var userData = localStorage.getItem('crevio_user');
+            if (userData) {
+                try {
+                    var user = JSON.parse(userData);
+                    var avatar = document.getElementById('userAvatar');
+                    var nameDisplay = document.getElementById('userNameDisplay');
+                    if (avatar && user.display_name) {
+                        avatar.textContent = user.display_name.charAt(0).toUpperCase();
+                    }
+                    if (nameDisplay && user.display_name) {
+                        nameDisplay.textContent = user.display_name;
+                    }
+                } catch (e) {}
+            }
+        });
+
+        // ---- Load account info if tab is active ----
+        // Check if Account Information tab is active on load
+        var activeTab = document.querySelector('.tab-btn.active');
+        if (activeTab && activeTab.dataset.tab === 'info') {
+            loadAccountInfo();
+        }
+    </script>
+</body>
+</html>

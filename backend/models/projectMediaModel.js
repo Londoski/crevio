@@ -107,6 +107,19 @@ const projectMediaModel = {
         const result = stmt.run(id);
 
         return result.changes > 0;
+    },
+
+
+    // Update media order (THIS WAS MISSING)
+    updateOrder(id, sort_order) {
+        const stmt = db.prepare(`
+            UPDATE project_media
+            SET sort_order = ?
+            WHERE id = ?
+        `);
+        const result = stmt.run(sort_order, id);
+        if (result.changes === 0) return null;
+        return this.findById(id);
     }
 
 };

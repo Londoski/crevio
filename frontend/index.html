@@ -1,949 +1,360 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="en" data-theme="dark">
 <head>
-
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crevio — Portfolio Platform</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
+    <style>
+        /* ---- RESET & BASE ---- */
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            transition: background 0.3s, color 0.3s;
+            line-height: 1.7;
+            min-height: 100vh;
+        }
+        a { text-decoration: none; color: inherit; }
 
-    <meta
-        name="description"
-        content="Crevio — creative portfolio, visual work and digital experiences."
-    >
+        [data-theme="dark"] {
+            --bg-primary: #0F172A;
+            --bg-secondary: #1E293B;
+            --bg-card: #1E293B;
+            --border-color: #334155;
+            --text-primary: #F1F5F9;
+            --text-secondary: #94A3B8;
+            --text-muted: #64748B;
+            --accent: #2563EB;
+            --accent-hover: #1D4ED8;
+            --accent-dim: rgba(37,99,235,0.15);
+            --shadow: 0 4px 24px rgba(0,0,0,0.4);
+        }
+        [data-theme="light"] {
+            --bg-primary: #F1F5F9;
+            --bg-secondary: #FFFFFF;
+            --bg-card: #FFFFFF;
+            --border-color: #E2E8F0;
+            --text-primary: #0F172A;
+            --text-secondary: #475569;
+            --text-muted: #94A3B8;
+            --accent: #2563EB;
+            --accent-hover: #1D4ED8;
+            --accent-dim: rgba(37,99,235,0.1);
+            --shadow: 0 4px 24px rgba(0,0,0,0.06);
+        }
 
-    <title>Crevio — Creative Portfolio</title>
+        .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
 
-    <link
-        rel="stylesheet"
-        href="/css/main.css"
-    >
+        /* ---- HEADER ---- */
+        header {
+            padding: 28px 0 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        header .brand {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        header .brand span { color: var(--accent); }
+        header .nav {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        header .nav a {
+            color: var(--text-secondary);
+            font-weight: 500;
+            transition: color 0.15s;
+            font-size: 14px;
+        }
+        header .nav a:hover { color: var(--text-primary); }
+        .theme-toggle {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 18px;
+            padding: 4px 8px;
+            border-radius: 8px;
+            transition: background 0.15s;
+        }
+        .theme-toggle:hover { background: var(--accent-dim); color: var(--text-primary); }
 
+        /* ---- HERO (no avatar) ---- */
+        .hero {
+            padding: 60px 0 40px;
+            text-align: center;
+        }
+        .hero h1 {
+            font-size: 38px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 6px;
+        }
+        .hero .tagline {
+            font-size: 18px;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .hero .location {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+        .hero .cta-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        .hero .cta-buttons .btn {
+            padding: 10px 24px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.15s;
+            border: none;
+            font-family: inherit;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-primary {
+            background: var(--accent);
+            color: #fff;
+        }
+        .btn-primary:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+        }
+        .btn-secondary {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+        .btn-secondary:hover {
+            background: var(--bg-card);
+            color: var(--text-primary);
+        }
+
+        /* ---- BOT PANEL ---- */
+        .bot-panel {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 28px;
+            margin: 20px 0 40px;
+            text-align: center;
+        }
+        .bot-panel h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+        .bot-panel .subtitle {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+        }
+        .bot-panel .bot-icon {
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 12px;
+            background: var(--accent-dim);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent);
+        }
+        .bot-panel .bot-icon i { width: 24px; height: 24px; }
+        .bot-panel .bot-actions {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+        }
+        .bot-panel .bot-actions .btn {
+            padding: 6px 16px;
+            border-radius: 999px;
+            border: 1px solid var(--border-color);
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.15s;
+            font-family: inherit;
+        }
+        .bot-panel .bot-actions .btn:hover {
+            border-color: var(--accent);
+            color: var(--text-primary);
+            background: var(--accent-dim);
+        }
+
+        /* ---- FEATURES ---- */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            margin: 40px 0;
+        }
+        .feature-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+        .feature-card .icon-wrap {
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 12px;
+            background: var(--accent-dim);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent);
+        }
+        .feature-card h4 {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+        .feature-card p {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        /* ---- FOOTER ---- */
+        footer {
+            padding: 20px 0 28px;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 14px;
+            border-top: 1px solid var(--border-color);
+            margin-top: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .container { padding: 0 16px; }
+            header { flex-direction: column; align-items: flex-start; gap: 12px; }
+            header .nav { gap: 12px; }
+            header .nav a { font-size: 13px; }
+            .hero h1 { font-size: 28px; }
+            .hero .tagline { font-size: 15px; }
+            .features-grid { grid-template-columns: 1fr; }
+            .bot-panel { padding: 20px; }
+        }
+        @media (max-width: 480px) {
+            .hero { padding: 30px 0 20px; }
+            .hero h1 { font-size: 24px; }
+        }
+    </style>
 </head>
-
-
 <body>
 
-
-    <!-- =====================================================
-         HEADER
-    ====================================================== -->
-
-    <header class="site-header">
-
-        <nav class="navbar">
-
-            <a
-                href="/"
-                class="brand"
-                aria-label="Crevio home"
-            >
-
-                <span class="brand-dot"></span>
-
-                CREVIO
-
-            </a>
-
-
-            <div class="nav-links">
-
-                <a href="#work">
-                    Work
-                </a>
-
-                <a href="#about">
-                    About
-                </a>
-
-                <a href="#contact">
-                    Contact
-                </a>
-
-            </div>
-
-
-            <button
-                id="open-assistant-nav"
-                class="nav-cta"
-                type="button"
-            >
-                Ask Crevio Bot
+    <header class="container">
+        <div class="brand">Crevio<span>.</span></div>
+        <div class="nav">
+            <a href="#features">Features</a>
+            <a href="#bot">Crevio Bot</a>
+            <a href="/dashboard/">Dashboard</a>
+            <button class="theme-toggle" id="themeToggleBtn" onclick="toggleTheme()">
+                <i data-lucide="moon" id="themeIcon"></i>
             </button>
-
-        </nav>
-
+        </div>
     </header>
 
-
-
-    <!-- =====================================================
-         MAIN
-    ====================================================== -->
-
-    <main>
-
-
-        <!-- =================================================
-             HERO
-        ================================================== -->
-
-        <section class="hero">
-
-            <div class="hero-shell">
-
-
-                <!-- =========================================
-                     LEFT CONTENT
-                ========================================== -->
-
-                <div class="hero-content">
-
-                    <div class="hero-status">
-
-                        <span class="status-dot"></span>
-
-                        Available for creative projects
-
-                    </div>
-
-
-                    <p class="eyebrow">
-                        CREATIVE PORTFOLIO
-                    </p>
-
-
-                    <h1>
-
-                        Creative work
-
-                        <span>
-                            with a point of view.
-                        </span>
-
-                    </h1>
-
-
-                    <p class="hero-description">
-
-                        Video production, design,
-                        visual storytelling and digital
-                        experiences crafted to make ideas
-                        impossible to ignore.
-
-                    </p>
-
-
-                    <div class="hero-actions">
-
-                        <a
-                            href="#work"
-                            class="primary-button"
-                        >
-
-                            Explore Work
-
-                            <span aria-hidden="true">
-                                →
-                            </span>
-
-                        </a>
-
-
-                        <button
-                            id="open-assistant-hero"
-                            class="text-button"
-                            type="button"
-                        >
-
-                            Ask Crevio Bot
-
-                            <span aria-hidden="true">
-                                ✦
-                            </span>
-
-                        </button>
-
-                    </div>
-
-
-                    <div class="hero-meta">
-
-                        <div class="hero-meta-item">
-
-                            <span class="hero-meta-label">
-                                Focus
-                            </span>
-
-                            <span class="hero-meta-value">
-                                Video · Design · Media
-                            </span>
-
-                        </div>
-
-
-                        <div class="hero-meta-item">
-
-                            <span class="hero-meta-label">
-                                Platform
-                            </span>
-
-                            <span class="hero-meta-value">
-                                Crevio
-                            </span>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-
-
-                <!-- =========================================
-                     CREVIO BOT VISUAL
-                ========================================== -->
-
-                <div
-                    class="hero-visual"
-                    id="ai-visual-panel"
-                >
-
-                    <div class="visual-glow glow-blue"></div>
-
-                    <div class="visual-glow glow-purple"></div>
-
-
-                    <button
-                        id="ai-panel-trigger"
-                        class="visual-panel"
-                        type="button"
-                        aria-label="Open Crevio Bot portfolio helper"
-                    >
-
-
-                        <!-- =================================
-                             TOOLBAR
-                        ================================== -->
-
-                        <div class="visual-toolbar">
-
-                            <div class="toolbar-dots">
-
-                                <span></span>
-                                <span></span>
-                                <span></span>
-
-                            </div>
-
-
-                            <div class="toolbar-label">
-                                NEED HELP WITH YOUR WORK
-                            </div>
-
-
-                            <div class="toolbar-status">
-
-                                <span class="toolbar-status-dot"></span>
-
-                                READY
-
-                            </div>
-
-                        </div>
-
-
-
-                        <!-- =================================
-                             VISUAL STAGE
-                        ================================== -->
-
-                        <div class="visual-stage">
-
-                            <div class="stage-grid"></div>
-
-
-                            <!-- Protected text area -->
-
-                            <div class="stage-safe-area"></div>
-
-
-                            <!-- =================================
-                                 MAIN BOT MESSAGE
-                            ================================== -->
-
-                            <div class="stage-content">
-
-                                <span class="stage-eyebrow">
-                                    CREVIO BOT
-                                </span>
-
-
-                                <strong>
-
-                                    Ask about
-                                    <br>
-                                    my work.
-
-                                </strong>
-
-
-                                <span class="stage-description">
-
-                                    Explore projects,
-                                    services and experience.
-
-                                </span>
-
-                            </div>
-
-
-                            <!-- =================================
-                                 LARGE CREVIO BOT LABEL
-                            ================================== -->
-
-                            <div class="stage-bot-label">
-
-                                Crevio
-                                <span>Bot</span>
-
-                            </div>
-
-
-                            <!-- =================================
-                                 PROJECTS CARD
-                            ================================== -->
-
-                            <div
-                                class="floating-card card-small"
-                            >
-
-                                <span class="mini-icon">
-                                    ✦
-                                </span>
-
-
-                                <div>
-
-                                    <strong>
-                                        Projects
-                                    </strong>
-
-                                    <small>
-                                        Explore my work
-                                    </small>
-
-                                </div>
-
-                            </div>
-
-
-                            <!-- =================================
-                                 ASK CREVIO BOT CARD
-                            ================================== -->
-
-                            <div
-                                class="floating-card card-main"
-                            >
-
-                                <span class="floating-label">
-                                    ASK CREVIO BOT
-                                </span>
-
-
-                                <strong>
-                                    What are you
-                                    looking for?
-                                </strong>
-
-
-                                <span class="floating-arrow">
-                                    ↗
-                                </span>
-
-                            </div>
-
-
-                            <!-- =================================
-                                 STATUS
-                            ================================== -->
-
-                            <div class="floating-pill">
-
-                                <span class="pill-dot"></span>
-
-                                Portfolio helper ready
-
-                            </div>
-
-                        </div>
-
-
-
-                        <!-- =================================
-                             FOOTER
-                        ================================== -->
-
-                        <div class="visual-footer">
-
-                            <span>
-                                CREVIO BOT
-                            </span>
-
-                            <span>
-                                CLICK TO ASK →
-                            </span>
-
-                        </div>
-
-                    </button>
-
-                </div>
-
-            </div>
-
-        </section>
-
-
-
-        <!-- =================================================
-             WORK
-        ================================================== -->
-
-        <section
-            id="work"
-            class="section work-section"
-        >
-
-            <div class="section-shell">
-
-                <div class="section-heading">
-
-                    <div>
-
-                        <p class="eyebrow">
-                            SELECTED WORK
-                        </p>
-
-                        <h2>
-                            Projects
-                        </h2>
-
-                    </div>
-
-
-                    <p class="section-description">
-
-                        A curated collection of
-                        creative projects, campaigns,
-                        visuals and experiments.
-
-                    </p>
-
-                </div>
-
-
-                <div
-                    id="projects-container"
-                    class="projects-grid"
-                >
-
-                    <div class="loading-state">
-                        Loading projects...
-                    </div>
-
-                </div>
-
-            </div>
-
-        </section>
-
-
-
-        <!-- =================================================
-             ABOUT
-        ================================================== -->
-
-        <section
-            id="about"
-            class="section about-section"
-        >
-
-            <div class="section-shell">
-
-                <div class="about-grid">
-
-                    <div>
-
-                        <p class="eyebrow">
-                            ABOUT CREVIO
-                        </p>
-
-                        <h2>
-
-                            Ideas become
-
-                            <span>
-                                visual.
-                            </span>
-
-                        </h2>
-
-                    </div>
-
-
-                    <div class="about-copy">
-
-                        <p class="about-lead">
-
-                            Crevio is built around one simple
-                            idea: creative work should be easy
-                            to experience, understand and remember.
-
-                        </p>
-
-
-                        <p>
-
-                            From video production and graphic
-                            design to digital experiments and
-                            visual storytelling, every project
-                            gets its own space.
-
-                        </p>
-
-
-                        <p>
-
-                            Crevio Bot is an optional portfolio
-                            helper that makes it easier for
-                            visitors to discover the work.
-
-                        </p>
-
-                    </div>
-
-                </div>
-
-
-                <div class="about-stats">
-
-                    <div class="about-stat">
-
-                        <strong>
-                            01
-                        </strong>
-
-                        <span>
-                            Visual storytelling
-                        </span>
-
-                    </div>
-
-
-                    <div class="about-stat">
-
-                        <strong>
-                            02
-                        </strong>
-
-                        <span>
-                            Video &amp; media
-                        </span>
-
-                    </div>
-
-
-                    <div class="about-stat">
-
-                        <strong>
-                            03
-                        </strong>
-
-                        <span>
-                            Design &amp; digital
-                        </span>
-
-                    </div>
-
-
-                    <div class="about-stat">
-
-                        <strong>
-                            04
-                        </strong>
-
-                        <span>
-                            Creative direction
-                        </span>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-        </section>
-
-
-
-        <!-- =================================================
-             SOCIAL
-        ================================================== -->
-
-        <section
-            id="social"
-            class="section social-section"
-        >
-
-            <div class="section-shell">
-
-                <div class="section-heading compact-heading">
-
-                    <div>
-
-                        <p class="eyebrow">
-                            CONNECT
-                        </p>
-
-                        <h2>
-                            My Socials.
-                        </h2>
-
-                    </div>
-
-                </div>
-
-
-                <div
-                    id="social-links-container"
-                    class="social-links"
-                >
-
-                    <div class="loading-state">
-                        Loading social links...
-                    </div>
-
-                </div>
-
-            </div>
-
-        </section>
-
-
-
-        <!-- =================================================
-             CONTACT
-        ================================================== -->
-
-        <section
-            id="contact"
-            class="contact-section"
-        >
-
-            <div class="contact-shell">
-
-                <div class="contact-glow"></div>
-
-
-                <p class="eyebrow">
-                    LET'S WORK TOGETHER
-                </p>
-
-
-                <h2>
-
-                    Have an idea?
-
-                    <span>
-                        Let's make it real.
-                    </span>
-
-                </h2>
-
-
-                <p class="contact-description">
-
-                    Tell me what you're building,
-                    what you're imagining or what
-                    you're trying to communicate.
-
-                </p>
-
-
-                <a
-                    href="mailto:"
-                    id="contact-email"
-                    class="contact-button"
-                >
-
-                    Start a conversation
-
-                    <span aria-hidden="true">
-                        ↗
-                    </span>
-
-                </a>
-
-            </div>
-
-        </section>
-
-    </main>
-
-
-
-    <!-- =====================================================
-         FOOTER
-    ====================================================== -->
-
-    <footer class="site-footer">
-
-        <div class="footer-inner">
-
-            <div class="footer-brand">
-
-                <span class="brand-dot"></span>
-
-                CREVIO
-
-            </div>
-
-
-            <p>
-
-                ©
-                <span id="current-year"></span>
-                Crevio.
-
-            </p>
-
-
-            <p>
-                Creative portfolio platform.
-            </p>
-
+    <!-- HERO (no avatar) -->
+    <section class="hero container" id="about">
+        <h1>Creative work with a point of view.</h1>
+        <p class="tagline">Video production, design, visual storytelling and digital experiences crafted to make ideas impossible to ignore.</p>
+        <div class="cta-buttons">
+            <a href="/dashboard/" class="btn btn-primary"><i data-lucide="arrow-right"></i> Explore Work</a>
+            <a href="#bot" class="btn btn-secondary"><i data-lucide="bot"></i> Ask Crevio Bot</a>
         </div>
+    </section>
 
-    </footer>
-
-
-
-    <!-- =====================================================
-         CREVIO BOT
-    ====================================================== -->
-
-    <div
-        id="ai-assistant"
-        class="ai-assistant"
-        aria-hidden="true"
-    >
-
-        <button
-            id="ai-backdrop"
-            class="ai-backdrop"
-            type="button"
-            aria-label="Close Crevio Bot"
-        ></button>
-
-
-
-        <section
-            class="ai-window"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="ai-title"
-        >
-
-
-            <!-- =========================================
-                 HEADER
-            ========================================== -->
-
-            <header class="ai-header">
-
-                <div class="ai-header-brand">
-
-                    <span class="ai-brand-icon">
-                        ✦
-                    </span>
-
-
-                    <div>
-
-                        <strong id="ai-title">
-                            Crevio Bot
-                        </strong>
-
-                        <span>
-                            Portfolio helper
-                        </span>
-
-                    </div>
-
-                </div>
-
-
-                <button
-                    id="ai-close"
-                    class="ai-close"
-                    type="button"
-                    aria-label="Close Crevio Bot"
-                >
-                    ×
-                </button>
-
-            </header>
-
-
-
-            <!-- =========================================
-                 MESSAGES
-            ========================================== -->
-
-            <div
-                id="ai-messages"
-                class="ai-messages"
-            >
-
-                <div class="ai-message ai-message-assistant">
-
-                    <div class="ai-avatar">
-                        C
-                    </div>
-
-
-                    <div class="ai-bubble">
-
-                        <p>
-
-                            Hi. I'm Crevio Bot.
-
-                        </p>
-
-
-                        <p>
-
-                            I can help you explore the
-                            portfolio, discover projects,
-                            understand services and find
-                            relevant creative work.
-
-                        </p>
-
-                    </div>
-
-                </div>
-
+    <!-- BOT PANEL (no profile picture) -->
+    <div class="container" id="bot">
+        <div class="bot-panel">
+            <div class="bot-icon"><i data-lucide="bot"></i></div>
+            <h3>Crevio Bot</h3>
+            <p class="subtitle">Ask about my work. Explore projects, services and experience.</p>
+            <div class="bot-actions">
+                <button class="btn" onclick="window.location.href='/dashboard/pages/bot.html'">Ask Crevio Bot</button>
+                <button class="btn" onclick="window.location.href='/dashboard/pages/projects.html'">Explore Projects</button>
+                <button class="btn" onclick="window.location.href='/dashboard/pages/services.html'">View Services</button>
             </div>
-
-
-
-            <!-- =========================================
-                 SUGGESTIONS
-            ========================================== -->
-
-            <div
-                id="ai-suggestions"
-                class="ai-suggestions"
-            >
-
-                <button
-                    type="button"
-                    data-ai-prompt="Show me your best video projects."
-                >
-                    Best video projects
-                </button>
-
-
-                <button
-                    type="button"
-                    data-ai-prompt="What services do you offer?"
-                >
-                    Services
-                </button>
-
-
-                <button
-                    type="button"
-                    data-ai-prompt="Tell me about the creator's experience."
-                >
-                    Experience
-                </button>
-
-
-                <button
-                    type="button"
-                    data-ai-prompt="What kind of projects are in the portfolio?"
-                >
-                    Project types
-                </button>
-
-            </div>
-
-
-
-            <!-- =========================================
-                 INPUT
-            ========================================== -->
-
-            <form
-                id="ai-form"
-                class="ai-form"
-            >
-
-                <input
-                    id="ai-input"
-                    type="text"
-                    autocomplete="off"
-                    placeholder="Ask Crevio Bot..."
-                    aria-label="Ask Crevio Bot"
-                >
-
-
-                <button
-                    type="submit"
-                    aria-label="Send message"
-                >
-                    →
-                </button>
-
-            </form>
-
-
-
-            <div class="ai-footer">
-
-                <span>
-                    CREVIO BOT
-                </span>
-
-                <span>
-                    Portfolio helper
-                </span>
-
-            </div>
-
-        </section>
-
+            <p style="margin-top:12px; font-size:13px; color:var(--text-muted);">Portfolio helper ready — click to ask</p>
+        </div>
     </div>
 
+    <!-- FEATURES -->
+    <section class="container" id="features">
+        <h2 style="text-align:center; margin-bottom:24px;">Built for creators</h2>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="icon-wrap"><i data-lucide="folder-open"></i></div>
+                <h4>Projects</h4>
+                <p>Showcase your work with beautiful project galleries.</p>
+            </div>
+            <div class="feature-card">
+                <div class="icon-wrap"><i data-lucide="image"></i></div>
+                <h4>Media</h4>
+                <p>Upload, organize, and manage all your creative assets.</p>
+            </div>
+            <div class="feature-card">
+                <div class="icon-wrap"><i data-lucide="share-2"></i></div>
+                <h4>Social Presence</h4>
+                <p>Track clicks and attribution from your portfolio.</p>
+            </div>
+        </div>
+    </section>
 
+    <footer class="container">
+        &copy; 2026 Crevio — Built for creators.
+    </footer>
 
-    <!-- =====================================================
-         JAVASCRIPT
-    ====================================================== -->
+    <script>
+        function toggleTheme() {
+            const html = document.documentElement;
+            const current = html.getAttribute('data-theme');
+            const next = current === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', next);
+            localStorage.setItem('crevio_theme', next);
+            const icon = document.getElementById('themeIcon');
+            if (icon) {
+                icon.setAttribute('data-lucide', next === 'dark' ? 'moon' : 'sun');
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            }
+        }
 
-    <script src="/assets/js/main.js"></script>
-
-    <script src="/assets/js/projects.js"></script>
-
-    <script src="/assets/js/social.js"></script>
-
-
+        document.addEventListener('DOMContentLoaded', function() {
+            const saved = localStorage.getItem('crevio_theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', saved);
+            const icon = document.getElementById('themeIcon');
+            if (icon) icon.setAttribute('data-lucide', saved === 'dark' ? 'moon' : 'sun');
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        });
+    </script>
 </body>
-
 </html>

@@ -1,0 +1,780 @@
+﻿<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Project — Crevio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        /* ---- RESET & BASE (same as dashboard) ---- */
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            transition: background 0.3s, color 0.3s;
+            display: flex;
+            min-height: 100vh;
+        }
+        a { text-decoration: none; color: inherit; }
+
+        /* ---- THEME VARIABLES ---- */
+        [data-theme="dark"] {
+            --bg-primary: #0F172A;
+            --bg-secondary: #1E293B;
+            --bg-card: #1E293B;
+            --bg-input: #0F172A;
+            --border-color: #334155;
+            --text-primary: #F1F5F9;
+            --text-secondary: #94A3B8;
+            --text-muted: #64748B;
+            --accent: #2563EB;
+            --accent-hover: #1D4ED8;
+            --accent-dim: rgba(37,99,235,0.15);
+            --danger: #EF4444;
+            --danger-hover: #DC2626;
+            --success: #22C55E;
+            --warning: #F59E0B;
+            --shadow: 0 4px 24px rgba(0,0,0,0.4);
+        }
+        [data-theme="light"] {
+            --bg-primary: #F1F5F9;
+            --bg-secondary: #FFFFFF;
+            --bg-card: #FFFFFF;
+            --bg-input: #F8FAFC;
+            --border-color: #E2E8F0;
+            --text-primary: #0F172A;
+            --text-secondary: #475569;
+            --text-muted: #94A3B8;
+            --accent: #2563EB;
+            --accent-hover: #1D4ED8;
+            --accent-dim: rgba(37,99,235,0.1);
+            --danger: #EF4444;
+            --danger-hover: #DC2626;
+            --success: #22C55E;
+            --warning: #F59E0B;
+            --shadow: 0 4px 24px rgba(0,0,0,0.06);
+        }
+
+        /* ---- SIDEBAR ---- */
+        .sidebar {
+            width: 240px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 24px 16px;
+            height: 100vh;
+            position: sticky;
+            top: 0;
+            flex-shrink: 0;
+            transition: background 0.3s, border-color 0.3s;
+            overflow-y: auto;
+        }
+        .sidebar-brand { padding-bottom: 20px; border-bottom: 1px solid var(--border-color); margin-bottom: 20px; }
+        .sidebar-brand h1 { font-size: 20px; font-weight: 700; color: var(--text-primary); }
+        .sidebar-brand span { font-size: 11px; font-weight: 500; text-transform: uppercase; color: var(--text-muted); }
+        .sidebar-nav { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+        .nav-item {
+            display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px;
+            color: var(--text-secondary); font-size: 14px; font-weight: 500; transition: all 0.15s;
+            text-decoration: none;
+        }
+        .nav-item:hover { background: var(--accent-dim); color: var(--text-primary); }
+        .nav-item.active { background: var(--accent-dim); color: var(--accent); }
+        .nav-item .icon { width: 20px; height: 20px; flex-shrink: 0; }
+        .nav-divider { height: 1px; background: var(--border-color); margin: 8px 12px; }
+        .sidebar-footer { padding-top: 16px; border-top: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 8px; }
+        .logout-button {
+            background: transparent; border: none; color: var(--danger); font-size: 13px; font-weight: 500;
+            padding: 10px 12px; border-radius: 8px; cursor: pointer; font-family: inherit;
+            display: flex; align-items: center; gap: 12px; transition: background 0.15s;
+            width: 100%;
+        }
+        .logout-button:hover { background: rgba(239,68,68,0.1); }
+
+        .theme-toggle-btn {
+            background: transparent; border: none; color: var(--text-secondary); font-size: 18px;
+            cursor: pointer; padding: 6px 10px; border-radius: 8px; transition: background 0.15s;
+            display: inline-flex; align-items: center; gap: 6px; width: fit-content;
+        }
+        .theme-toggle-btn:hover { background: var(--accent-dim); color: var(--text-primary); }
+        .theme-toggle-btn .icon { width: 18px; height: 18px; }
+
+        .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 199; }
+        .sidebar-overlay.open { display: block; }
+
+        /* ---- MAIN ---- */
+        .dashboard-main {
+            flex: 1; padding: 28px 36px; background: var(--bg-primary);
+            min-height: 100vh; transition: background 0.3s;
+        }
+
+        /* ---- HEADER ---- */
+        .dashboard-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 28px; flex-wrap: wrap; gap: 12px;
+        }
+        .topbar-left { display: flex; align-items: center; gap: 16px; }
+        .mobile-menu-toggle { display: none; background: none; border: none; color: var(--text-secondary); font-size: 24px; cursor: pointer; }
+        .topbar-left h2 { font-size: 24px; font-weight: 700; color: var(--text-primary); }
+        .header-description { font-size: 14px; color: var(--text-secondary); }
+        .topbar-right { display: flex; align-items: center; gap: 16px; }
+        .primary-button {
+            padding: 8px 18px; border-radius: 8px; border: none; background: var(--accent); color: #fff;
+            font-size: 13px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+            transition: all 0.15s; text-decoration: none;
+        }
+        .primary-button:hover { background: var(--accent-hover); transform: translateY(-1px); }
+        .secondary-button {
+            padding: 8px 18px; border-radius: 8px; border: 1px solid var(--border-color);
+            background: transparent; color: var(--text-secondary); font-size: 13px; font-weight: 500;
+            cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+            transition: all 0.15s; text-decoration: none;
+        }
+        .secondary-button:hover { background: var(--bg-card); color: var(--text-primary); }
+        .user-profile { display: flex; align-items: center; gap: 8px; }
+        .user-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 13px; }
+        .user-name { font-size: 14px; font-weight: 500; color: var(--text-primary); }
+
+        /* ---- FORM CARD ---- */
+        .form-container {
+            max-width: 720px;
+            margin: 0 auto;
+        }
+        .form-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 28px;
+            margin-bottom: 24px;
+            transition: background 0.3s, border-color 0.3s;
+        }
+        .form-card h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+        .form-card .subtitle {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+        .form-group label .required {
+            color: var(--danger);
+            margin-left: 2px;
+        }
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-input);
+            color: var(--text-primary);
+            font-size: 14px;
+            font-family: inherit;
+            transition: border 0.2s, box-shadow 0.2s;
+            box-sizing: border-box;
+        }
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-dim);
+        }
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        .form-group .hint {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        /* ---- Thumbnail Upload ---- */
+        .thumbnail-upload-area {
+            border: 2px dashed var(--border-color);
+            border-radius: 12px;
+            padding: 32px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: var(--bg-primary);
+            position: relative;
+        }
+        .thumbnail-upload-area:hover {
+            border-color: var(--accent);
+            background: var(--accent-dim);
+        }
+        .thumbnail-upload-area .icon {
+            width: 40px;
+            height: 40px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+        .thumbnail-upload-area input[type="file"] {
+            display: none;
+        }
+        .thumbnail-preview {
+            display: none;
+            width: 120px;
+            height: 120px;
+            border-radius: 12px;
+            object-fit: cover;
+            margin: 0 auto 12px;
+            border: 2px solid var(--border-color);
+        }
+        .thumbnail-preview.show {
+            display: block;
+        }
+        .thumbnail-upload-area .remove-thumbnail {
+            display: none;
+            margin-top: 8px;
+            background: transparent;
+            border: none;
+            color: var(--danger);
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            font-family: inherit;
+            padding: 4px 12px;
+            border-radius: 6px;
+        }
+        .thumbnail-upload-area .remove-thumbnail:hover {
+            background: rgba(239,68,68,0.1);
+        }
+        .thumbnail-upload-area .remove-thumbnail.show {
+            display: inline-block;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+        }
+        .form-actions .btn {
+            padding: 10px 24px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.15s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border: none;
+            font-family: inherit;
+            text-decoration: none;
+        }
+        .btn-primary {
+            background: var(--accent);
+            color: #fff;
+        }
+        .btn-primary:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+        }
+        .btn-secondary {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+        .btn-secondary:hover {
+            background: var(--bg-card);
+            color: var(--text-primary);
+        }
+
+        .form-message {
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-size: 14px;
+            margin-top: 12px;
+            display: none;
+        }
+        .form-message.success {
+            display: block;
+            background: rgba(34,197,94,0.1);
+            color: var(--success);
+            border: 1px solid rgba(34,197,94,0.2);
+        }
+        .form-message.error {
+            display: block;
+            background: rgba(239,68,68,0.1);
+            color: var(--danger);
+            border: 1px solid rgba(239,68,68,0.2);
+        }
+        .form-message.info {
+            display: block;
+            background: rgba(37,99,235,0.1);
+            color: var(--accent);
+            border: 1px solid rgba(37,99,235,0.2);
+        }
+
+        /* ---- Responsive ---- */
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            .form-card {
+                padding: 20px;
+            }
+            .form-actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .form-actions .btn {
+                justify-content: center;
+            }
+            .sidebar {
+                display: none;
+            }
+            .dashboard-main {
+                padding: 16px 20px;
+            }
+            .mobile-menu-toggle {
+                display: block;
+            }
+            .topbar-right {
+                width: 100%;
+                justify-content: space-between;
+            }
+            .user-name {
+                display: none;
+            }
+            .thumbnail-upload-area {
+                padding: 20px;
+            }
+        }
+        @media (max-width: 480px) {
+            .form-card {
+                padding: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand"><h1>Crevio</h1><span>Creator Dashboard</span></div>
+        <nav class="sidebar-nav">
+            <a href="/dashboard/" class="nav-item"><i data-lucide="layout-dashboard" class="icon"></i> Overview</a>
+            <a href="/dashboard/pages/projects.html" class="nav-item"><i data-lucide="folder-open" class="icon"></i> Projects</a>
+            <a href="/dashboard/pages/media.html" class="nav-item"><i data-lucide="image" class="icon"></i> Media</a>
+            <a href="/dashboard/pages/services.html" class="nav-item"><i data-lucide="briefcase" class="icon"></i> Services</a>
+            <a href="/dashboard/pages/skills.html" class="nav-item"><i data-lucide="star" class="icon"></i> Skills</a>
+            <a href="/dashboard/pages/social-links.html" class="nav-item"><i data-lucide="share-2" class="icon"></i> My Socials</a>
+            <div class="nav-divider"></div>
+            <a href="/dashboard/pages/portfolio.html" class="nav-item"><i data-lucide="layout-template" class="icon"></i> Portfolio</a>
+            <a href="/dashboard/pages/portfolio-edit.html" class="nav-item"><i data-lucide="edit-3" class="icon"></i> Edit Portfolio</a>
+            <a href="/dashboard/pages/bot.html" class="nav-item"><i data-lucide="bot" class="icon"></i> Crevio Bot</a>
+            <div class="nav-divider"></div>
+            <a href="/dashboard/pages/messages.html" class="nav-item"><i data-lucide="mail" class="icon"></i> Messages</a>
+            <a href="/dashboard/pages/notifications.html" class="nav-item"><i data-lucide="bell" class="icon"></i> Notifications</a>
+            <div class="nav-divider"></div>
+            <a href="/dashboard/pages/billing.html" class="nav-item"><i data-lucide="credit-card" class="icon"></i> Billing</a>
+            <a href="/dashboard/pages/security.html" class="nav-item"><i data-lucide="shield" class="icon"></i> Security</a>
+            <a href="/dashboard/pages/settings.html" class="nav-item"><i data-lucide="settings" class="icon"></i> Settings</a>
+            <a href="/dashboard/pages/profile.html" class="nav-item"><i data-lucide="user" class="icon"></i> Profile</a>
+            <a href="/dashboard/pages/account-management.html" class="nav-item"><i data-lucide="user-cog" class="icon"></i> Account Management</a>
+            <div class="nav-divider"></div>
+            <a href="/" target="_blank" class="nav-item"><i data-lucide="globe" class="icon"></i> View Portfolio</a>
+        </nav>
+        <div class="sidebar-footer">
+            <span id="themeToggleBtn" class="theme-toggle-btn" onclick="toggleTheme()" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:8px;color:var(--text-secondary);font-size:18px;">
+                <i data-lucide="moon" class="icon"></i>
+            </span>
+            <button id="logoutButton" class="logout-button"><i data-lucide="log-out" class="icon"></i> Logout</button>
+        </div>
+    </aside>
+
+    <div id="sidebarOverlay" class="sidebar-overlay"></div>
+
+    <!-- MAIN -->
+    <main class="dashboard-main">
+
+        <header class="dashboard-header">
+            <div class="topbar-left">
+                <button id="mobileToggle" class="mobile-menu-toggle"><i data-lucide="menu"></i></button>
+                <div>
+                    <h2>Create Project</h2>
+                    <p class="header-description">Add a new project to your portfolio</p>
+                </div>
+            </div>
+            <div class="topbar-right">
+                <a href="/dashboard/pages/projects.html" class="secondary-button">
+                    <i data-lucide="arrow-left" class="icon"></i> Back to Projects
+                </a>
+                <div class="user-profile">
+                    <span class="user-avatar" id="userAvatar">C</span>
+                    <span class="user-name" id="userNameDisplay">Creator</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="form-container">
+            <div class="form-card">
+                <h3>New Project</h3>
+                <p class="subtitle">Fill in the details below to add a new project to your portfolio.</p>
+
+                <form id="create-project-form" enctype="multipart/form-data">
+                    <!-- Title -->
+                    <div class="form-group">
+                        <label for="title">Project Title <span class="required">*</span></label>
+                        <input type="text" id="title" name="title" placeholder="e.g. Lura Energy Campaign" required>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="form-group">
+                        <label for="description">Description</label>
+                        <textarea id="description" name="description" rows="4" placeholder="Describe the project..."></textarea>
+                    </div>
+
+                    <!-- Category & Year -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="category">Category</label>
+                            <input type="text" id="category" name="category" placeholder="e.g. Video Production">
+                        </div>
+                        <div class="form-group">
+                            <label for="year">Year</label>
+                            <input type="number" id="year" name="year" placeholder="2026" min="1900" max="2100">
+                        </div>
+                    </div>
+
+                    <!-- Client & Project URL -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="client_name">Client</label>
+                            <input type="text" id="client_name" name="client_name" placeholder="Client name">
+                        </div>
+                        <div class="form-group">
+                            <label for="project_url">Project URL</label>
+                            <input type="url" id="project_url" name="project_url" placeholder="https://example.com/project">
+                        </div>
+                    </div>
+
+                    <!-- Thumbnail Upload -->
+                    <div class="form-group">
+                        <label>Thumbnail</label>
+                        <div class="thumbnail-upload-area" id="thumbnailUploadArea">
+                            <input type="file" id="thumbnailInput" accept="image/jpeg,image/png,image/webp">
+                            <div id="thumbnailPreviewContainer">
+                                <img id="thumbnailPreview" class="thumbnail-preview" alt="Thumbnail preview">
+                                <div id="thumbnailPlaceholder">
+                                    <i data-lucide="upload-cloud" class="icon"></i>
+                                    <p><strong>Click to upload</strong> or drag and drop</p>
+                                    <p style="font-size:12px;margin-top:4px;">JPG, PNG, WebP — Max 5MB</p>
+                                </div>
+                            </div>
+                            <button type="button" class="remove-thumbnail" id="removeThumbnailBtn">Remove</button>
+                        </div>
+                        <div class="hint">A square image (1:1 ratio) works best for thumbnails.</div>
+                    </div>
+
+                    <!-- Message -->
+                    <div id="form-status" class="form-message"></div>
+
+                    <!-- Actions -->
+                    <div class="form-actions">
+                        <a href="/dashboard/pages/projects.html" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary" id="submitBtn">
+                            <i data-lucide="plus" class="icon"></i> Create Project
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // =========================================================
+        // CREATE PROJECT JS (thumbnail upload + form submit)
+        // =========================================================
+
+        const form = document.getElementById('create-project-form');
+        const submitBtn = document.getElementById('submitBtn');
+        const statusEl = document.getElementById('form-status');
+
+        const thumbnailInput = document.getElementById('thumbnailInput');
+        const thumbnailPreview = document.getElementById('thumbnailPreview');
+        const thumbnailPlaceholder = document.getElementById('thumbnailPlaceholder');
+        const removeThumbnailBtn = document.getElementById('removeThumbnailBtn');
+        const uploadArea = document.getElementById('thumbnailUploadArea');
+
+        let selectedFile = null;
+        let uploadedThumbnailUrl = null;
+
+        // ---- OPEN FILE EXPLORER (CLICK ON UPLOAD AREA) ----
+        uploadArea.addEventListener('click', function(e) {
+            // Prevent if clicking on remove button
+            if (e.target.closest('.remove-thumbnail')) return;
+            thumbnailInput.click();
+        });
+
+        // ---- Thumbnail preview ----
+        thumbnailInput.addEventListener('change', function(e) {
+            const file = this.files[0];
+            if (!file) return;
+
+            const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+            if (!allowedTypes.includes(file.type)) {
+                showMessage('Unsupported image format. Use JPG, PNG, or WebP.', 'error');
+                this.value = '';
+                return;
+            }
+
+            if (file.size > 5 * 1024 * 1024) {
+                showMessage('Image is too large. Maximum size is 5MB.', 'error');
+                this.value = '';
+                return;
+            }
+
+            selectedFile = file;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                thumbnailPreview.src = e.target.result;
+                thumbnailPreview.classList.add('show');
+                thumbnailPlaceholder.style.display = 'none';
+                removeThumbnailBtn.classList.add('show');
+                uploadedThumbnailUrl = null;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        removeThumbnailBtn.addEventListener('click', function() {
+            thumbnailInput.value = '';
+            thumbnailPreview.classList.remove('show');
+            thumbnailPreview.src = '';
+            thumbnailPlaceholder.style.display = 'block';
+            this.classList.remove('show');
+            selectedFile = null;
+            uploadedThumbnailUrl = null;
+        });
+
+        // ---- Upload thumbnail to server ----
+        async function uploadThumbnail(file) {
+            const token = getToken();
+            if (!token) return null;
+
+            const formData = new FormData();
+            formData.append('thumbnail', file);
+
+            try {
+                const res = await fetch('/api/upload/thumbnail', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: formData
+                });
+
+                const data = await res.json();
+                if (!res.ok || !data.success) {
+                    throw new Error(data.message || 'Thumbnail upload failed.');
+                }
+
+                return data.thumbnail_url;
+
+            } catch (err) {
+                console.error('Thumbnail upload error:', err);
+                showMessage(err.message || 'Failed to upload thumbnail.', 'error');
+                return null;
+            }
+        }
+
+        function getToken() {
+            const token = localStorage.getItem('crevio_token');
+            if (!token) {
+                window.location.href = '/admin/pages/login.html';
+                return null;
+            }
+            return token;
+        }
+
+        function showMessage(text, type = 'info') {
+            statusEl.className = 'form-message ' + type;
+            statusEl.textContent = text;
+        }
+
+        function hideMessage() {
+            statusEl.className = 'form-message';
+            statusEl.textContent = '';
+        }
+
+        // ---- Form submit ----
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const title = document.getElementById('title').value.trim();
+            if (!title) {
+                showMessage('Project title is required.', 'error');
+                return;
+            }
+
+            hideMessage();
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = 'Creating...';
+
+            try {
+                let thumbnailUrl = null;
+                if (selectedFile) {
+                    showMessage('Uploading thumbnail...', 'info');
+                    thumbnailUrl = await uploadThumbnail(selectedFile);
+                    if (!thumbnailUrl) {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = '<i data-lucide="plus" class="icon"></i> Create Project';
+                        return;
+                    }
+                }
+
+                const projectData = {
+                    title: title,
+                    description: document.getElementById('description').value.trim(),
+                    category: document.getElementById('category').value.trim(),
+                    year: parseInt(document.getElementById('year').value) || null,
+                    client_name: document.getElementById('client_name').value.trim(),
+                    project_url: document.getElementById('project_url').value.trim(),
+                    thumbnail_url: thumbnailUrl
+                };
+
+                const token = getToken();
+                if (!token) return;
+
+                const res = await fetch('/api/projects', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify(projectData)
+                });
+
+                const result = await res.json();
+
+                if (!res.ok || !result.success) {
+                    throw new Error(result.message || 'Failed to create project.');
+                }
+
+                showMessage('✅ Project created successfully!', 'success');
+                setTimeout(function() {
+                    window.location.href = '/dashboard/pages/projects.html';
+                }, 1200);
+
+            } catch (err) {
+                console.error('Create project error:', err);
+                showMessage(err.message || 'Unable to create project. Please try again.', 'error');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i data-lucide="plus" class="icon"></i> Create Project';
+            }
+        });
+
+        // ---- DRAG AND DROP ----
+        uploadArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            this.style.borderColor = 'var(--accent)';
+            this.style.background = 'var(--accent-dim)';
+        });
+        uploadArea.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            this.style.borderColor = '';
+            this.style.background = '';
+        });
+        uploadArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.style.borderColor = '';
+            this.style.background = '';
+            if (e.dataTransfer.files.length) {
+                thumbnailInput.files = e.dataTransfer.files;
+                thumbnailInput.dispatchEvent(new Event('change'));
+            }
+        });
+
+        // ---- THEME TOGGLE ----
+        function toggleTheme() {
+            var current = document.documentElement.getAttribute('data-theme');
+            var next = current === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('crevio_theme', next);
+            var icon = document.querySelector('#themeToggleBtn .icon');
+            if (icon) {
+                icon.setAttribute('data-lucide', next === 'dark' ? 'moon' : 'sun');
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            }
+        }
+        window.toggleTheme = toggleTheme;
+
+        // ---- MOBILE TOGGLE ----
+        document.getElementById('mobileToggle')?.addEventListener('click', function() {
+            document.getElementById('sidebar')?.classList.toggle('open');
+            document.getElementById('sidebarOverlay')?.classList.toggle('open');
+        });
+        document.getElementById('sidebarOverlay')?.addEventListener('click', function() {
+            document.getElementById('sidebar')?.classList.remove('open');
+            this.classList.remove('open');
+        });
+
+        // ---- LOGOUT ----
+        document.getElementById('logoutButton')?.addEventListener('click', function() {
+            localStorage.removeItem('crevio_token');
+            localStorage.removeItem('crevio_user');
+            window.location.href = '/admin/pages/login.html';
+        });
+
+        // ---- INIT ----
+        document.addEventListener('DOMContentLoaded', function() {
+            var saved = localStorage.getItem('crevio_theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', saved);
+            var btn = document.getElementById('themeToggleBtn');
+            if (btn) {
+                var icon = btn.querySelector('.icon');
+                if (icon) icon.setAttribute('data-lucide', saved === 'dark' ? 'moon' : 'sun');
+            }
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+
+            // Set user avatar and name
+            var userData = localStorage.getItem('crevio_user');
+            if (userData) {
+                try {
+                    var user = JSON.parse(userData);
+                    var avatar = document.getElementById('userAvatar');
+                    var nameDisplay = document.getElementById('userNameDisplay');
+                    if (avatar && user.display_name) {
+                        avatar.textContent = user.display_name.charAt(0).toUpperCase();
+                    }
+                    if (nameDisplay && user.display_name) {
+                        nameDisplay.textContent = user.display_name;
+                    }
+                } catch (e) {}
+            }
+        });
+    </script>
+</body>
+</html>

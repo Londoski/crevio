@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crevio Bot — Crevio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="/dashboard/css/dashboard.css">
+
+    <style>
+        /* ---- Avatar override (small for header) ---- */
+        .user-avatar {
+            width: 32px !important;
+            height: 32px !important;
+            font-size: 13px !important;
+            flex-shrink: 0;
+        }
+        .user-avatar img {
+            width: 32px !important;
+            height: 32px !important;
+            border-radius: 50% !important;
+            object-fit: cover !important;
+        }
+
+        /* ---- Bot specific styles ---- */
+        .bot-container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .bot-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 28px;
+            margin-bottom: 24px;
+            transition: background 0.3s, border-color 0.3s;
+        }
+        .bot-card h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+        .bot-card .subtitle {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+
+        /* ---- Chat messages (NO AVATAR) ---- */
+        .chat-messages {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+            padding-right: 8px;
+            margin-bottom: 16px;
+        }
+        .chat-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+        .chat-messages::-webkit-scrollbar-track {
+            background: var(--bg-primary);
+            border-radius: 3px;
+        }
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 3px;
+        }
+
+        /* ---- Hide ANY avatar inside the chat messages ---- */
+        .chat-messages .avatar,
+        .chat-messages .user-avatar,
+        .chat-messages img.avatar,
+        .chat-messages .message .avatar {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
+
+        .message {
+            display: flex;
+            gap: 12px;
+            max-width: 85%;
+        }
+        .message.bot {
+            align-self: flex-start;
+        }
+        .message.user {
+            align-self: flex-end;
+            flex-direction: row-reverse;
+        }
+
+        /* ---- Bot message (no avatar) ---- */
+        .message .bubble {
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 14px;
+            line-height: 1.6;
+            color: var(--text-primary);
+        }
+        .message.bot .bubble {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-bottom-left-radius: 4px;
+        }
+        .message.user .bubble {
+            background: var(--accent);
+            color: #fff;
+            border-bottom-right-radius: 4px;
+        }
+
+        /* ---- Quick suggestions ---- */
+        .suggestions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        .suggestions .chip {
+            padding: 6px 16px;
+            border-radius: 999px;
+            border: 1px solid var(--border-color);
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.15s;
+            font-family: inherit;
+        }
+        .suggestions .chip:hover {
+            border-color: var(--accent);
+            color: var(--text-primary);
+            background: var(--accent-dim);
+        }
+
+        /* ---- Input ---- */
+        .chat-input-wrap {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        .chat-input-wrap input {
+            flex: 1;
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-input);
+            color: var(--text-primary);
+            font-size: 14px;
+            font-family: inherit;
+        }
+        .chat-input-wrap input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-dim);
+        }
+        .chat-input-wrap button {
+            padding: 10px 20px;
+            border-radius: 10px;
+            border: none;
+            background: var(--accent);
+            color: #fff;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+            font-family: inherit;
+        }
+        .chat-input-wrap button:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+        }
+
+        /* ---- Footer links ---- */
+        .bot-footer {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            padding-top: 16px;
+            border-top: 1px solid var(--border-color);
+            margin-top: 8px;
+        }
+        .bot-footer a {
+            color: var(--text-secondary);
+            font-size: 13px;
+            transition: color 0.15s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .bot-footer a:hover {
+            color: var(--text-primary);
+        }
+
+        /* ---- Responsive ---- */
+        @media (max-width: 768px) {
+            .bot-card { padding: 20px; }
+            .message { max-width: 95%; }
+            .suggestions { gap: 6px; }
+            .suggestions .chip { font-size: 12px; padding: 4px 12px; }
+            .chat-input-wrap { flex-direction: column; align-items: stretch; }
+        }
+        @media (max-width: 480px) {
+            .bot-card { padding: 16px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand"><h1>Crevio</h1><span>Creator Dashboard</span></div>
+        <nav class="sidebar-nav">
+            <a href="/dashboard/" class="nav-item"><i data-lucide="layout-dashboard" class="icon"></i> Overview</a>
+            <a href="/dashboard/pages/projects.html" class="nav-item"><i data-lucide="folder-open" class="icon"></i> Projects</a>
+            <a href="/dashboard/pages/media.html" class="nav-item"><i data-lucide="image" class="icon"></i> Media</a>
+            <a href="/dashboard/pages/services.html" class="nav-item"><i data-lucide="briefcase" class="icon"></i> Services</a>
+            <a href="/dashboard/pages/skills.html" class="nav-item"><i data-lucide="star" class="icon"></i> Skills</a>
+            <a href="/dashboard/pages/social-links.html" class="nav-item"><i data-lucide="share-2" class="icon"></i> My Socials</a>
+            <div class="nav-divider"></div>
+            <a href="/dashboard/pages/portfolio.html" class="nav-item"><i data-lucide="layout-template" class="icon"></i> Portfolio</a>
+            <a href="/dashboard/pages/portfolio-edit.html" class="nav-item"><i data-lucide="edit-3" class="icon"></i> Edit Portfolio</a>
+            <a href="/dashboard/pages/bot.html" class="nav-item active"><i data-lucide="bot" class="icon"></i> Crevio Bot</a>
+            <div class="nav-divider"></div>
+            <a href="/dashboard/pages/messages.html" class="nav-item"><i data-lucide="mail" class="icon"></i> Messages</a>
+            <a href="/dashboard/pages/notifications.html" class="nav-item"><i data-lucide="bell" class="icon"></i> Notifications</a>
+            <div class="nav-divider"></div>
+            <a href="/dashboard/pages/billing.html" class="nav-item"><i data-lucide="credit-card" class="icon"></i> Billing</a>
+            <a href="/dashboard/pages/security.html" class="nav-item"><i data-lucide="shield" class="icon"></i> Security</a>
+            <a href="/dashboard/pages/settings.html" class="nav-item"><i data-lucide="settings" class="icon"></i> Settings</a>
+            <a href="/dashboard/pages/profile.html" class="nav-item"><i data-lucide="user" class="icon"></i> Profile</a>
+            <a href="/dashboard/pages/account-management.html" class="nav-item"><i data-lucide="user-cog" class="icon"></i> Account Management</a>
+            <div class="nav-divider"></div>
+            <a href="/" target="_blank" class="nav-item"><i data-lucide="globe" class="icon"></i> View Portfolio</a>
+        </nav>
+        <div class="sidebar-footer">
+            <span id="themeToggleBtn" class="theme-toggle-btn" onclick="toggleTheme()" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:8px;color:var(--text-secondary);font-size:18px;">
+                <i data-lucide="moon" class="icon"></i>
+            </span>
+            <button id="logoutButton" class="logout-button"><i data-lucide="log-out" class="icon"></i> Logout</button>
+        </div>
+    </aside>
+
+    <div id="sidebarOverlay" class="sidebar-overlay"></div>
+
+    <!-- MAIN -->
+    <main class="dashboard-main">
+
+        <header class="dashboard-header">
+            <div class="topbar-left">
+                <button id="mobileToggle" class="mobile-menu-toggle"><i data-lucide="menu"></i></button>
+                <div>
+                    <h2>Crevio Bot</h2>
+                    <p class="header-description">Ask about my work. Explore projects, services and experience.</p>
+                </div>
+            </div>
+            <div class="topbar-right">
+                <div class="user-profile">
+                    <span class="user-avatar" id="userAvatar">C</span>
+                    <span class="user-name" id="userNameDisplay">Creator</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="bot-container">
+
+            <div class="bot-card">
+                <h3>Portfolio Helper</h3>
+                <p class="subtitle">Ask me anything about my work, projects, or services.</p>
+
+                <!-- Chat Messages (NO AVATAR) -->
+                <div class="chat-messages" id="chatMessages">
+                    <div class="message bot">
+                        <div class="bubble">👋 Hello! I'm Crevio Bot. Ask me about projects, services, or anything you'd like to know.</div>
+                    </div>
+                </div>
+
+                <!-- Quick Suggestions -->
+                <div class="suggestions" id="suggestions">
+                    <button class="chip" data-query="What projects have you worked on?">What projects have you worked on?</button>
+                    <button class="chip" data-query="What services do you offer?">What services do you offer?</button>
+                    <button class="chip" data-query="Tell me about your experience.">Tell me about your experience.</button>
+                    <button class="chip" data-query="How can I contact you?">How can I contact you?</button>
+                </div>
+
+                <!-- Input -->
+                <div class="chat-input-wrap">
+                    <input type="text" id="chatInput" placeholder="Ask Crevio Bot…" autofocus>
+                    <button id="sendBtn">Send</button>
+                </div>
+
+                <!-- Footer -->
+                <div class="bot-footer">
+                    <a href="/dashboard/pages/projects.html"><i data-lucide="folder-open" style="width:16px;height:16px;"></i> Explore my work</a>
+                    <a href="/dashboard/pages/services.html"><i data-lucide="briefcase" style="width:16px;height:16px;"></i> View services</a>
+                    <a href="/dashboard/pages/contact.html"><i data-lucide="mail" style="width:16px;height:16px;"></i> Contact</a>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <script>
+        // =========================================================
+        // CREVIO BOT JS
+        // =========================================================
+
+        const chatMessages = document.getElementById('chatMessages');
+        const chatInput = document.getElementById('chatInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const suggestionChips = document.querySelectorAll('.suggestions .chip');
+
+        // ---- REMOVE ANY EXISTING AVATAR FROM CHAT (backup) ----
+        function removeAvatars() {
+            // Remove any avatar elements inside chat messages
+            const avatars = chatMessages.querySelectorAll('.avatar, .user-avatar, img.avatar');
+            avatars.forEach(el => el.remove());
+            // Also remove any avatar containers
+            const avatarContainers = chatMessages.querySelectorAll('[class*="avatar"]');
+            avatarContainers.forEach(el => {
+                if (el.classList.contains('user-avatar') || el.classList.contains('avatar')) {
+                    el.remove();
+                }
+            });
+        }
+
+        // ---- Auto-scroll to bottom ----
+        function scrollToBottom() {
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // ---- Add message (NO AVATAR) ----
+        function addMessage(text, sender = 'user') {
+            const div = document.createElement('div');
+            div.className = `message ${sender}`;
+            // No avatar element – just the bubble
+            div.innerHTML = `<div class="bubble">${text}</div>`;
+            chatMessages.appendChild(div);
+            removeAvatars(); // safety cleanup
+            scrollToBottom();
+        }
+
+        // ---- Bot response (mock) ----
+        function getBotResponse(query) {
+            const q = query.toLowerCase();
+            if (q.includes('project') || q.includes('work')) {
+                return "I've worked on a variety of projects — from commercial campaigns to documentary films and digital experiences. Check the Projects page for the full portfolio.";
+            } else if (q.includes('service')) {
+                return "I offer video production, photography, graphic design, and digital strategy services. Each project is tailored to tell a compelling story.";
+            } else if (q.includes('experience') || q.includes('background')) {
+                return "I'm a creative professional with over 10 years of experience in visual storytelling, working with brands, agencies, and independent creators.";
+            } else if (q.includes('contact')) {
+                return "You can reach me through the contact page or via email at hello@crevio.com. I'd love to hear about your project!";
+            } else {
+                return "That's a great question! Could you tell me more about what you're looking for? I'm here to help with anything related to my work, projects, or services.";
+            }
+        }
+
+        // ---- Handle send ----
+        function handleSend() {
+            const text = chatInput.value.trim();
+            if (!text) return;
+
+            addMessage(text, 'user');
+            chatInput.value = '';
+
+            // Show typing indicator (simulated)
+            setTimeout(() => {
+                const response = getBotResponse(text);
+                addMessage(response, 'bot');
+                removeAvatars(); // final cleanup
+            }, 600);
+        }
+
+        // ---- Event listeners ----
+        sendBtn.addEventListener('click', handleSend);
+        chatInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') handleSend();
+        });
+
+        suggestionChips.forEach(chip => {
+            chip.addEventListener('click', function() {
+                const query = this.dataset.query;
+                chatInput.value = query;
+                handleSend();
+            });
+        });
+
+        // ---- Theme toggle ----
+        function toggleTheme() {
+            var current = document.documentElement.getAttribute('data-theme');
+            var next = current === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('crevio_theme', next);
+            var icon = document.querySelector('#themeToggleBtn .icon');
+            if (icon) {
+                icon.setAttribute('data-lucide', next === 'dark' ? 'moon' : 'sun');
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            }
+        }
+        window.toggleTheme = toggleTheme;
+
+        // ---- Init ----
+        document.addEventListener('DOMContentLoaded', function() {
+            var saved = localStorage.getItem('crevio_theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', saved);
+            var icon = document.querySelector('#themeToggleBtn .icon');
+            if (icon) icon.setAttribute('data-lucide', saved === 'dark' ? 'moon' : 'sun');
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+
+            var userData = localStorage.getItem('crevio_user');
+            if (userData) {
+                try {
+                    var user = JSON.parse(userData);
+                    var avatar = document.getElementById('userAvatar');
+                    var nameDisplay = document.getElementById('userNameDisplay');
+                    if (avatar && user.display_name) avatar.textContent = user.display_name.charAt(0).toUpperCase();
+                    if (nameDisplay && user.display_name) nameDisplay.textContent = user.display_name;
+                } catch (e) {}
+            }
+
+            // Remove any avatars that might have been rendered
+            removeAvatars();
+        });
+
+        // ---- Mobile toggle ----
+        document.getElementById('mobileToggle')?.addEventListener('click', function() {
+            document.getElementById('sidebar')?.classList.toggle('open');
+            document.getElementById('sidebarOverlay')?.classList.toggle('open');
+        });
+        document.getElementById('sidebarOverlay')?.addEventListener('click', function() {
+            document.getElementById('sidebar')?.classList.remove('open');
+            this.classList.remove('open');
+        });
+        document.getElementById('logoutButton')?.addEventListener('click', function() {
+            localStorage.removeItem('crevio_token');
+            localStorage.removeItem('crevio_user');
+            window.location.href = '/admin/pages/login.html';
+        });
+    </script>
+
+</body>
+</html>

@@ -1,282 +1,119 @@
-const projectModel = require("../models/projectModel");
+// =========================================================
+// CREVIO — PROJECT CONTROLLER
+// =========================================================
 
+const projectModel = require('../models/projectModel');
 
-// ==========================================
-// CREATE PROJECT
-// ==========================================
+// ---- GET ALL PROJECTS ----
+const getProjects = (req, res) => {
+    try {
+        const userId = req.user.id;
+        const projects = projectModel.findByUser(userId);
+        res.json({ success: true, projects });
+    } catch (err) {
+        console.error('Get projects error:', err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+};
 
+// ---- GET SINGLE PROJECT ----
+const getProject = (req, res) => {
+    try {
+        const userId = req.user.id;
+        const project = projectModel.findById(req.params.id);
+        if (!project || project.user_id !== userId) {
+            return res.status(404).json({ success: false, message: 'Project not found' });
+        }
+        res.json({ success: true, project });
+    } catch (err) {
+        console.error('Get project error:', err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+};
+
+// ---- CREATE PROJECT ----
 const createProject = (req, res) => {
     try {
-        const {
-            title,
-            description,
-            category,
-            thumbnail_url,
-            project_url,
-            client_name,
-            year
-        } = req.body;
-
-        const user_id = req.user.id;
-
-        // Validate title
-        if (!title || !title.trim()) {
-            return res.status(400).json({
-                success: false,
-                message: "Title is required."
-            });
-        }
-
-        const project = projectModel.create({
-            user_id,
-            title: title.trim(),
-            description,
-            category,
-            thumbnail_url,
-            project_url,
-            client_name,
-            year
-        });
-
-        res.status(201).json({
-            success: true,
-            message: "Project created successfully.",
-            project
-        });
-
-    } catch (error) {
-        console.error("Create project error:", error);
-
-        res.status(500).json({
-            success: false,
-            message: "Unable to create project."
-        });
+        const userId = req.user.id;
+        const projectData = { ...req.body, user_id: userId };
+        const project = projectModel.create(projectData);
+        res.json({ success: true, project });
+    } catch (err) {
+        console.error('Create project error:', err);
+        res.status(500).json({ success: false, error: err.message });
     }
 };
 
-
-// ==========================================
-// GET MY PROJECTS
-// ==========================================
-
-const getMyProjects = (req, res) => {
-    try {
-        const user_id = req.user.id;
-
-        const projects = projectModel.findByUserId(user_id);
-
-        res.json({
-            success: true,
-            count: projects.length,
-            projects
-        });
-
-    } catch (error) {
-        console.error("Get projects error:", error);
-
-        res.status(500).json({
-            success: false,
-            message: "Unable to retrieve projects."
-        });
-    }
-};
-
-
-// ==========================================
-// GET ONE PROJECT
-// ==========================================
-
-const getProjectById = (req, res) => {
-    try {
-        const user_id = req.user.id;
-        const project_id = Number(req.params.id);
-
-        console.log("Getting project:", project_id);
-        console.log("Requested by user:", user_id);
-
-        if (!Number.isInteger(project_id)) {
-            return res.status(400).json({
-                success: false,
-                message: "Invalid project ID."
-            });
-        }
-
-        const project = projectModel.findById(project_id);
-
-        if (!project) {
-            return res.status(404).json({
-                success: false,
-                message: "Project not found."
-            });
-        }
-
-        // Security check
-        if (project.user_id !== user_id) {
-            return res.status(403).json({
-                success: false,
-                message: "You do not have permission to access this project."
-            });
-        }
-
-        res.json({
-            success: true,
-            project
-        });
-
-    } catch (error) {
-        console.error("Get project error:", error);
-
-        res.status(500).json({
-            success: false,
-            message: "Unable to retrieve project."
-        });
-    }
-};
-
-
-// ==========================================
-// UPDATE PROJECT
-// ==========================================
-
+// ---- UPDATE PROJECT ----
 const updateProject = (req, res) => {
     try {
-        const user_id = req.user.id;
-        const project_id = Number(req.params.id);
-
-        if (!Number.isInteger(project_id)) {
-            return res.status(400).json({
-                success: false,
-                message: "Invalid project ID."
-            });
+        const userId = req.user.id;
+        const project = projectModel.findById(req.params.id);
+        if (!project || project.user_id !== userId) {
+            return res.status(404).json({ success: false, message: 'Project not found' });
         }
-
-        const project = projectModel.findById(project_id);
-
-        if (!project) {
-            return res.status(404).json({
-                success: false,
-                message: "Project not found."
-            });
-        }
-
-        // Security check
-        if (project.user_id !== user_id) {
-            return res.status(403).json({
-                success: false,
-                message: "You do not have permission to update this project."
-            });
-        }
-
-        const {
-            title,
-            description,
-            category,
-            thumbnail_url,
-            project_url,
-            client_name,
-            year
-        } = req.body;
-
-        if (!title || !title.trim()) {
-            return res.status(400).json({
-                success: false,
-                message: "Title is required."
-            });
-        }
-
-        const updatedProject = projectModel.update(project_id, {
-            title: title.trim(),
-            description,
-            category,
-            thumbnail_url,
-            project_url,
-            client_name,
-            year
-        });
-
-        res.json({
-            success: true,
-            message: "Project updated successfully.",
-            project: updatedProject
-        });
-
-    } catch (error) {
-        console.error("Update project error:", error);
-
-        res.status(500).json({
-            success: false,
-            message: "Unable to update project."
-        });
+        const updated = projectModel.update(req.params.id, req.body);
+        res.json({ success: true, project: updated });
+    } catch (err) {
+        console.error('Update project error:', err);
+        res.status(500).json({ success: false, error: err.message });
     }
 };
 
-
-// ==========================================
-// DELETE PROJECT
-// ==========================================
-
+// ---- DELETE PROJECT ----
 const deleteProject = (req, res) => {
     try {
-        const user_id = req.user.id;
-        const project_id = Number(req.params.id);
-
-        if (!Number.isInteger(project_id)) {
-            return res.status(400).json({
-                success: false,
-                message: "Invalid project ID."
-            });
+        const userId = req.user.id;
+        const project = projectModel.findById(req.params.id);
+        if (!project || project.user_id !== userId) {
+            return res.status(404).json({ success: false, message: 'Project not found' });
         }
-
-        const project = projectModel.findById(project_id);
-
-        if (!project) {
-            return res.status(404).json({
-                success: false,
-                message: "Project not found."
-            });
-        }
-
-        // Security check
-        if (project.user_id !== user_id) {
-            return res.status(403).json({
-                success: false,
-                message: "You do not have permission to delete this project."
-            });
-        }
-
-        const deleted = projectModel.delete(project_id);
-
-        if (!deleted) {
-            return res.status(500).json({
-                success: false,
-                message: "Unable to delete project."
-            });
-        }
-
-        res.json({
-            success: true,
-            message: "Project deleted successfully."
-        });
-
-    } catch (error) {
-        console.error("Delete project error:", error);
-
-        res.status(500).json({
-            success: false,
-            message: "Unable to delete project."
-        });
+        projectModel.delete(req.params.id);
+        res.json({ success: true, message: 'Project deleted' });
+    } catch (err) {
+        console.error('Delete project error:', err);
+        res.status(500).json({ success: false, error: err.message });
     }
 };
 
+// ---- TOGGLE FEATURED ----
+const toggleFeatured = (req, res) => {
+    try {
+        const userId = req.user.id;
+        const project = projectModel.findById(req.params.id);
+        if (!project || project.user_id !== userId) {
+            return res.status(404).json({ success: false, message: 'Project not found' });
+        }
+        const updated = projectModel.update(req.params.id, { featured: !project.featured });
+        res.json({ success: true, project: updated });
+    } catch (err) {
+        console.error('Toggle featured error:', err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+};
 
-// ==========================================
-// EXPORT
-// ==========================================
+// ---- PUBLISH PROJECT ----
+const publishProject = (req, res) => {
+    try {
+        const userId = req.user.id;
+        const project = projectModel.findById(req.params.id);
+        if (!project || project.user_id !== userId) {
+            return res.status(404).json({ success: false, message: 'Project not found' });
+        }
+        const updated = projectModel.update(req.params.id, { published: true });
+        res.json({ success: true, project: updated });
+    } catch (err) {
+        console.error('Publish project error:', err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+};
 
 module.exports = {
+    getProjects,
+    getProject,
     createProject,
-    getMyProjects,
-    getProjectById,
     updateProject,
-    deleteProject
+    deleteProject,
+    toggleFeatured,
+    publishProject
 };

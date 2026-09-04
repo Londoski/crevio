@@ -1,0 +1,711 @@
+﻿<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Skills — Crevio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        /* ---- RESET & BASE ---- */
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            transition: background 0.3s, color 0.3s;
+            display: flex;
+            min-height: 100vh;
+        }
+        a { text-decoration: none; color: inherit; }
+
+        [data-theme="dark"] {
+            --bg-primary: #0F172A;
+            --bg-secondary: #1E293B;
+            --bg-card: #1E293B;
+            --bg-input: #0F172A;
+            --border-color: #334155;
+            --text-primary: #F1F5F9;
+            --text-secondary: #94A3B8;
+            --text-muted: #64748B;
+            --accent: #2563EB;
+            --accent-hover: #1D4ED8;
+            --accent-dim: rgba(37,99,235,0.15);
+            --danger: #EF4444;
+            --success: #22C55E;
+            --warning: #F59E0B;
+            --shadow: 0 4px 24px rgba(0,0,0,0.4);
+        }
+        [data-theme="light"] {
+            --bg-primary: #F1F5F9;
+            --bg-secondary: #FFFFFF;
+            --bg-card: #FFFFFF;
+            --bg-input: #F8FAFC;
+            --border-color: #E2E8F0;
+            --text-primary: #0F172A;
+            --text-secondary: #475569;
+            --text-muted: #94A3B8;
+            --accent: #2563EB;
+            --accent-hover: #1D4ED8;
+            --accent-dim: rgba(37,99,235,0.1);
+            --danger: #EF4444;
+            --success: #22C55E;
+            --warning: #F59E0B;
+            --shadow: 0 4px 24px rgba(0,0,0,0.06);
+        }
+
+        /* ---- SIDEBAR (same as dashboard) ---- */
+        .sidebar {
+            width: 240px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 24px 16px;
+            height: 100vh;
+            position: sticky;
+            top: 0;
+            flex-shrink: 0;
+            transition: background 0.3s, border-color 0.3s;
+            overflow-y: auto;
+        }
+        .sidebar-brand { padding-bottom: 20px; border-bottom: 1px solid var(--border-color); margin-bottom: 20px; }
+        .sidebar-brand h1 { font-size: 20px; font-weight: 700; color: var(--text-primary); }
+        .sidebar-brand span { font-size: 11px; font-weight: 500; text-transform: uppercase; color: var(--text-muted); }
+        .sidebar-nav { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+        .nav-item {
+            display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px;
+            color: var(--text-secondary); font-size: 14px; font-weight: 500; transition: all 0.15s;
+            text-decoration: none;
+        }
+        .nav-item:hover { background: var(--accent-dim); color: var(--text-primary); }
+        .nav-item.active { background: var(--accent-dim); color: var(--accent); }
+        .nav-item .icon { width: 20px; height: 20px; flex-shrink: 0; }
+        .nav-divider { height: 1px; background: var(--border-color); margin: 8px 12px; }
+        .sidebar-footer { padding-top: 16px; border-top: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 8px; }
+        .logout-button {
+            background: transparent; border: none; color: var(--danger); font-size: 13px; font-weight: 500;
+            padding: 10px 12px; border-radius: 8px; cursor: pointer; font-family: inherit;
+            display: flex; align-items: center; gap: 12px; transition: background 0.15s;
+            width: 100%;
+        }
+        .logout-button:hover { background: rgba(239,68,68,0.1); }
+        .theme-toggle-btn {
+            background: transparent; border: none; color: var(--text-secondary); font-size: 18px;
+            cursor: pointer; padding: 6px 10px; border-radius: 8px; transition: background 0.15s;
+            display: inline-flex; align-items: center; gap: 6px; width: fit-content;
+        }
+        .theme-toggle-btn:hover { background: var(--accent-dim); color: var(--text-primary); }
+        .theme-toggle-btn .icon { width: 18px; height: 18px; }
+        .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 199; }
+        .sidebar-overlay.open { display: block; }
+
+        /* ---- MAIN ---- */
+        .dashboard-main {
+            flex: 1; padding: 28px 36px; background: var(--bg-primary);
+            min-height: 100vh; transition: background 0.3s;
+        }
+
+        .dashboard-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 28px; flex-wrap: wrap; gap: 12px;
+        }
+        .topbar-left { display: flex; align-items: center; gap: 16px; }
+        .mobile-menu-toggle { display: none; background: none; border: none; color: var(--text-secondary); font-size: 24px; cursor: pointer; }
+        .topbar-left h2 { font-size: 24px; font-weight: 700; color: var(--text-primary); }
+        .header-description { font-size: 14px; color: var(--text-secondary); }
+        .topbar-right { display: flex; align-items: center; gap: 16px; }
+        .primary-button {
+            padding: 8px 18px; border-radius: 8px; border: none; background: var(--accent); color: #fff;
+            font-size: 13px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+            transition: all 0.15s; text-decoration: none;
+        }
+        .primary-button:hover { background: var(--accent-hover); transform: translateY(-1px); }
+        .secondary-button {
+            padding: 8px 18px; border-radius: 8px; border: 1px solid var(--border-color);
+            background: transparent; color: var(--text-secondary); font-size: 13px; font-weight: 500;
+            cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+            transition: all 0.15s; text-decoration: none;
+        }
+        .secondary-button:hover { background: var(--bg-card); color: var(--text-primary); }
+        .user-profile { display: flex; align-items: center; gap: 8px; }
+        .user-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 13px; flex-shrink: 0; }
+        .user-avatar img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+        .user-name { font-size: 14px; font-weight: 500; color: var(--text-primary); }
+
+        /* ---- CARDS ---- */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            transition: background 0.3s, border-color 0.3s;
+        }
+        .card h3 {
+            font-size: 16px; font-weight: 600; color: var(--text-primary);
+            margin-bottom: 16px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .card h3 .icon { width: 20px; height: 20px; color: var(--text-secondary); }
+        .card .subtitle {
+            font-size: 14px; color: var(--text-secondary);
+            margin-bottom: 16px;
+        }
+
+        /* ---- YOUR SKILLS (chips) ---- */
+        .skills-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .skill-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 999px;
+            padding: 4px 12px 4px 14px;
+            font-size: 13px;
+            color: var(--text-primary);
+            transition: all 0.15s;
+        }
+        .skill-chip:hover {
+            border-color: var(--accent);
+        }
+        .skill-chip .remove {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 16px;
+            padding: 0 2px;
+            line-height: 1;
+            transition: color 0.15s;
+        }
+        .skill-chip .remove:hover {
+            color: var(--danger);
+        }
+        .empty-skills {
+            color: var(--text-muted);
+            font-size: 14px;
+            padding: 8px 0;
+        }
+
+        /* ---- RECOMMENDED ---- */
+        .recommended-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .recommend-chip {
+            background: var(--bg-primary);
+            border: 1px dashed var(--border-color);
+            border-radius: 999px;
+            padding: 4px 14px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .recommend-chip:hover {
+            border-color: var(--accent);
+            color: var(--text-primary);
+            background: var(--accent-dim);
+        }
+
+        /* ---- CATEGORY GRID ---- */
+        .category-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 16px;
+        }
+        .category-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px 20px;
+            transition: all 0.2s;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+        }
+        .category-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+        .category-card .cat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+        .category-card .cat-icon {
+            font-size: 24px;
+        }
+        .category-card .cat-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 15px;
+        }
+        .category-card .cat-meta {
+            font-size: 13px;
+            color: var(--text-muted);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .category-card .cat-meta .count {
+            font-size: 12px;
+        }
+        .category-card .cat-meta .selected-badge {
+            background: var(--accent-dim);
+            color: var(--accent);
+            padding: 2px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .category-card .arrow {
+            color: var(--text-muted);
+            font-size: 18px;
+        }
+
+        /* ---- MODAL / DRAWER ---- */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 32px;
+            max-width: 720px;
+            width: 100%;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: var(--shadow);
+        }
+        .modal-box .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            flex-shrink: 0;
+        }
+        .modal-box .modal-header h2 {
+            font-size: 20px;
+            font-weight: 700;
+        }
+        .modal-box .modal-header .close-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 24px;
+            cursor: pointer;
+        }
+        .modal-box .search-input {
+            width: 100%;
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-input);
+            color: var(--text-primary);
+            font-size: 14px;
+            margin-bottom: 12px;
+            flex-shrink: 0;
+        }
+        .modal-box .search-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-dim);
+        }
+        .modal-box .category-filter {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+            flex-shrink: 0;
+        }
+        .modal-box .category-filter .filter-btn {
+            padding: 4px 14px;
+            border-radius: 999px;
+            border: 1px solid var(--border-color);
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
+            font-family: inherit;
+        }
+        .modal-box .category-filter .filter-btn.active {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+        }
+        .modal-box .category-filter .filter-btn:hover:not(.active) {
+            border-color: var(--accent);
+            color: var(--text-primary);
+        }
+        .modal-box .skill-list {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            overflow-y: auto;
+            flex: 1;
+            padding-right: 4px;
+        }
+        .modal-box .skill-list::-webkit-scrollbar {
+            width: 6px;
+        }
+        .modal-box .skill-list::-webkit-scrollbar-track {
+            background: var(--bg-primary);
+            border-radius: 3px;
+        }
+        .modal-box .skill-list::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 3px;
+        }
+        .modal-box .skill-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 6px 12px;
+            border-radius: 8px;
+            transition: background 0.15s;
+            cursor: pointer;
+        }
+        .modal-box .skill-item:hover {
+            background: var(--accent-dim);
+        }
+        .modal-box .skill-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--accent);
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .modal-box .skill-item .skill-name {
+            font-size: 14px;
+            color: var(--text-primary);
+        }
+        .modal-box .skill-item .skill-category {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-left: auto;
+        }
+        .modal-box .skill-item.selected {
+            background: var(--accent-dim);
+            border-radius: 8px;
+        }
+        .modal-box .modal-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+        .modal-box .modal-footer .selected-count {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        .modal-box .modal-footer .actions {
+            display: flex;
+            gap: 12px;
+        }
+        .modal-box .modal-footer .btn {
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            border: none;
+            font-family: inherit;
+            transition: all 0.15s;
+        }
+        .btn-primary { background: var(--accent); color: #fff; }
+        .btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); }
+        .btn-secondary { background: transparent; border: 1px solid var(--border-color); color: var(--text-secondary); }
+        .btn-secondary:hover { background: var(--bg-card); color: var(--text-primary); }
+
+        /* ---- CUSTOM SKILL (only in "Other" category) ---- */
+        .custom-skill-area {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+        .custom-skill-area .btn {
+            background: transparent;
+            border: 1px dashed var(--border-color);
+            color: var(--text-secondary);
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 13px;
+            transition: all 0.15s;
+        }
+        .custom-skill-area .btn:hover {
+            border-color: var(--accent);
+            color: var(--text-primary);
+        }
+        .custom-skill-form {
+            display: flex;
+            gap: 12px;
+            margin-top: 8px;
+            flex-wrap: wrap;
+        }
+        .custom-skill-form input {
+            flex: 1;
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-input);
+            color: var(--text-primary);
+            font-size: 14px;
+            font-family: inherit;
+            min-width: 140px;
+        }
+        .custom-skill-form input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        .custom-skill-form .btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 13px;
+            border: none;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.15s;
+        }
+        .custom-skill-form .btn-primary { background: var(--accent); color: #fff; }
+        .custom-skill-form .btn-primary:hover { background: var(--accent-hover); }
+        .custom-skill-form .btn-secondary { background: transparent; border: 1px solid var(--border-color); color: var(--text-secondary); }
+        .custom-skill-form .btn-secondary:hover { background: var(--bg-card); color: var(--text-primary); }
+
+        .loading-state, .empty-state {
+            text-align: center;
+            padding: 24px 0;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            .dashboard-main { padding: 16px 20px; }
+            .mobile-menu-toggle { display: block; }
+            .dashboard-header { flex-direction: column; align-items: flex-start; gap: 12px; }
+            .topbar-right { width: 100%; justify-content: space-between; }
+            .user-name { display: none; }
+            .category-grid { grid-template-columns: 1fr; }
+            .modal-box { padding: 20px; margin: 10px; max-height: 95vh; }
+            .modal-box .category-filter { flex-wrap: nowrap; overflow-x: auto; }
+            .modal-box .category-filter .filter-btn { white-space: nowrap; }
+        }
+        @media (max-width: 480px) {
+            .card { padding: 16px; }
+            .modal-box { padding: 16px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand"><h1>Crevio</h1><span>Creator Dashboard</span></div>
+        <nav class="sidebar-nav">
+            <a href="/dashboard/" class="nav-item"><i data-lucide="layout-dashboard" class="icon"></i> Overview</a>
+            <a href="/dashboard/pages/projects.html" class="nav-item"><i data-lucide="folder-open" class="icon"></i> Projects</a>
+            <a href="/dashboard/pages/media.html" class="nav-item"><i data-lucide="image" class="icon"></i> Media</a>
+            <a href="/dashboard/pages/services.html" class="nav-item"><i data-lucide="briefcase" class="icon"></i> Services</a>
+            <a href="/dashboard/pages/skills.html" class="nav-item active"><i data-lucide="star" class="icon"></i> Skills</a>
+            <a href="/dashboard/pages/social-links.html" class="nav-item"><i data-lucide="share-2" class="icon"></i> My Socials</a>
+            <div class="nav-divider"></div>
+            <a href="/dashboard/pages/portfolio.html" class="nav-item"><i data-lucide="layout-template" class="icon"></i> Portfolio</a>
+            <a href="/dashboard/pages/portfolio-edit.html" class="nav-item"><i data-lucide="edit-3" class="icon"></i> Edit Portfolio</a>
+            <a href="/dashboard/pages/bot.html" class="nav-item"><i data-lucide="bot" class="icon"></i> Crevio Bot</a>
+            <div class="nav-divider"></div>
+            <a href="/dashboard/pages/messages.html" class="nav-item"><i data-lucide="mail" class="icon"></i> Messages</a>
+            <a href="/dashboard/pages/notifications.html" class="nav-item"><i data-lucide="bell" class="icon"></i> Notifications</a>
+            <div class="nav-divider"></div>
+            <a href="/dashboard/pages/billing.html" class="nav-item"><i data-lucide="credit-card" class="icon"></i> Billing</a>
+            <a href="/dashboard/pages/security.html" class="nav-item"><i data-lucide="shield" class="icon"></i> Security</a>
+            <a href="/dashboard/pages/settings.html" class="nav-item"><i data-lucide="settings" class="icon"></i> Settings</a>
+            <a href="/dashboard/pages/profile.html" class="nav-item"><i data-lucide="user" class="icon"></i> Profile</a>
+            <a href="/dashboard/pages/account-management.html" class="nav-item"><i data-lucide="user-cog" class="icon"></i> Account Management</a>
+            <div class="nav-divider"></div>
+            <a href="/" target="_blank" class="nav-item"><i data-lucide="globe" class="icon"></i> View Portfolio</a>
+        </nav>
+        <div class="sidebar-footer">
+            <span id="themeToggleBtn" class="theme-toggle-btn" onclick="toggleTheme()" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:8px;color:var(--text-secondary);font-size:18px;">
+                <i data-lucide="moon" class="icon"></i>
+            </span>
+            <button id="logoutButton" class="logout-button"><i data-lucide="log-out" class="icon"></i> Logout</button>
+        </div>
+    </aside>
+
+    <div id="sidebarOverlay" class="sidebar-overlay"></div>
+
+    <!-- MAIN -->
+    <main class="dashboard-main">
+
+        <header class="dashboard-header">
+            <div class="topbar-left">
+                <button id="mobileToggle" class="mobile-menu-toggle"><i data-lucide="menu"></i></button>
+                <div>
+                    <h2>Skills</h2>
+                    <p class="header-description">Build a skill set that represents your professional work.</p>
+                </div>
+            </div>
+            <div class="topbar-right">
+                <button class="primary-button" id="addSkillBtn">
+                    <i data-lucide="plus" class="icon"></i> Add Skill
+                </button>
+                <div class="user-profile">
+                    <span class="user-avatar" id="userAvatar">C</span>
+                    <span class="user-name" id="userNameDisplay">Creator</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- YOUR SKILLS -->
+        <div class="card">
+            <h3><i data-lucide="star" class="icon"></i> Your Skills</h3>
+            <div id="selectedSkillsContainer">
+                <div class="loading-state">Loading your skills...</div>
+            </div>
+        </div>
+
+        <!-- RECOMMENDED -->
+        <div class="card">
+            <h3><i data-lucide="sparkles" class="icon"></i> Recommended for You</h3>
+            <p class="subtitle">Based on your professional profile</p>
+            <div id="recommendedContainer">
+                <div class="loading-state">Loading recommendations...</div>
+            </div>
+        </div>
+
+        <!-- CATEGORIES -->
+        <div class="card">
+            <h3><i data-lucide="grid" class="icon"></i> Explore Skill Categories</h3>
+            <p class="subtitle">Browse and select skills from our library</p>
+            <div id="categoryGrid" class="category-grid">
+                <div class="loading-state">Loading categories...</div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ADD SKILL MODAL -->
+    <div id="skillModal" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h2>Add Skills</h2>
+                <button class="close-btn" id="closeModalBtn">&times;</button>
+            </div>
+            <input type="text" id="skillSearch" class="search-input" placeholder="Search skills… (e.g. cinematography)">
+
+            <!-- Category filter pills -->
+            <div class="category-filter" id="categoryFilter">
+                <button class="filter-btn active" data-category="all">All</button>
+            </div>
+
+            <!-- Skill list (scrollable) -->
+            <div id="skillListContainer" class="skill-list">
+                <div class="loading-state">Loading skills…</div>
+            </div>
+
+            <!-- Custom skill area (only visible for "Other" category) -->
+            <div class="custom-skill-area" id="customSkillArea" style="display:none;">
+                <button class="btn" id="showCustomSkillBtn">+ Add Custom Skill</button>
+                <div id="customSkillForm" style="display:none;margin-top:8px;">
+                    <div class="custom-skill-form">
+                        <input type="text" id="customSkillName" placeholder="Enter custom skill name">
+                        <button class="btn btn-primary" id="saveCustomSkillBtn">Add</button>
+                        <button class="btn btn-secondary" id="cancelCustomSkillBtn">Cancel</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <span class="selected-count" id="selectedCount">0 skills selected</span>
+                <div class="actions">
+                    <button class="btn btn-secondary" id="cancelModalBtn">Cancel</button>
+                    <button class="btn btn-primary" id="saveModalBtn">Save Skills</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/dashboard/js/skills.js"></script>
+    <script src="/dashboard/js/avatar.js"></script>
+    <script>
+        function toggleTheme() {
+            var current = document.documentElement.getAttribute('data-theme');
+            var next = current === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('crevio_theme', next);
+            var icon = document.querySelector('#themeToggleBtn .icon');
+            if (icon) {
+                icon.setAttribute('data-lucide', next === 'dark' ? 'moon' : 'sun');
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            var saved = localStorage.getItem('crevio_theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', saved);
+            var icon = document.querySelector('#themeToggleBtn .icon');
+            if (icon) icon.setAttribute('data-lucide', saved === 'dark' ? 'moon' : 'sun');
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+
+            // Set avatar and name
+            var userData = localStorage.getItem('crevio_user');
+            if (userData) {
+                try {
+                    var user = JSON.parse(userData);
+                    var avatar = document.getElementById('userAvatar');
+                    var nameDisplay = document.getElementById('userNameDisplay');
+                    if (avatar && user.display_name) avatar.textContent = user.display_name.charAt(0).toUpperCase();
+                    if (nameDisplay && user.display_name) nameDisplay.textContent = user.display_name;
+                } catch (e) { console.error(e); }
+            }
+        });
+
+        document.getElementById('mobileToggle')?.addEventListener('click', function() {
+            document.getElementById('sidebar')?.classList.toggle('open');
+            document.getElementById('sidebarOverlay')?.classList.toggle('open');
+        });
+        document.getElementById('sidebarOverlay')?.addEventListener('click', function() {
+            document.getElementById('sidebar')?.classList.remove('open');
+            this.classList.remove('open');
+        });
+        document.getElementById('logoutButton')?.addEventListener('click', function() {
+            localStorage.removeItem('crevio_token');
+            localStorage.removeItem('crevio_user');
+            window.location.href = '/admin/pages/login.html';
+        });
+    </script>
+</body>
+</html>

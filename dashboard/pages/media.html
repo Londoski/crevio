@@ -1,0 +1,1369 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Media — Crevio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        /* ---- RESET & BASE ---- */
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            transition: background 0.3s, color 0.3s;
+            display: flex;
+            min-height: 100vh;
+        }
+        a { text-decoration: none; color: inherit; }
+
+        /* ---- THEME ---- */
+        [data-theme="dark"] {
+            --bg-primary: #0F172A;
+            --bg-secondary: #1E293B;
+            --bg-card: #1E293B;
+            --bg-input: #0F172A;
+            --border-color: #334155;
+            --text-primary: #F1F5F9;
+            --text-secondary: #94A3B8;
+            --text-muted: #64748B;
+            --accent: #2563EB;
+            --accent-hover: #1D4ED8;
+            --accent-dim: rgba(37,99,235,0.15);
+            --danger: #EF4444;
+            --danger-hover: #DC2626;
+            --success: #22C55E;
+            --warning: #F59E0B;
+            --shadow: 0 4px 24px rgba(0,0,0,0.4);
+        }
+        [data-theme="light"] {
+            --bg-primary: #F1F5F9;
+            --bg-secondary: #FFFFFF;
+            --bg-card: #FFFFFF;
+            --bg-input: #F8FAFC;
+            --border-color: #E2E8F0;
+            --text-primary: #0F172A;
+            --text-secondary: #475569;
+            --text-muted: #94A3B8;
+            --accent: #2563EB;
+            --accent-hover: #1D4ED8;
+            --accent-dim: rgba(37,99,235,0.1);
+            --danger: #EF4444;
+            --danger-hover: #DC2626;
+            --success: #22C55E;
+            --warning: #F59E0B;
+            --shadow: 0 4px 24px rgba(0,0,0,0.06);
+        }
+
+        /* ---- SIDEBAR ---- */
+        .sidebar {
+            width: 240px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 24px 16px;
+            height: 100vh;
+            position: sticky;
+            top: 0;
+            flex-shrink: 0;
+            transition: background 0.3s, border-color 0.3s;
+            overflow-y: auto;
+        }
+        .sidebar-brand { padding-bottom: 20px; border-bottom: 1px solid var(--border-color); margin-bottom: 20px; }
+        .sidebar-brand h1 { font-size: 20px; font-weight: 700; color: var(--text-primary); }
+        .sidebar-brand span { font-size: 11px; font-weight: 500; text-transform: uppercase; color: var(--text-muted); }
+        .sidebar-nav { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+        .nav-item {
+            display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px;
+            color: var(--text-secondary); font-size: 14px; font-weight: 500; transition: all 0.15s;
+            text-decoration: none;
+        }
+        .nav-item:hover { background: var(--accent-dim); color: var(--text-primary); }
+        .nav-item.active { background: var(--accent-dim); color: var(--accent); }
+        .nav-item .icon { width: 20px; height: 20px; flex-shrink: 0; }
+        .nav-divider { height: 1px; background: var(--border-color); margin: 8px 12px; }
+        .sidebar-footer { padding-top: 16px; border-top: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 8px; }
+        .logout-button {
+            background: transparent; border: none; color: var(--danger); font-size: 13px; font-weight: 500;
+            padding: 10px 12px; border-radius: 8px; cursor: pointer; font-family: inherit;
+            display: flex; align-items: center; gap: 12px; transition: background 0.15s;
+            width: 100%;
+        }
+        .logout-button:hover { background: rgba(239,68,68,0.1); }
+        .theme-toggle-btn {
+            background: transparent; border: none; color: var(--text-secondary); font-size: 18px;
+            cursor: pointer; padding: 6px 10px; border-radius: 8px; transition: background 0.15s;
+            display: inline-flex; align-items: center; gap: 6px; width: fit-content;
+        }
+        .theme-toggle-btn:hover { background: var(--accent-dim); color: var(--text-primary); }
+        .theme-toggle-btn .icon { width: 18px; height: 18px; }
+        .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 199; }
+        .sidebar-overlay.open { display: block; }
+
+        /* ---- MAIN ---- */
+        .dashboard-main {
+            flex: 1; padding: 28px 36px; background: var(--bg-primary);
+            min-height: 100vh; transition: background 0.3s;
+        }
+
+        .dashboard-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 28px; flex-wrap: wrap; gap: 12px;
+        }
+        .topbar-left { display: flex; align-items: center; gap: 16px; }
+        .mobile-menu-toggle {
+            display: none; background: none; border: none;
+            color: var(--text-secondary); font-size: 24px; cursor: pointer;
+        }
+        .topbar-left h2 { font-size: 24px; font-weight: 700; color: var(--text-primary); }
+        .header-description { font-size: 14px; color: var(--text-secondary); }
+        .topbar-right { display: flex; align-items: center; gap: 16px; }
+        .primary-button {
+            padding: 8px 18px; border-radius: 8px; border: none;
+            background: var(--accent); color: #fff;
+            font-size: 13px; font-weight: 600; cursor: pointer;
+            display: inline-flex; align-items: center; gap: 6px;
+            transition: all 0.15s; text-decoration: none;
+        }
+        .primary-button:hover { background: var(--accent-hover); transform: translateY(-1px); }
+        .secondary-button {
+            padding: 8px 18px; border-radius: 8px; border: 1px solid var(--border-color);
+            background: transparent; color: var(--text-secondary);
+            font-size: 13px; font-weight: 500; cursor: pointer;
+            display: inline-flex; align-items: center; gap: 6px;
+            transition: all 0.15s; text-decoration: none;
+        }
+        .secondary-button:hover { background: var(--bg-card); color: var(--text-primary); }
+        .user-profile { display: flex; align-items: center; gap: 8px; }
+        .user-avatar {
+            width: 32px; height: 32px; border-radius: 50%;
+            background: var(--accent); color: #fff;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 600; font-size: 13px; flex-shrink: 0;
+            overflow: hidden;
+        }
+        .user-avatar img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+        .user-name { font-size: 14px; font-weight: 500; color: var(--text-primary); }
+
+        /* ---- MEDIA SPECIFIC ---- */
+        .media-container { max-width: 1400px; margin: 0 auto; }
+
+        .storage-indicator {
+            display: flex; align-items: center; gap: 12px;
+            background: var(--bg-card); border: 1px solid var(--border-color);
+            border-radius: 10px; padding: 6px 16px 6px 12px;
+            margin-bottom: 20px; font-size: 13px; color: var(--text-secondary);
+        }
+        .storage-indicator .bar-wrap { flex: 1; max-width: 120px; height: 4px; background: var(--border-color); border-radius: 2px; overflow: hidden; }
+        .storage-indicator .bar-wrap .fill { height: 100%; width: 24%; background: var(--accent); border-radius: 2px; }
+        .storage-indicator .used-text { font-weight: 500; color: var(--text-primary); white-space: nowrap; }
+
+        .stats-row {
+            display: flex; flex-wrap: wrap; gap: 24px 48px;
+            background: var(--bg-card); border: 1px solid var(--border-color);
+            border-radius: 12px; padding: 16px 28px;
+            margin-bottom: 24px; align-items: center;
+        }
+        .stats-row .stat-item {
+            display: flex; align-items: baseline; gap: 6px;
+            font-size: 14px; color: var(--text-secondary);
+        }
+        .stats-row .stat-item .num { font-weight: 700; color: var(--text-primary); font-size: 18px; }
+        .stats-row .stat-item .label { color: var(--text-muted); font-size: 14px; }
+
+        .media-toolbar {
+            display: flex; flex-wrap: wrap; gap: 12px 20px;
+            align-items: center; margin-bottom: 24px;
+        }
+        .media-toolbar .search-wrap { flex: 1; min-width: 200px; position: relative; }
+        .media-toolbar .search-wrap input {
+            width: 100%; padding: 8px 14px 8px 38px;
+            border-radius: 10px; border: 1px solid var(--border-color);
+            background: var(--bg-input); color: var(--text-primary);
+            font-size: 14px; font-family: inherit;
+        }
+        .media-toolbar .search-wrap input:focus {
+            outline: none; border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-dim);
+        }
+        .media-toolbar .search-wrap .search-icon {
+            position: absolute; left: 12px; top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted); width: 18px; height: 18px;
+        }
+        .media-toolbar .filter-group {
+            display: flex; flex-wrap: wrap; align-items: center; gap: 4px;
+        }
+        .media-toolbar .filter-group .pill {
+            padding: 4px 14px; border-radius: 999px;
+            border: 1px solid var(--border-color); background: transparent;
+            color: var(--text-secondary); font-size: 12px; font-weight: 500;
+            cursor: pointer; transition: all 0.15s; font-family: inherit;
+            white-space: nowrap;
+        }
+        .media-toolbar .filter-group .pill.active {
+            background: var(--accent); color: #fff; border-color: var(--accent);
+        }
+        .media-toolbar .filter-group .pill:hover:not(.active) {
+            border-color: var(--accent); color: var(--text-primary);
+        }
+        .media-toolbar .filter-group .divider {
+            width: 1px; height: 24px; background: var(--border-color);
+            margin: 0 6px;
+        }
+        .media-toolbar .filter-group .sort-label {
+            font-size: 12px; color: var(--text-muted); margin-left: 8px;
+        }
+        .media-toolbar .filter-group .sort-select {
+            background: transparent; border: none;
+            color: var(--text-secondary); font-size: 12px; font-weight: 500;
+            cursor: pointer; font-family: inherit; padding: 2px 4px;
+        }
+        .media-toolbar .filter-group .sort-select:focus { outline: none; }
+
+        .bulk-bar {
+            display: none; align-items: center; gap: 12px;
+            padding: 10px 16px; background: var(--bg-card);
+            border: 1px solid var(--border-color); border-radius: 10px;
+            margin-bottom: 20px; flex-wrap: wrap;
+        }
+        .bulk-bar.show { display: flex; }
+        .bulk-bar .count { font-weight: 600; color: var(--text-primary); font-size: 14px; }
+        .bulk-bar .btn {
+            padding: 4px 14px; border-radius: 8px;
+            font-weight: 500; font-size: 13px; border: none;
+            cursor: pointer; font-family: inherit;
+            transition: all 0.15s; display: inline-flex; align-items: center; gap: 4px;
+        }
+        .bulk-bar .btn-secondary {
+            background: transparent; border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+        .bulk-bar .btn-secondary:hover { background: var(--bg-card); color: var(--text-primary); }
+        .bulk-bar .btn-danger { background: var(--danger); color: #fff; }
+        .bulk-bar .btn-danger:hover { background: var(--danger-hover); }
+
+        .media-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 20px;
+        }
+        .media-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.15s;
+            position: relative;
+            cursor: pointer;
+        }
+        .media-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-3px);
+            box-shadow: var(--shadow);
+        }
+        .media-card .checkbox-wrap {
+            position: absolute; top: 8px; left: 8px; z-index: 2;
+            background: rgba(0,0,0,0.5); border-radius: 4px; padding: 2px;
+        }
+        .media-card .checkbox-wrap input[type="checkbox"] {
+            width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer;
+        }
+        .media-card .thumbnail {
+            width: 100%;
+            aspect-ratio: 16/10;
+            background: var(--bg-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .media-card .thumbnail img,
+        .media-card .thumbnail video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .media-card .thumbnail video {
+            background: #000;
+            object-fit: cover;
+        }
+        .media-card .thumbnail .video-overlay {
+            position: absolute; inset: 0;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(0,0,0,0.3);
+            pointer-events: none;
+        }
+        .media-card .thumbnail .video-overlay .play-icon {
+            width: 40px; height: 40px; border-radius: 50%;
+            background: rgba(0,0,0,0.6); color: #fff;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px;
+        }
+        .media-card .thumbnail .file-type-badge {
+            position: absolute; top: 8px; right: 8px;
+            background: rgba(0,0,0,0.7); color: #fff;
+            font-size: 10px; font-weight: 600; text-transform: uppercase;
+            padding: 2px 8px; border-radius: 4px;
+        }
+        .media-card .info { padding: 12px 14px 14px; }
+        .media-card .info .name {
+            font-size: 13px; font-weight: 500; color: var(--text-primary);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .media-card .info .meta {
+            font-size: 12px; color: var(--text-muted);
+            display: flex; justify-content: space-between; align-items: center;
+            margin-top: 2px;
+        }
+        .media-card .info .meta .project {
+            color: var(--accent); font-weight: 500;
+            max-width: 60%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .media-card .info .meta .project.unassigned { color: var(--text-muted); }
+        .media-card .info .meta .date { font-size: 10px; color: var(--text-muted); }
+        .media-card .more-btn {
+            position: absolute; bottom: 8px; right: 8px;
+            background: rgba(0,0,0,0.5); border: none; color: #fff;
+            border-radius: 4px; padding: 2px 6px; cursor: pointer;
+            font-size: 16px; line-height: 1;
+        }
+        .media-card .more-btn:hover { background: rgba(0,0,0,0.8); }
+
+        .empty-state {
+            grid-column: 1 / -1;
+            text-align: center; padding: 60px 0;
+            color: var(--text-muted);
+        }
+        .empty-state .icon { width: 48px; height: 48px; color: var(--text-muted); margin-bottom: 12px; }
+        .empty-state h3 { font-size: 18px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
+        .empty-state p { font-size: 14px; margin-bottom: 16px; }
+        .empty-state .error-msg { color: var(--danger); }
+
+        /* ---- Modals ---- */
+        .modal-overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.7); z-index: 1000;
+            align-items: center; justify-content: center; padding: 20px;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal-box {
+            background: var(--bg-card); border: 1px solid var(--border-color);
+            border-radius: 16px; padding: 32px;
+            max-width: 480px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow);
+        }
+        .modal-box .modal-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 16px;
+        }
+        .modal-box .modal-header h2 {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        .modal-box .modal-header .close-btn {
+            background: none; border: none; color: var(--text-muted);
+            font-size: 24px; cursor: pointer;
+        }
+        .modal-box .modal-subtitle {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+        }
+        .modal-box .form-group { margin-bottom: 16px; }
+        .modal-box .form-group label {
+            display: block; font-size: 13px; font-weight: 500;
+            color: var(--text-secondary); margin-bottom: 4px;
+        }
+        .modal-box .form-group input {
+            width: 100%; padding: 10px 14px; border-radius: 10px;
+            border: 1px solid var(--border-color); background: var(--bg-input);
+            color: var(--text-primary); font-size: 14px; font-family: inherit;
+        }
+        .modal-box .form-group input:focus {
+            outline: none; border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-dim);
+        }
+        .modal-box .modal-footer {
+            display: flex; justify-content: flex-end; gap: 12px;
+            margin-top: 16px; padding-top: 16px;
+            border-top: 1px solid var(--border-color);
+        }
+        .modal-box .modal-footer .btn {
+            padding: 10px 20px; border-radius: 10px;
+            font-weight: 600; font-size: 14px; cursor: pointer;
+            border: none; font-family: inherit; transition: all 0.15s;
+        }
+        .btn-primary { background: var(--accent); color: #fff; }
+        .btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); }
+        .btn-secondary { background: transparent; border: 1px solid var(--border-color); color: var(--text-secondary); }
+        .btn-secondary:hover { background: var(--bg-card); color: var(--text-primary); }
+        .btn-danger { background: var(--danger); color: #fff; }
+        .btn-danger:hover { background: var(--danger-hover); }
+
+        /* ---- Upload Modal (file upload) ---- */
+        .upload-area {
+            border: 2px dashed var(--border-color); border-radius: 12px;
+            padding: 40px 20px; text-align: center; cursor: pointer;
+            transition: all 0.2s; background: var(--bg-primary);
+        }
+        .upload-area:hover { border-color: var(--accent); background: var(--accent-dim); }
+        .upload-area .icon { width: 48px; height: 48px; color: var(--text-muted); margin-bottom: 8px; }
+        .upload-area input[type="file"] { display: none; }
+        .upload-area .accepted-formats { font-size: 12px; color: var(--text-muted); margin-top: 8px; }
+        .upload-progress { margin-top: 16px; }
+        .upload-progress .file-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 6px 0; border-bottom: 1px solid var(--border-color);
+            font-size: 13px;
+        }
+        .upload-progress .file-item .progress-bar {
+            flex: 1; height: 4px; background: var(--border-color);
+            border-radius: 2px; overflow: hidden;
+        }
+        .upload-progress .file-item .progress-bar .fill {
+            height: 100%; background: var(--accent);
+            transition: width 0.3s;
+        }
+        .upload-progress .file-item .status {
+            font-size: 12px; color: var(--text-muted);
+            min-width: 60px; text-align: right;
+        }
+        .upload-progress .file-item .status.success { color: var(--success); }
+        .upload-progress .file-item .status.error { color: var(--danger); }
+
+        /* ---- Detail Panel ---- */
+        .detail-panel {
+            position: fixed; top: 0; right: -480px;
+            width: 480px; max-width: 90vw; height: 100%;
+            background: var(--bg-card); border-left: 1px solid var(--border-color);
+            z-index: 999; transition: right 0.3s ease;
+            display: flex; flex-direction: column;
+            overflow-y: auto; box-shadow: -4px 0 24px rgba(0,0,0,0.3);
+        }
+        .detail-panel.open { right: 0; }
+        .detail-panel .panel-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 16px 20px; border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+        .detail-panel .panel-header h3 { font-size: 16px; font-weight: 600; color: var(--text-primary); }
+        .detail-panel .panel-header .close-btn {
+            background: none; border: none; color: var(--text-muted);
+            font-size: 20px; cursor: pointer;
+        }
+        .detail-panel .panel-body { padding: 20px; flex: 1; overflow-y: auto; }
+        .detail-panel .panel-body .preview {
+            width: 100%; background: #000; border-radius: 8px;
+            overflow: hidden; display: flex; align-items: center; justify-content: center;
+            margin-bottom: 16px; min-height: 200px; max-height: 60vh;
+        }
+        .detail-panel .panel-body .preview img,
+        .detail-panel .panel-body .preview video {
+            width: 100%; height: 100%; max-height: 60vh; object-fit: contain; display: block;
+        }
+        .detail-panel .panel-body .field { margin-bottom: 12px; }
+        .detail-panel .panel-body .field label {
+            display: block; font-size: 11px; font-weight: 600;
+            text-transform: uppercase; letter-spacing: 0.04em;
+            color: var(--text-muted); margin-bottom: 2px;
+        }
+        .detail-panel .panel-body .field .value {
+            font-size: 14px; color: var(--text-primary); word-break: break-word;
+        }
+        .detail-panel .panel-body .field .value .badge {
+            display: inline-block; padding: 2px 10px; border-radius: 999px;
+            font-size: 11px; font-weight: 500;
+            background: var(--accent-dim); color: var(--accent);
+        }
+        .detail-panel .panel-body .field .value .badge.unassigned {
+            background: var(--bg-primary); color: var(--text-muted);
+        }
+        .detail-panel .panel-actions {
+            display: flex; gap: 8px; flex-wrap: wrap;
+            padding: 16px 20px; border-top: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+        .detail-panel .panel-actions .btn {
+            padding: 6px 14px; border-radius: 8px;
+            font-weight: 500; font-size: 13px; border: none;
+            cursor: pointer; font-family: inherit;
+            transition: all 0.15s; display: inline-flex; align-items: center; gap: 4px;
+        }
+
+        @media (max-width: 992px) {
+            .stats-row { gap: 16px 28px; padding: 14px 20px; }
+            .media-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+        }
+        @media (max-width: 768px) {
+            .stats-row { gap: 12px 20px; padding: 12px 16px; flex-wrap: wrap; }
+            .stats-row .stat-item { font-size: 13px; }
+            .stats-row .stat-item .num { font-size: 16px; }
+            .media-toolbar { flex-direction: column; align-items: stretch; }
+            .media-toolbar .filter-group { overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; padding-bottom: 4px; }
+            .media-toolbar .filter-group .pill { white-space: nowrap; }
+            .media-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; }
+            .detail-panel { width: 100%; max-width: 100%; right: -100%; }
+            .modal-box { padding: 20px; margin: 10px; max-width: 95%; }
+            .upload-area { padding: 24px 16px; }
+            .sidebar { display: none; }
+            .dashboard-main { padding: 16px 20px; }
+            .mobile-menu-toggle { display: block; }
+            .topbar-right { width: 100%; justify-content: space-between; }
+            .user-name { display: none; }
+        }
+        @media (max-width: 480px) {
+            .media-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+            .media-card .info .name { font-size: 12px; }
+            .media-card .info .meta { font-size: 10px; }
+            .stats-row .stat-item { font-size: 12px; }
+            .stats-row .stat-item .num { font-size: 14px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand"><h1>Crevio</h1><span>Creator Dashboard</span></div>
+        <nav class="sidebar-nav">
+            <a href="/dashboard/" class="nav-item"><i data-lucide="layout-dashboard" class="icon"></i> Overview</a>
+            <a href="/dashboard/pages/projects.html" class="nav-item"><i data-lucide="folder-open" class="icon"></i> Projects</a>
+            <a href="/dashboard/pages/media.html" class="nav-item active"><i data-lucide="image" class="icon"></i> Media</a>
+            <a href="/dashboard/pages/services.html" class="nav-item"><i data-lucide="briefcase" class="icon"></i> Services</a>
+            <a href="/dashboard/pages/skills.html" class="nav-item"><i data-lucide="star" class="icon"></i> Skills</a>
+            <a href="/dashboard/pages/social-links.html" class="nav-item"><i data-lucide="share-2" class="icon"></i> My Socials</a>
+            <div class="nav-divider"></div>
+            <a href="/dashboard/pages/portfolio.html" class="nav-item"><i data-lucide="layout-template" class="icon"></i> Portfolio</a>
+            <a href="/dashboard/pages/portfolio-edit.html" class="nav-item"><i data-lucide="edit-3" class="icon"></i> Edit Portfolio</a>
+            <a href="/dashboard/pages/bot.html" class="nav-item"><i data-lucide="bot" class="icon"></i> Crevio Bot</a>
+            <div class="nav-divider"></div>
+            <a href="/dashboard/pages/messages.html" class="nav-item"><i data-lucide="mail" class="icon"></i> Messages</a>
+            <a href="/dashboard/pages/notifications.html" class="nav-item"><i data-lucide="bell" class="icon"></i> Notifications</a>
+            <div class="nav-divider"></div>
+            <a href="/dashboard/pages/billing.html" class="nav-item"><i data-lucide="credit-card" class="icon"></i> Billing</a>
+            <a href="/dashboard/pages/security.html" class="nav-item"><i data-lucide="shield" class="icon"></i> Security</a>
+            <a href="/dashboard/pages/settings.html" class="nav-item"><i data-lucide="settings" class="icon"></i> Settings</a>
+            <a href="/dashboard/pages/profile.html" class="nav-item"><i data-lucide="user" class="icon"></i> Profile</a>
+            <a href="/dashboard/pages/account-management.html" class="nav-item"><i data-lucide="user-cog" class="icon"></i> Account Management</a>
+            <div class="nav-divider"></div>
+            <a href="/" target="_blank" class="nav-item"><i data-lucide="globe" class="icon"></i> View Portfolio</a>
+        </nav>
+        <div class="sidebar-footer">
+            <span id="themeToggleBtn" class="theme-toggle-btn" onclick="toggleTheme()" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:8px;color:var(--text-secondary);font-size:18px;">
+                <i data-lucide="moon" class="icon"></i>
+            </span>
+            <button id="logoutButton" class="logout-button"><i data-lucide="log-out" class="icon"></i> Logout</button>
+        </div>
+    </aside>
+
+    <div id="sidebarOverlay" class="sidebar-overlay"></div>
+
+    <!-- MAIN -->
+    <main class="dashboard-main">
+
+        <header class="dashboard-header">
+            <div class="topbar-left">
+                <button id="mobileToggle" class="mobile-menu-toggle"><i data-lucide="menu"></i></button>
+                <div>
+                    <h2>Media</h2>
+                    <p class="header-description">Manage your photos, videos and portfolio assets.</p>
+                </div>
+            </div>
+            <div class="topbar-right">
+                <button class="primary-button" id="uploadBtn">
+                    <i data-lucide="upload" class="icon"></i> Upload Media
+                </button>
+                <div class="user-profile">
+                    <span class="user-avatar" id="userAvatar">C</span>
+                    <span class="user-name" id="userNameDisplay">Creator</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="media-container">
+
+            <!-- Storage Indicator -->
+            <div class="storage-indicator">
+                <i data-lucide="hard-drive" style="width:16px;height:16px;color:var(--text-muted);"></i>
+                <span class="used-text">0 MB</span>
+                <span style="color:var(--text-muted);">/ 10 GB</span>
+                <div class="bar-wrap"><div class="fill" style="width:0%;"></div></div>
+            </div>
+
+            <!-- Stats -->
+            <div class="stats-row" id="statsRow">
+                <div class="stat-item"><span class="num" id="totalCount">0</span> <span class="label">Total Media</span></div>
+                <div class="stat-item"><span class="num" id="imageCount">0</span> <span class="label">Images</span></div>
+                <div class="stat-item"><span class="num" id="videoCount">0</span> <span class="label">Videos</span></div>
+                <div class="stat-item"><span class="num" id="usedCount">0</span> <span class="label">Used in Projects</span></div>
+                <div class="stat-item"><span class="num" id="unassignedCount">0</span> <span class="label">Unassigned</span></div>
+            </div>
+
+            <!-- Toolbar -->
+            <div class="media-toolbar">
+                <div class="search-wrap">
+                    <i data-lucide="search" class="search-icon"></i>
+                    <input type="text" id="searchInput" placeholder="Search media…">
+                </div>
+                <div class="filter-group" id="filterPills">
+                    <button class="pill active" data-filter="all">All Media</button>
+                    <button class="pill" data-filter="image">Images</button>
+                    <button class="pill" data-filter="video">Videos</button>
+                    <button class="pill" data-filter="unassigned">Unassigned</button>
+                    <button class="pill" data-filter="used">Used in Projects</button>
+                    <button class="pill" data-filter="unused">Unused</button>
+                    <span class="divider"></span>
+                    <span class="sort-label">Sort:</span>
+                    <select class="sort-select" id="sortSelect">
+                        <option value="newest">Newest</option>
+                        <option value="oldest">Oldest</option>
+                        <option value="name-asc">Name A–Z</option>
+                        <option value="name-desc">Name Z–A</option>
+                        <option value="largest">Largest</option>
+                        <option value="smallest">Smallest</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Bulk Bar -->
+            <div class="bulk-bar" id="bulkBar">
+                <span class="count" id="selectedCount">0 selected</span>
+                <button class="btn btn-secondary" id="bulkAssignBtn"><i data-lucide="folder" style="width:14px;height:14px;"></i> Assign to Project</button>
+                <button class="btn btn-danger" id="bulkDeleteBtn"><i data-lucide="trash-2" style="width:14px;height:14px;"></i> Delete</button>
+                <button class="btn btn-secondary" id="bulkClearBtn">Clear Selection</button>
+            </div>
+
+            <!-- Media Grid -->
+            <div id="mediaGrid" class="media-grid">
+                <div class="empty-state">
+                    <i data-lucide="image" class="icon"></i>
+                    <h3>Loading...</h3>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- UPLOAD MODAL -->
+    <div id="uploadModal" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h2>Upload Media</h2>
+                <button class="close-btn" id="closeUploadModal">&times;</button>
+            </div>
+            <div class="upload-area" id="uploadArea">
+                <i data-lucide="upload-cloud" class="icon"></i>
+                <p><strong>Drag & drop files here</strong> or</p>
+                <button class="btn btn-secondary" style="margin: 8px auto;">Choose Files</button>
+                <p class="accepted-formats">JPG · PNG · WEBP · MP4 · MOV · More</p>
+                <input type="file" id="fileInput" accept="image/*,video/*,image/gif" multiple>
+            </div>
+            <div id="uploadProgress" class="upload-progress"></div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelUploadBtn">Cancel</button>
+                <button class="btn btn-primary" id="finalizeUploadBtn" disabled>Upload</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ASSIGN MODAL -->
+    <div id="assignModal" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h2>Assign to Project</h2>
+                <button class="close-btn" id="closeAssignModal">&times;</button>
+            </div>
+            <p class="modal-subtitle" id="assignSubtitle">Assign selected media to a project</p>
+            <div class="form-group">
+                <label for="assignProjectName">Project Name</label>
+                <input type="text" id="assignProjectName" placeholder="e.g. Lura Campaign" autofocus>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelAssignBtn">Cancel</button>
+                <button class="btn btn-primary" id="confirmAssignBtn">Assign</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- DETAIL PANEL -->
+    <div id="detailPanel" class="detail-panel">
+        <div class="panel-header">
+            <h3>Media Details</h3>
+            <button class="close-btn" id="closeDetailPanel">&times;</button>
+        </div>
+        <div class="panel-body" id="detailBody"></div>
+        <div class="panel-actions" id="detailActions"></div>
+    </div>
+
+    <script>
+        // =========================================================
+        // ALL JAVASCRIPT (self-contained)
+        // =========================================================
+
+        console.log('Media page loaded');
+
+        // ---- DOM refs ----
+        const grid = document.getElementById('mediaGrid');
+        const searchInput = document.getElementById('searchInput');
+        const filterPills = document.querySelectorAll('#filterPills .pill');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const uploadModal = document.getElementById('uploadModal');
+        const closeUploadModal = document.getElementById('closeUploadModal');
+        const cancelUploadBtn = document.getElementById('cancelUploadBtn');
+        const finalizeUploadBtn = document.getElementById('finalizeUploadBtn');
+        const fileInput = document.getElementById('fileInput');
+        const uploadArea = document.getElementById('uploadArea');
+        const uploadProgress = document.getElementById('uploadProgress');
+        const detailPanel = document.getElementById('detailPanel');
+        const closeDetailPanel = document.getElementById('closeDetailPanel');
+        const detailBody = document.getElementById('detailBody');
+        const detailActions = document.getElementById('detailActions');
+        const bulkBar = document.getElementById('bulkBar');
+        const selectedCount = document.getElementById('selectedCount');
+        const bulkAssignBtn = document.getElementById('bulkAssignBtn');
+        const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+        const bulkClearBtn = document.getElementById('bulkClearBtn');
+        const sortSelect = document.getElementById('sortSelect');
+
+        // ---- Assign Modal refs ----
+        const assignModal = document.getElementById('assignModal');
+        const closeAssignModal = document.getElementById('closeAssignModal');
+        const cancelAssignBtn = document.getElementById('cancelAssignBtn');
+        const confirmAssignBtn = document.getElementById('confirmAssignBtn');
+        const assignProjectName = document.getElementById('assignProjectName');
+        const assignSubtitle = document.getElementById('assignSubtitle');
+
+        let mediaItems = [];
+        let selectedIds = new Set();
+        let currentFilter = 'all';
+        let currentSearch = '';
+        let currentSort = 'newest';
+        let pendingAssignIds = [];
+
+        // ---- AUTH ----
+        function getToken() {
+            const token = localStorage.getItem('crevio_token');
+            if (!token) {
+                window.location.href = '/admin/pages/login.html';
+                return null;
+            }
+            return token;
+        }
+
+        // ---- API ----
+        async function apiFetch(endpoint, options = {}) {
+            const token = getToken();
+            if (!token) return null;
+            const res = await fetch(endpoint, {
+                ...options,
+                headers: {
+                    'Authorization': 'Bearer ' + token,
+                    ...options.headers
+                }
+            });
+            if (res.status === 401) {
+                localStorage.removeItem('crevio_token');
+                window.location.href = '/admin/pages/login.html';
+                return null;
+            }
+            return res;
+        }
+
+        // ---- LOAD MEDIA ----
+        async function loadMedia() {
+            const params = new URLSearchParams();
+            if (currentFilter !== 'all') params.append('filter', currentFilter);
+            if (currentSearch) params.append('search', currentSearch);
+            if (currentSort && currentSort !== 'newest') params.append('sort', currentSort);
+
+            try {
+                const res = await apiFetch('/api/media?' + params.toString());
+                if (!res) throw new Error('No response from server');
+                const data = await res.json();
+                if (!data.success) throw new Error(data.message || 'Failed to load media');
+                mediaItems = data.media || [];
+                renderMedia(mediaItems);
+                updateStats(mediaItems);
+            } catch (err) {
+                console.error('Load media error:', err);
+                grid.innerHTML = `
+                    <div class="empty-state">
+                        <i data-lucide="alert-circle" class="icon"></i>
+                        <h3 class="error-msg" style="color:var(--danger);">Unable to load media</h3>
+                        <p>${err.message}</p>
+                        <button class="primary-button" onclick="loadMedia()" style="margin-top:12px;">
+                            <i data-lucide="refresh-cw" class="icon"></i> Retry
+                        </button>
+                    </div>
+                `;
+                refreshIcons();
+            }
+        }
+
+        // ---- RENDER MEDIA ----
+        function renderMedia(items) {
+            if (!items || items.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state">
+                        <i data-lucide="image" class="icon"></i>
+                        <h3>No media yet</h3>
+                        <p>Upload your first image or video.</p>
+                        <button class="primary-button" id="emptyUploadBtn2">
+                            <i data-lucide="upload" class="icon"></i> Upload Media
+                        </button>
+                    </div>
+                `;
+                document.getElementById('emptyUploadBtn2')?.addEventListener('click', () => openUploadModal());
+                refreshIcons();
+                return;
+            }
+
+            let html = '';
+            items.forEach(item => {
+                const isSelected = selectedIds.has(item.id);
+                const isVideo = item.media_type && item.media_type.startsWith('video');
+                const mediaUrl = item.media_url || '';
+                const thumb = item.thumbnail_url || mediaUrl || '';
+                const projectName = item.project_name || 'Unassigned';
+                const projectClass = item.project_name ? '' : 'unassigned';
+                const dateAdded = item.created_at ? new Date(item.created_at).toLocaleDateString() : '';
+
+                html += `
+                    <div class="media-card" data-id="${item.id}" data-selected="${isSelected}">
+                        <div class="checkbox-wrap">
+                            <input type="checkbox" class="media-checkbox" data-id="${item.id}" ${isSelected ? 'checked' : ''}>
+                        </div>
+                        <div class="thumbnail">
+                            ${isVideo ?
+                                `<video src="${mediaUrl}" poster="${thumb}" muted preload="metadata"></video>
+                                 <div class="video-overlay"><div class="play-icon">▶</div></div>` :
+                                `<img src="${thumb || mediaUrl}" alt="${item.title || item.filename}" loading="lazy" onerror="this.src='https://via.placeholder.com/400x250/1E293B/94A3B8?text=Error'">`
+                            }
+                            <span class="file-type-badge">${isVideo ? 'Video' : 'Image'}</span>
+                        </div>
+                        <div class="info">
+                            <div class="name" title="${item.title || item.filename}">${item.title || item.filename}</div>
+                            <div class="meta">
+                                <span class="project ${projectClass}" title="${projectName}">${projectName}</span>
+                                <span class="date">${dateAdded}</span>
+                            </div>
+                        </div>
+                        <button class="more-btn" data-id="${item.id}" title="Actions">⋯</button>
+                    </div>
+                `;
+            });
+            grid.innerHTML = html;
+
+            // ---- Event listeners ----
+            grid.querySelectorAll('.media-checkbox').forEach(cb => {
+                cb.addEventListener('change', function() {
+                    const id = parseInt(this.dataset.id);
+                    if (this.checked) selectedIds.add(id);
+                    else selectedIds.delete(id);
+                    updateBulkBar();
+                    const card = this.closest('.media-card');
+                    if (card) card.dataset.selected = this.checked ? 'true' : 'false';
+                });
+            });
+
+            grid.querySelectorAll('.media-card').forEach(card => {
+                card.addEventListener('click', function(e) {
+                    if (e.target.closest('.checkbox-wrap') || e.target.closest('.more-btn')) return;
+                    const id = parseInt(this.dataset.id);
+                    const item = mediaItems.find(m => m.id === id);
+                    if (item) openDetailPanel(item);
+                });
+            });
+
+            grid.querySelectorAll('.more-btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const id = parseInt(this.dataset.id);
+                    const item = mediaItems.find(m => m.id === id);
+                    if (item) openDetailPanel(item);
+                });
+            });
+
+            refreshIcons();
+        }
+
+        // ---- UPDATE STATS (with storage calculation) ----
+        function updateStats(items) {
+            const total = items.length;
+            const images = items.filter(m => m.media_type && m.media_type.startsWith('image')).length;
+            const videos = items.filter(m => m.media_type && m.media_type.startsWith('video')).length;
+            const used = items.filter(m => m.project_id).length;
+            const unassigned = items.filter(m => !m.project_id).length;
+
+            // ---- Calculate total file size ----
+            let totalBytes = 0;
+            items.forEach(item => {
+                if (item.file_size) {
+                    totalBytes += item.file_size;
+                }
+            });
+
+            // Format the size
+            let sizeDisplay = '0 MB';
+            if (totalBytes > 0) {
+                const mb = totalBytes / (1024 * 1024);
+                if (mb >= 1024) {
+                    sizeDisplay = (mb / 1024).toFixed(1) + ' GB';
+                } else if (mb >= 1) {
+                    sizeDisplay = mb.toFixed(1) + ' MB';
+                } else {
+                    sizeDisplay = (totalBytes / 1024).toFixed(0) + ' KB';
+                }
+            }
+
+            // ---- Update stats numbers ----
+            document.getElementById('totalCount').textContent = total;
+            document.getElementById('imageCount').textContent = images;
+            document.getElementById('videoCount').textContent = videos;
+            document.getElementById('usedCount').textContent = used;
+            document.getElementById('unassignedCount').textContent = unassigned;
+
+            // ---- Update storage indicator ----
+            const storageText = document.querySelector('.storage-indicator .used-text');
+            if (storageText) {
+                storageText.textContent = sizeDisplay;
+            }
+
+            // Update progress bar (assuming 10GB limit)
+            const progressFill = document.querySelector('.storage-indicator .bar-wrap .fill');
+            if (progressFill && totalBytes > 0) {
+                const percent = Math.min((totalBytes / (10 * 1024 * 1024 * 1024)) * 100, 100);
+                progressFill.style.width = percent + '%';
+            }
+        }
+
+        // ---- Filters ----
+        filterPills.forEach(pill => {
+            pill.addEventListener('click', function() {
+                filterPills.forEach(p => p.classList.remove('active'));
+                this.classList.add('active');
+                currentFilter = this.dataset.filter;
+                loadMedia();
+            });
+        });
+
+        searchInput.addEventListener('input', function() {
+            currentSearch = this.value.trim();
+            loadMedia();
+        });
+
+        sortSelect.addEventListener('change', function() {
+            currentSort = this.value;
+            loadMedia();
+        });
+
+        // ---- Bulk ----
+        function updateBulkBar() {
+            const count = selectedIds.size;
+            if (count > 0) {
+                bulkBar.classList.add('show');
+                selectedCount.textContent = `${count} selected`;
+            } else {
+                bulkBar.classList.remove('show');
+            }
+        }
+
+        bulkClearBtn.addEventListener('click', function() {
+            selectedIds.clear();
+            updateBulkBar();
+            grid.querySelectorAll('.media-checkbox').forEach(cb => cb.checked = false);
+            grid.querySelectorAll('.media-card').forEach(card => card.dataset.selected = 'false');
+        });
+
+        bulkDeleteBtn.addEventListener('click', async function() {
+            if (selectedIds.size === 0) return;
+            if (!confirm(`Delete ${selectedIds.size} selected media items?`)) return;
+            const ids = Array.from(selectedIds);
+            try {
+                const res = await apiFetch('/api/media/bulk', {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ids })
+                });
+                if (!res) return;
+                const data = await res.json();
+                if (!data.success) throw new Error(data.message || 'Bulk delete failed');
+                selectedIds.clear();
+                updateBulkBar();
+                loadMedia();
+            } catch (err) {
+                alert('❌ ' + err.message);
+            }
+        });
+
+        // ---- Custom Assign Modal ----
+        function openAssignModal() {
+            const count = selectedIds.size;
+            if (count === 0) return;
+            pendingAssignIds = Array.from(selectedIds);
+            assignSubtitle.textContent = `Assign ${count} selected media item${count > 1 ? 's' : ''} to a project`;
+            assignProjectName.value = '';
+            assignModal.classList.add('open');
+            setTimeout(() => assignProjectName.focus(), 100);
+        }
+
+        function closeAssignModalFn() {
+            assignModal.classList.remove('open');
+            pendingAssignIds = [];
+            assignProjectName.value = '';
+        }
+
+        bulkAssignBtn.addEventListener('click', openAssignModal);
+        closeAssignModal.addEventListener('click', closeAssignModalFn);
+        cancelAssignBtn.addEventListener('click', closeAssignModalFn);
+
+        assignModal.addEventListener('click', function(e) {
+            if (e.target === this) closeAssignModalFn();
+        });
+
+        assignProjectName.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                confirmAssignBtn.click();
+            }
+        });
+
+        confirmAssignBtn.addEventListener('click', async function() {
+            const projectName = assignProjectName.value.trim();
+            const ids = pendingAssignIds;
+            if (ids.length === 0) return;
+
+            const finalProjectName = projectName || null;
+
+            try {
+                const res = await apiFetch('/api/media/bulk/assign', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ids, projectName: finalProjectName })
+                });
+                if (!res) return;
+                const data = await res.json();
+                if (!data.success) throw new Error(data.message || 'Assignment failed');
+                selectedIds.clear();
+                updateBulkBar();
+                closeAssignModalFn();
+                loadMedia();
+            } catch (err) {
+                alert('❌ ' + err.message);
+            }
+        });
+
+        // ---- Upload ----
+        function openUploadModal() {
+            uploadModal.classList.add('open');
+            fileInput.value = '';
+            uploadProgress.innerHTML = '';
+            finalizeUploadBtn.disabled = true;
+        }
+
+        function closeUploadModalFn() {
+            uploadModal.classList.remove('open');
+            fileInput.value = '';
+            uploadProgress.innerHTML = '';
+            finalizeUploadBtn.disabled = true;
+        }
+
+        uploadBtn.addEventListener('click', openUploadModal);
+        closeUploadModal.addEventListener('click', closeUploadModalFn);
+        cancelUploadBtn.addEventListener('click', closeUploadModalFn);
+
+        uploadArea.addEventListener('click', () => fileInput.click());
+        uploadArea.addEventListener('dragover', e => { e.preventDefault(); uploadArea.style.borderColor = 'var(--accent)'; });
+        uploadArea.addEventListener('dragleave', e => { e.preventDefault(); uploadArea.style.borderColor = ''; });
+        uploadArea.addEventListener('drop', e => {
+            e.preventDefault();
+            uploadArea.style.borderColor = '';
+            if (e.dataTransfer.files.length) {
+                fileInput.files = e.dataTransfer.files;
+                handleFiles(fileInput.files);
+            }
+        });
+
+        fileInput.addEventListener('change', function() {
+            if (this.files.length) handleFiles(this.files);
+        });
+
+        function handleFiles(files) {
+            let html = '';
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                html += `
+                    <div class="file-item" data-index="${i}">
+                        <span>${file.name}</span>
+                        <span style="font-size:11px;color:var(--text-muted);">${(file.size / 1024 / 1024).toFixed(1)} MB</span>
+                        <div class="progress-bar"><div class="fill" style="width:0%;"></div></div>
+                        <span class="status">Pending</span>
+                    </div>
+                `;
+            }
+            uploadProgress.innerHTML = html;
+            finalizeUploadBtn.disabled = false;
+        }
+
+        finalizeUploadBtn.addEventListener('click', async function() {
+            if (this.disabled) return;
+            const files = fileInput.files;
+            if (!files || files.length === 0) return;
+
+            this.disabled = true;
+            this.textContent = 'Uploading...';
+
+            let errors = [];
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const formData = new FormData();
+                formData.append('media', file);
+
+                try {
+                    const res = await apiFetch('/api/media/upload', {
+                        method: 'POST',
+                        body: formData,
+                        headers: {}
+                    });
+                    if (!res) continue;
+                    const data = await res.json();
+                    if (!data.success) {
+                        errors.push({ file: file.name, error: data.message || 'Upload failed' });
+                        updateFileStatus(i, 'error');
+                    } else {
+                        updateFileStatus(i, 'success');
+                    }
+                } catch (err) {
+                    errors.push({ file: file.name, error: err.message });
+                    updateFileStatus(i, 'error');
+                }
+            }
+
+            this.disabled = false;
+            this.textContent = 'Upload';
+
+            if (errors.length === 0) {
+                alert('✅ All files uploaded successfully!');
+                closeUploadModalFn();
+                loadMedia();
+            } else {
+                let msg = 'Some files failed to upload:\n';
+                errors.forEach(e => msg += `- ${e.file}: ${e.error}\n`);
+                alert('❌ ' + msg);
+                finalizeUploadBtn.disabled = true;
+            }
+        });
+
+        function updateFileStatus(index, status) {
+            const items = uploadProgress.querySelectorAll('.file-item');
+            if (items[index]) {
+                const statusEl = items[index].querySelector('.status');
+                const bar = items[index].querySelector('.fill');
+                if (status === 'success') {
+                    statusEl.textContent = '✅ Done';
+                    statusEl.className = 'status success';
+                    bar.style.width = '100%';
+                } else {
+                    statusEl.textContent = '❌ Failed';
+                    statusEl.className = 'status error';
+                    bar.style.width = '100%';
+                    bar.style.background = 'var(--danger)';
+                }
+            }
+        }
+
+        // ---- Detail panel ----
+        function openDetailPanel(item) {
+            const isVideo = item.media_type && item.media_type.startsWith('video');
+            const thumb = item.thumbnail_url || item.media_url || '';
+            const projectName = item.project_name || 'Unassigned';
+
+            detailBody.innerHTML = `
+                <div class="preview">
+                    ${isVideo ?
+                        `<video controls src="${item.media_url}" poster="${thumb}" style="width:100%;height:100%;max-height:60vh;object-fit:contain;"></video>` :
+                        `<img src="${item.media_url}" alt="${item.title || item.filename}" style="width:100%;height:100%;max-height:60vh;object-fit:contain;">`
+                    }
+                </div>
+                <div class="field">
+                    <label>Title</label>
+                    <div class="value">${item.title || item.filename}</div>
+                </div>
+                <div class="field">
+                    <label>Type</label>
+                    <div class="value">${item.media_type || 'Unknown'}</div>
+                </div>
+                <div class="field">
+                    <label>Project</label>
+                    <div class="value"><span class="badge ${projectName === 'Unassigned' ? 'unassigned' : ''}">${projectName}</span></div>
+                </div>
+                <div class="field">
+                    <label>Description</label>
+                    <div class="value">${item.description || 'No description'}</div>
+                </div>
+                <div class="field">
+                    <label>File Size</label>
+                    <div class="value">${item.file_size ? (item.file_size / 1024 / 1024).toFixed(1) + ' MB' : '—'}</div>
+                </div>
+                <div class="field">
+                    <label>Added</label>
+                    <div class="value">${item.created_at ? new Date(item.created_at).toLocaleString() : '—'}</div>
+                </div>
+            `;
+
+            detailActions.innerHTML = `
+                <button class="btn btn-secondary" id="detailEditBtn"><i data-lucide="edit-2" style="width:14px;height:14px;"></i> Edit</button>
+                <button class="btn btn-secondary" id="detailAssignBtn"><i data-lucide="folder" style="width:14px;height:14px;"></i> Assign</button>
+                <button class="btn btn-secondary" id="detailDownloadBtn"><i data-lucide="download" style="width:14px;height:14px;"></i> Download</button>
+                <button class="btn btn-danger" id="detailDeleteBtn"><i data-lucide="trash-2" style="width:14px;height:14px;"></i> Delete</button>
+            `;
+
+            detailPanel.classList.add('open');
+
+            document.getElementById('detailEditBtn').addEventListener('click', function() {
+                const newTitle = prompt('Enter new title:', item.title || item.filename);
+                if (newTitle !== null && newTitle.trim() !== '') {
+                    updateMedia(item.id, { title: newTitle.trim() });
+                }
+            });
+
+            document.getElementById('detailAssignBtn').addEventListener('click', function() {
+                pendingAssignIds = [item.id];
+                assignSubtitle.textContent = `Assign "${item.title || item.filename}" to a project`;
+                assignProjectName.value = item.project_name || '';
+                assignModal.classList.add('open');
+                setTimeout(() => assignProjectName.focus(), 100);
+            });
+
+            document.getElementById('detailDownloadBtn').addEventListener('click', function() {
+                window.open(item.media_url, '_blank');
+            });
+
+            document.getElementById('detailDeleteBtn').addEventListener('click', function() {
+                if (!confirm(`Delete "${item.title || item.filename}"?`)) return;
+                deleteMedia(item.id);
+            });
+
+            refreshIcons();
+        }
+
+        closeDetailPanel.addEventListener('click', function() {
+            detailPanel.classList.remove('open');
+        });
+
+        async function updateMedia(id, updates) {
+            try {
+                const res = await apiFetch(`/api/media/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updates)
+                });
+                if (!res) return;
+                const data = await res.json();
+                if (!data.success) throw new Error(data.message || 'Update failed');
+                loadMedia();
+                detailPanel.classList.remove('open');
+            } catch (err) {
+                alert('❌ ' + err.message);
+            }
+        }
+
+        async function deleteMedia(id) {
+            try {
+                const res = await apiFetch(`/api/media/${id}`, { method: 'DELETE' });
+                if (!res) return;
+                const data = await res.json();
+                if (!data.success) throw new Error(data.message || 'Delete failed');
+                loadMedia();
+                detailPanel.classList.remove('open');
+            } catch (err) {
+                alert('❌ ' + err.message);
+            }
+        }
+
+        // ---- Helpers ----
+        function refreshIcons() {
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+
+        // ---- Theme toggle ----
+        function toggleTheme() {
+            const current = document.documentElement.getAttribute('data-theme');
+            const next = current === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('crevio_theme', next);
+            const icon = document.querySelector('#themeToggleBtn .icon');
+            if (icon) {
+                icon.setAttribute('data-lucide', next === 'dark' ? 'moon' : 'sun');
+                refreshIcons();
+            }
+        }
+        window.toggleTheme = toggleTheme;
+
+        // ---- Init ----
+        document.addEventListener('DOMContentLoaded', function() {
+            const saved = localStorage.getItem('crevio_theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', saved);
+            const icon = document.querySelector('#themeToggleBtn .icon');
+            if (icon) icon.setAttribute('data-lucide', saved === 'dark' ? 'moon' : 'sun');
+            refreshIcons();
+
+            // ---- SET USER AVATAR (with profile image support) ----
+            const userData = localStorage.getItem('crevio_user');
+            if (userData) {
+                try {
+                    const user = JSON.parse(userData);
+                    const avatar = document.getElementById('userAvatar');
+                    const nameDisplay = document.getElementById('userNameDisplay');
+
+                    if (avatar) {
+                        if (user.profile_image) {
+                            avatar.innerHTML = `<img src="${user.profile_image}" alt="Profile">`;
+                        } else if (user.display_name) {
+                            avatar.textContent = user.display_name.charAt(0).toUpperCase();
+                        } else {
+                            avatar.textContent = 'C';
+                        }
+                    }
+                    if (nameDisplay && user.display_name) {
+                        nameDisplay.textContent = user.display_name;
+                    }
+                } catch (e) {
+                    console.error('Error setting avatar:', e);
+                }
+            }
+
+            // ---- Mobile toggle ----
+            document.getElementById('mobileToggle').addEventListener('click', function() {
+                document.getElementById('sidebar').classList.toggle('open');
+                document.getElementById('sidebarOverlay').classList.toggle('open');
+            });
+            document.getElementById('sidebarOverlay').addEventListener('click', function() {
+                document.getElementById('sidebar').classList.remove('open');
+                this.classList.remove('open');
+            });
+            document.getElementById('logoutButton').addEventListener('click', function() {
+                localStorage.removeItem('crevio_token');
+                localStorage.removeItem('crevio_user');
+                window.location.href = '/admin/pages/login.html';
+            });
+
+            loadMedia();
+        });
+    </script>
+</body>
+</html>

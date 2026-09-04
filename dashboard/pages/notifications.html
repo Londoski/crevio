@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notifications — Crevio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    /* ===== RESET & BASE ===== */
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      transition: background 0.3s, color 0.3s;
+      display: flex;
+      min-height: 100vh;
+    }
+    a { text-decoration: none; color: inherit; }
+
+    /* ===== THEME ===== */
+    [data-theme="dark"] {
+      --bg-primary: #0F172A;
+      --bg-secondary: #1E293B;
+      --bg-card: #1E293B;
+      --bg-input: #0F172A;
+      --border-color: #334155;
+      --text-primary: #F1F5F9;
+      --text-secondary: #94A3B8;
+      --text-muted: #64748B;
+      --accent: #2563EB;
+      --accent-hover: #1D4ED8;
+      --accent-dim: rgba(37,99,235,0.15);
+      --danger: #EF4444;
+      --success: #22C55E;
+      --warning: #F59E0B;
+      --shadow: 0 4px 24px rgba(0,0,0,0.4);
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-full: 999px;
+    }
+    [data-theme="light"] {
+      --bg-primary: #F1F5F9;
+      --bg-secondary: #FFFFFF;
+      --bg-card: #FFFFFF;
+      --bg-input: #F8FAFC;
+      --border-color: #E2E8F0;
+      --text-primary: #0F172A;
+      --text-secondary: #475569;
+      --text-muted: #94A3B8;
+      --accent: #2563EB;
+      --accent-hover: #1D4ED8;
+      --accent-dim: rgba(37,99,235,0.1);
+      --danger: #EF4444;
+      --success: #22C55E;
+      --warning: #F59E0B;
+      --shadow: 0 4px 24px rgba(0,0,0,0.06);
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-full: 999px;
+    }
+
+    /* ===== SIDEBAR ===== */
+    .sidebar {
+      width: 240px;
+      background: var(--bg-secondary);
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      padding: 24px 16px;
+      height: 100vh;
+      position: sticky;
+      top: 0;
+      flex-shrink: 0;
+      transition: background 0.3s, border-color 0.3s;
+      overflow-y: auto;
+    }
+    .sidebar-brand { padding-bottom: 20px; border-bottom: 1px solid var(--border-color); margin-bottom: 20px; }
+    .sidebar-brand h1 { font-size: 20px; font-weight: 700; color: var(--text-primary); }
+    .sidebar-brand span { font-size: 11px; font-weight: 500; text-transform: uppercase; color: var(--text-muted); }
+    .sidebar-nav { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+    .nav-item {
+      display: flex; align-items: center; gap: 12px; padding: 10px 12px;
+      border-radius: var(--radius-sm);
+      color: var(--text-secondary); font-size: 14px; font-weight: 500; transition: all 0.15s;
+      text-decoration: none;
+    }
+    .nav-item:hover { background: var(--accent-dim); color: var(--text-primary); }
+    .nav-item.active { background: var(--accent-dim); color: var(--accent); }
+    .nav-item .icon { width: 20px; height: 20px; flex-shrink: 0; }
+    .nav-divider { height: 1px; background: var(--border-color); margin: 8px 12px; }
+    .badge {
+      margin-left: auto;
+      background: var(--accent);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 1px 8px;
+      border-radius: var(--radius-full);
+    }
+    .sidebar-footer { padding-top: 16px; border-top: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 8px; }
+    .logout-button {
+      background: transparent; border: none; color: var(--danger); font-size: 13px; font-weight: 500;
+      padding: 10px 12px; border-radius: var(--radius-sm); cursor: pointer; font-family: inherit;
+      display: flex; align-items: center; gap: 12px; transition: background 0.15s;
+      width: 100%;
+    }
+    .logout-button:hover { background: rgba(239,68,68,0.1); }
+    .theme-toggle-btn {
+      background: transparent; border: none; color: var(--text-secondary); font-size: 18px;
+      cursor: pointer; padding: 6px 10px; border-radius: var(--radius-sm); transition: background 0.15s;
+      display: inline-flex; align-items: center; gap: 6px; width: fit-content;
+    }
+    .theme-toggle-btn:hover { background: var(--accent-dim); color: var(--text-primary); }
+    .theme-toggle-btn .icon { width: 18px; height: 18px; }
+    .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 199; }
+    .sidebar-overlay.open { display: block; }
+
+    /* ===== MAIN ===== */
+    .dashboard-main {
+      flex: 1; padding: 28px 36px; background: var(--bg-primary);
+      min-height: 100vh; transition: background 0.3s;
+    }
+    .dashboard-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 28px; flex-wrap: wrap; gap: 12px;
+    }
+    .topbar-left { display: flex; align-items: center; gap: 16px; }
+    .mobile-menu-toggle {
+      display: none; background: none; border: none;
+      color: var(--text-secondary); font-size: 24px; cursor: pointer;
+    }
+    .topbar-left h2 { font-size: 24px; font-weight: 700; color: var(--text-primary); }
+    .header-description { font-size: 14px; color: var(--text-secondary); }
+    .topbar-right { display: flex; align-items: center; gap: 16px; }
+    .primary-button {
+      padding: 8px 18px; border-radius: var(--radius-sm); border: none;
+      background: var(--accent); color: #fff;
+      font-size: 13px; font-weight: 600; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 6px;
+      transition: all 0.15s; text-decoration: none;
+    }
+    .primary-button:hover { background: var(--accent-hover); transform: translateY(-1px); }
+    .primary-button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .user-profile { display: flex; align-items: center; gap: 8px; }
+    .user-avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: var(--accent); color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 600; font-size: 13px; flex-shrink: 0;
+      overflow: hidden;
+    }
+    .user-avatar img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+    .user-name { font-size: 14px; font-weight: 500; color: var(--text-primary); }
+
+    /* ===== NOTIFICATIONS FEED ===== */
+    .filter-bar {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .filter-btn {
+      padding: 6px 16px;
+      border-radius: var(--radius-full);
+      border: 1px solid var(--border-color);
+      background: transparent;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.15s;
+      font-family: inherit;
+    }
+    .filter-btn.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+    .filter-btn:hover:not(.active) {
+      border-color: var(--accent);
+      color: var(--text-primary);
+    }
+    .filter-dropdown {
+      position: relative;
+      display: inline-block;
+    }
+    .filter-dropdown-btn {
+      padding: 6px 16px;
+      border-radius: var(--radius-full);
+      border: 1px solid var(--border-color);
+      background: transparent;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      font-family: inherit;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s;
+    }
+    .filter-dropdown-btn:hover {
+      border-color: var(--accent);
+      color: var(--text-primary);
+    }
+    .filter-dropdown-menu {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      margin-top: 6px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 8px;
+      min-width: 200px;
+      box-shadow: var(--shadow);
+      z-index: 100;
+    }
+    .filter-dropdown-menu.open { display: block; }
+    .filter-dropdown-menu .group-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      padding: 4px 8px;
+      margin-top: 4px;
+    }
+    .filter-dropdown-menu .group-label:first-child { margin-top: 0; }
+    .filter-dropdown-menu .filter-option {
+      display: block;
+      width: 100%;
+      padding: 6px 12px;
+      border: none;
+      background: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: 13px;
+      font-family: inherit;
+      text-align: left;
+      border-radius: var(--radius-sm);
+      transition: background 0.15s;
+    }
+    .filter-dropdown-menu .filter-option:hover {
+      background: var(--accent-dim);
+      color: var(--text-primary);
+    }
+    .filter-dropdown-menu .filter-option.active {
+      background: var(--accent);
+      color: #fff;
+    }
+    .filter-dropdown-menu .divider {
+      height: 1px;
+      background: var(--border-color);
+      margin: 6px 0;
+    }
+
+    /* Feed container with rounded corners */
+    .feed-wrapper {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+    .notification-group {
+      margin-bottom: 0;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .notification-group:last-child {
+      border-bottom: none;
+    }
+    .notification-group h3 {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-muted);
+      padding: 12px 16px 4px;
+      letter-spacing: 0.02em;
+    }
+    .notification-item {
+      padding: 12px 16px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      transition: background 0.15s;
+      gap: 12px;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .notification-item:last-child {
+      border-bottom: none;
+    }
+    .notification-item:hover {
+      background: var(--accent-dim);
+    }
+    .notification-item.unread {
+      border-left: 3px solid var(--accent);
+      background: var(--accent-dim);
+    }
+    .notification-item .left {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      flex: 1;
+      min-width: 0;
+    }
+    .notification-item .icon-wrap {
+      flex-shrink: 0;
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--accent-dim);
+      color: var(--accent);
+    }
+    .notification-item .icon-wrap.Messages { color: var(--accent); background: rgba(37,99,235,0.15); }
+    .notification-item .icon-wrap.Portfolio { color: #8B5CF6; background: rgba(139,92,246,0.15); }
+    .notification-item .icon-wrap.Projects { color: #06B6D4; background: rgba(6,182,212,0.15); }
+    .notification-item .icon-wrap.Billing { color: #F59E0B; background: rgba(245,158,11,0.15); }
+    .notification-item .icon-wrap.Security { color: #EF4444; background: rgba(239,68,68,0.15); }
+    .notification-item .icon-wrap.System { color: #6B7280; background: rgba(107,114,128,0.15); }
+    .notification-item .content {
+      flex: 1;
+      min-width: 0;
+    }
+    .notification-item .content .title {
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+    .notification-item .content .message {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+      word-wrap: break-word;
+    }
+    .notification-item .content .time {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+    .notification-item .actions {
+      display: flex;
+      gap: 4px;
+      flex-shrink: 0;
+      align-items: center;
+    }
+    .notification-item .actions button {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 4px;
+      border-radius: var(--radius-sm);
+      transition: all 0.15s;
+    }
+    .notification-item .actions button:hover {
+      background: var(--accent-dim);
+      color: var(--text-primary);
+    }
+    .notification-item .actions .more-btn {
+      position: relative;
+    }
+    .notification-item .actions .more-menu {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 100%;
+      margin-top: 4px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 4px 0;
+      min-width: 140px;
+      box-shadow: var(--shadow);
+      z-index: 10;
+    }
+    .notification-item .actions .more-menu.open { display: block; }
+    .notification-item .actions .more-menu button {
+      display: block;
+      width: 100%;
+      padding: 6px 12px;
+      border: none;
+      background: none;
+      color: var(--text-secondary);
+      font-size: 13px;
+      font-family: inherit;
+      text-align: left;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .notification-item .actions .more-menu button:hover {
+      background: var(--accent-dim);
+      color: var(--text-primary);
+    }
+
+    .empty-state, .error-state {
+      padding: 60px 20px;
+      text-align: center;
+    }
+    .empty-state .icon { width: 64px; height: 64px; color: var(--text-muted); margin-bottom: 16px; }
+    .empty-state h3 { font-size: 20px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
+    .empty-state p { font-size: 14px; color: var(--text-secondary); }
+    .error-state { color: var(--danger); }
+    .error-state .error-detail { font-size: 13px; color: var(--text-secondary); margin-top: 8px; word-break: break-all; }
+    .error-state button {
+      margin-top: 12px;
+      padding: 8px 20px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .load-more {
+      display: block;
+      margin: 16px auto;
+      padding: 8px 20px;
+      background: transparent;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 14px;
+      transition: all 0.15s;
+    }
+    .load-more:hover {
+      background: var(--accent-dim);
+      color: var(--text-primary);
+    }
+
+    /* Skeleton */
+    .loading-skeleton .line {
+      height: 16px;
+      background: var(--bg-secondary);
+      border-radius: 4px;
+      margin-bottom: 6px;
+      animation: pulse 1.5s infinite;
+    }
+    .loading-skeleton .line.short { width: 40%; }
+    .loading-skeleton .line.medium { width: 60%; }
+    .loading-skeleton .line.long { width: 80%; }
+    .loading-skeleton .row {
+      display: flex;
+      gap: 12px;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .loading-skeleton .row .avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-sm);
+      background: var(--bg-secondary);
+      flex-shrink: 0;
+    }
+    .loading-skeleton .row .content { flex: 1; }
+    @keyframes pulse {
+      0% { opacity: 0.6; }
+      50% { opacity: 1; }
+      100% { opacity: 0.6; }
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 768px) {
+      .dashboard-main { padding: 20px; }
+      .topbar-left h2 { font-size: 20px; }
+      .mobile-menu-toggle { display: block; }
+      .sidebar { position: fixed; left: -280px; top: 0; bottom: 0; z-index: 200; transition: left 0.3s; }
+      .sidebar.open { left: 0; }
+      .notification-item { flex-wrap: wrap; }
+      .notification-item .actions { margin-top: 8px; width: 100%; justify-content: flex-end; }
+      .filter-bar { gap: 8px; }
+    }
+    @media (max-width: 480px) {
+      .filter-btn, .filter-dropdown-btn { font-size: 12px; padding: 4px 12px; }
+      .notification-item .content .title { font-size: 13px; }
+      .notification-item .content .message { font-size: 12px; }
+      .notification-item .icon-wrap { width: 28px; height: 28px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- SIDEBAR (same as before) -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand"><h1>Crevio</h1><span>Creator Dashboard</span></div>
+    <nav class="sidebar-nav">
+      <a href="/dashboard/" class="nav-item"><i data-lucide="layout-dashboard" class="icon"></i> Overview</a>
+      <a href="/dashboard/pages/projects.html" class="nav-item"><i data-lucide="folder-open" class="icon"></i> Projects</a>
+      <a href="/dashboard/pages/media.html" class="nav-item"><i data-lucide="image" class="icon"></i> Media</a>
+      <a href="/dashboard/pages/services.html" class="nav-item"><i data-lucide="briefcase" class="icon"></i> Services</a>
+      <a href="/dashboard/pages/skills.html" class="nav-item"><i data-lucide="star" class="icon"></i> Skills</a>
+      <a href="/dashboard/pages/social-links.html" class="nav-item"><i data-lucide="share-2" class="icon"></i> My Socials</a>
+      <div class="nav-divider"></div>
+      <a href="/dashboard/pages/portfolio.html" class="nav-item"><i data-lucide="layout-template" class="icon"></i> Portfolio</a>
+      <a href="/dashboard/pages/portfolio-edit.html" class="nav-item"><i data-lucide="edit-3" class="icon"></i> Edit Portfolio</a>
+      <a href="/dashboard/pages/bot.html" class="nav-item"><i data-lucide="bot" class="icon"></i> Crevio Bot</a>
+      <div class="nav-divider"></div>
+      <a href="/dashboard/pages/messages.html" class="nav-item"><i data-lucide="mail" class="icon"></i> Messages</a>
+      <a href="/dashboard/pages/notifications.html" class="nav-item active"><i data-lucide="bell" class="icon"></i> Notifications <span class="badge" id="sidebarBadge">0</span></a>
+      <div class="nav-divider"></div>
+      <a href="/dashboard/pages/billing.html" class="nav-item"><i data-lucide="credit-card" class="icon"></i> Billing</a>
+      <a href="/dashboard/pages/security.html" class="nav-item"><i data-lucide="shield" class="icon"></i> Security</a>
+      <a href="/dashboard/pages/settings.html" class="nav-item"><i data-lucide="settings" class="icon"></i> Settings</a>
+      <a href="/dashboard/pages/profile.html" class="nav-item"><i data-lucide="user" class="icon"></i> Profile</a>
+      <a href="/dashboard/pages/account-management.html" class="nav-item"><i data-lucide="user-cog" class="icon"></i> Account Management</a>
+      <div class="nav-divider"></div>
+      <a href="/" target="_blank" class="nav-item"><i data-lucide="globe" class="icon"></i> View Portfolio</a>
+    </nav>
+    <div class="sidebar-footer">
+      <span id="themeToggleBtn" class="theme-toggle-btn" onclick="toggleTheme()"><i data-lucide="moon" class="icon"></i></span>
+      <button id="logoutButton" class="logout-button"><i data-lucide="log-out" class="icon"></i> Logout</button>
+    </div>
+  </aside>
+  <div id="sidebarOverlay" class="sidebar-overlay"></div>
+
+  <!-- MAIN -->
+  <main class="dashboard-main">
+    <header class="dashboard-header">
+      <div class="topbar-left">
+        <button id="mobileToggle" class="mobile-menu-toggle"><i data-lucide="menu"></i></button>
+        <div>
+          <h2>Notifications</h2>
+          <p class="header-description">Stay up to date with activity on your Crevio account.</p>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <button id="markAllReadBtn" class="primary-button" style="display:none;">
+          <i data-lucide="check-check" style="width:16px;height:16px;"></i> Mark all as read
+        </button>
+        <div class="user-profile">
+          <span class="user-avatar" id="userAvatar">C</span>
+          <span class="user-name" id="userNameDisplay">Creator</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="filter-bar">
+      <button class="filter-btn active" data-filter="all">All</button>
+      <button class="filter-btn" data-filter="unread">Unread</button>
+      <div class="filter-dropdown">
+        <button class="filter-dropdown-btn" id="filterDropdownBtn">
+          <i data-lucide="sliders-horizontal" style="width:14px;height:14px;"></i> Filters
+        </button>
+        <div class="filter-dropdown-menu" id="filterDropdownMenu">
+          <div class="group-label">Category</div>
+          <button class="filter-option active" data-filter-type="category" data-value="">All Categories</button>
+          <button class="filter-option" data-filter-type="category" data-value="Messages">Messages</button>
+          <button class="filter-option" data-filter-type="category" data-value="Portfolio">Portfolio</button>
+          <button class="filter-option" data-filter-type="category" data-value="Projects">Projects</button>
+          <button class="filter-option" data-filter-type="category" data-value="Billing">Billing</button>
+          <button class="filter-option" data-filter-type="category" data-value="Security">Security</button>
+          <button class="filter-option" data-filter-type="category" data-value="System">System</button>
+          <div class="divider"></div>
+          <div class="group-label">Time</div>
+          <button class="filter-option active" data-filter-type="period" data-value="">All Time</button>
+          <button class="filter-option" data-filter-type="period" data-value="today">Today</button>
+          <button class="filter-option" data-filter-type="period" data-value="week">This week</button>
+          <button class="filter-option" data-filter-type="period" data-value="month">This month</button>
+          <button class="filter-option" data-filter-type="period" data-value="older">Older</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- FEED WRAPPER (rounded container) -->
+    <div class="feed-wrapper" id="feedContainer">
+      <!-- Skeleton will be rendered by JS -->
+    </div>
+  </main>
+
+  <script>
+    // =========================================================
+    // NOTIFICATIONS PAGE – FULL FUNCTIONALITY
+    // =========================================================
+
+    const feedContainer = document.getElementById('feedContainer');
+    const markAllBtn = document.getElementById('markAllReadBtn');
+    const sidebarBadge = document.getElementById('sidebarBadge');
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    const filterDropdownBtn = document.getElementById('filterDropdownBtn');
+    const filterDropdownMenu = document.getElementById('filterDropdownMenu');
+
+    let notifications = [];
+    let unreadCount = 0;
+    let currentFilter = 'all';
+    let currentCategory = '';
+    let currentPeriod = '';
+    let page = 0;
+    let loading = false;
+    let hasMore = true;
+
+    function getToken() {
+      const token = localStorage.getItem('crevio_token');
+      if (!token) {
+        window.location.href = '/admin/pages/login.html';
+        return null;
+      }
+      return token;
+    }
+
+    async function apiFetch(endpoint, options = {}) {
+      const token = getToken();
+      if (!token) return null;
+      const res = await fetch(endpoint, {
+        ...options,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token,
+          ...options.headers
+        }
+      });
+      if (res.status === 401) {
+        localStorage.removeItem('crevio_token');
+        window.location.href = '/admin/pages/login.html';
+        return null;
+      }
+      return res;
+    }
+
+    async function loadNotifications(reset = true) {
+      if (loading) return;
+      if (reset) {
+        page = 0;
+        hasMore = true;
+        notifications = [];
+        feedContainer.innerHTML = '';
+      }
+      if (!hasMore && !reset) return;
+      loading = true;
+
+      const params = new URLSearchParams({
+        limit: 20,
+        offset: page * 20,
+        unread: currentFilter === 'unread'
+      });
+      if (currentCategory) params.append('category', currentCategory);
+      if (currentPeriod) params.append('period', currentPeriod);
+
+      try {
+        const res = await apiFetch('/api/notifications?' + params.toString());
+        if (!res) return;
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error || 'Failed to load notifications');
+
+        const newItems = data.notifications || [];
+        if (reset) notifications = newItems;
+        else notifications = [...notifications, ...newItems];
+        hasMore = newItems.length === 20;
+        if (hasMore) page++;
+
+        const countRes = await apiFetch('/api/notifications/unread-count');
+        if (countRes) {
+          const countData = await countRes.json();
+          unreadCount = countData.count || 0;
+          updateBadge(unreadCount);
+          markAllBtn.style.display = unreadCount > 0 ? 'inline-flex' : 'none';
+        }
+
+        renderFeed();
+      } catch (err) {
+        console.error('Load error:', err);
+        feedContainer.innerHTML = `
+          <div class="error-state">
+            <i data-lucide="alert-circle" style="width:48px;height:48px;display:block;margin:0 auto 12px;"></i>
+            <p>Something went wrong.</p>
+            <p class="error-detail">${err.message || 'Unknown error'}</p>
+            <button onclick="loadNotifications(true)">Try again</button>
+          </div>
+        `;
+        refreshIcons();
+      } finally {
+        loading = false;
+      }
+    }
+
+    function renderFeed() {
+      if (notifications.length === 0) {
+        feedContainer.innerHTML = `
+          <div class="empty-state">
+            <i data-lucide="bell-off" class="icon"></i>
+            <h3>You're all caught up.</h3>
+            <p>Important updates about your account, portfolio, billing and activity will appear here.</p>
+          </div>
+        `;
+        refreshIcons();
+        return;
+      }
+
+      const groups = groupNotifications(notifications);
+      let html = '';
+      for (const [label, items] of Object.entries(groups)) {
+        html += `<div class="notification-group"><h3>${label}</h3>`;
+        items.forEach(n => {
+          html += renderNotificationItem(n);
+        });
+        html += `</div>`;
+      }
+      if (hasMore) {
+        html += `<button class="load-more" id="loadMoreBtn">Load more</button>`;
+      }
+      feedContainer.innerHTML = html;
+      refreshIcons();
+      attachItemEvents();
+    }
+
+    function groupNotifications(list) {
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+      const weekStart = new Date(today);
+      weekStart.setDate(weekStart.getDate() - 7);
+      const groups = {};
+      list.forEach(n => {
+        const date = new Date(n.created_at);
+        let key;
+        if (date >= today) key = 'Today';
+        else if (date >= yesterday) key = 'Yesterday';
+        else if (date >= weekStart) key = 'This week';
+        else key = 'Older';
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(n);
+      });
+      const order = ['Today', 'Yesterday', 'This week', 'Older'];
+      const sorted = {};
+      order.forEach(k => { if (groups[k]) sorted[k] = groups[k]; });
+      return sorted;
+    }
+
+    function renderNotificationItem(n) {
+      const isUnread = !n.is_read;
+      const timeAgo = timeSince(new Date(n.created_at));
+      const category = n.category || 'System';
+      const iconMap = { 'Messages':'message-circle', 'Portfolio':'layout', 'Projects':'folder', 'Billing':'credit-card', 'Security':'shield', 'System':'settings' };
+      const iconName = iconMap[category] || 'bell';
+      return `
+        <div class="notification-item ${isUnread ? 'unread' : ''}" data-id="${n.id}">
+          <div class="left">
+            <div class="icon-wrap ${category}">
+              <i data-lucide="${iconName}" style="width:18px;height:18px;"></i>
+            </div>
+            <div class="content">
+              <div class="title">${n.title}</div>
+              <div class="message">${n.message}</div>
+              <div class="time">${timeAgo}</div>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="mark-read-btn" data-id="${n.id}" data-read="${isUnread ? 'false' : 'true'}" title="${isUnread ? 'Mark as read' : 'Mark as unread'}">
+              <i data-lucide="${isUnread ? 'check-circle' : 'circle'}" style="width:16px;height:16px;"></i>
+            </button>
+            <div class="more-btn" style="position:relative;">
+              <button><i data-lucide="more-vertical" style="width:16px;height:16px;"></i></button>
+              <div class="more-menu">
+                <button class="archive-btn" data-id="${n.id}">Archive</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function timeSince(date) {
+      const seconds = Math.floor((new Date() - date) / 1000);
+      let interval = Math.floor(seconds / 60);
+      if (interval < 1) return 'just now';
+      if (interval < 60) return interval + 'm ago';
+      interval = Math.floor(interval / 60);
+      if (interval < 24) return interval + 'h ago';
+      interval = Math.floor(interval / 24);
+      if (interval < 7) return interval + 'd ago';
+      return date.toLocaleDateString();
+    }
+
+    function attachItemEvents() {
+      document.querySelectorAll('.notification-item').forEach(el => {
+        el.addEventListener('click', function(e) {
+          if (e.target.closest('.actions')) return;
+          const id = parseInt(this.dataset.id);
+          handleNotificationClick(id);
+        });
+      });
+      document.querySelectorAll('.mark-read-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          const id = parseInt(this.dataset.id);
+          if (this.dataset.read === 'false') markAsRead(id);
+          else markAsUnread(id);
+        });
+      });
+      document.querySelectorAll('.archive-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          const id = parseInt(this.dataset.id);
+          archiveNotification(id);
+        });
+      });
+      document.querySelectorAll('.more-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          const menu = this.querySelector('.more-menu');
+          menu.classList.toggle('open');
+        });
+      });
+      const loadMoreBtn = document.getElementById('loadMoreBtn');
+      if (loadMoreBtn) loadMoreBtn.addEventListener('click', () => loadNotifications(false));
+    }
+
+    async function markAsRead(id) {
+      try { const res = await apiFetch(`/api/notifications/${id}/read`, { method: 'PATCH' }); if (res) { const data = await res.json(); if (data.success) loadNotifications(true); } } catch(e) { console.error(e); }
+    }
+    async function markAsUnread(id) {
+      try { const res = await apiFetch(`/api/notifications/${id}/unread`, { method: 'PATCH' }); if (res) { const data = await res.json(); if (data.success) loadNotifications(true); } } catch(e) { console.error(e); }
+    }
+    async function archiveNotification(id) {
+      try { const res = await apiFetch(`/api/notifications/${id}/archive`, { method: 'PATCH' }); if (res) { const data = await res.json(); if (data.success) loadNotifications(true); } } catch(e) { console.error(e); }
+    }
+    async function markAllAsRead() {
+      try { const res = await apiFetch('/api/notifications/read-all', { method: 'PATCH' }); if (res) { const data = await res.json(); if (data.success) loadNotifications(true); } } catch(e) { console.error(e); }
+    }
+    async function handleNotificationClick(id) {
+      const n = notifications.find(item => item.id === id);
+      if (n && !n.is_read) await markAsRead(id);
+    }
+
+    function updateBadge(count) {
+      sidebarBadge.textContent = count;
+      sidebarBadge.style.display = count > 0 ? 'inline' : 'none';
+    }
+
+    // ---- FILTER EVENTS ----
+    filterBtns.forEach(btn => {
+      btn.addEventListener('click', function() {
+        filterBtns.forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        currentFilter = this.dataset.filter;
+        loadNotifications(true);
+      });
+    });
+    filterDropdownBtn.addEventListener('click', function(e) { e.stopPropagation(); filterDropdownMenu.classList.toggle('open'); });
+    document.addEventListener('click', function() { filterDropdownMenu.classList.remove('open'); });
+    document.querySelectorAll('.filter-option').forEach(opt => {
+      opt.addEventListener('click', function() {
+        const type = this.dataset.filterType;
+        const value = this.dataset.value;
+        const siblings = this.closest('.filter-dropdown-menu').querySelectorAll(`[data-filter-type="${type}"]`);
+        siblings.forEach(s => s.classList.remove('active'));
+        this.classList.add('active');
+        if (type === 'category') currentCategory = value;
+        else if (type === 'period') currentPeriod = value;
+        loadNotifications(true);
+        filterDropdownMenu.classList.remove('open');
+      });
+    });
+    markAllBtn.addEventListener('click', markAllAsRead);
+
+    // ---- THEME ----
+    function toggleTheme() {
+      const current = document.documentElement.getAttribute('data-theme');
+      const next = current === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('crevio_theme', next);
+      const icon = document.querySelector('#themeToggleBtn .icon');
+      if (icon) { icon.setAttribute('data-lucide', next === 'dark' ? 'moon' : 'sun'); refreshIcons(); }
+    }
+    window.toggleTheme = toggleTheme;
+
+    function refreshIcons() { if (typeof lucide !== 'undefined') lucide.createIcons(); }
+
+    // ---- INIT ----
+    document.addEventListener('DOMContentLoaded', function() {
+      const saved = localStorage.getItem('crevio_theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', saved);
+      const icon = document.querySelector('#themeToggleBtn .icon');
+      if (icon) icon.setAttribute('data-lucide', saved === 'dark' ? 'moon' : 'sun');
+      refreshIcons();
+
+      const userData = localStorage.getItem('crevio_user');
+      if (userData) {
+        try {
+          const user = JSON.parse(userData);
+          const avatar = document.getElementById('userAvatar');
+          const nameDisplay = document.getElementById('userNameDisplay');
+          if (avatar && user.display_name) {
+            if (user.profile_image) avatar.innerHTML = '<img src="' + user.profile_image + '" alt="Profile">';
+            else avatar.textContent = user.display_name.charAt(0).toUpperCase();
+          }
+          if (nameDisplay && user.display_name) nameDisplay.textContent = user.display_name;
+        } catch(e) {}
+      }
+
+      document.getElementById('mobileToggle').addEventListener('click', function() {
+        document.getElementById('sidebar').classList.toggle('open');
+        document.getElementById('sidebarOverlay').classList.toggle('open');
+      });
+      document.getElementById('sidebarOverlay').addEventListener('click', function() {
+        document.getElementById('sidebar').classList.remove('open');
+        this.classList.remove('open');
+      });
+      document.getElementById('logoutButton').addEventListener('click', function() {
+        localStorage.removeItem('crevio_token');
+        localStorage.removeItem('crevio_user');
+        window.location.href = '/admin/pages/login.html';
+      });
+
+      loadNotifications(true);
+    });
+  </script>
+</body>
+</html>
