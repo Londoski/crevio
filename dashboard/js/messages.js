@@ -1,5 +1,5 @@
-﻿// =========================================================
-// CREVIO — MESSAGES
+// =========================================================
+// CREVIO â€” MESSAGES
 // File: dashboard/js/messages.js
 // =========================================================
 console.log("[Messages] loaded");
@@ -46,7 +46,7 @@ document.addEventListener("DOMContentLoaded", function () {
         { key: "archived", label: "Archived" }
     ];
 
-    const REACTIONS = ["👍", "❤️", "😂", "😮", "😢", "🙏"];
+    const REACTIONS = ["ðŸ‘", "â¤ï¸", "ðŸ˜‚", "ðŸ˜®", "ðŸ˜¢", "ðŸ™"];
 
     const MSG_MENU = [
         { id: "reply",   icon: "corner-up-left",  label: "Reply" },
@@ -117,7 +117,7 @@ document.addEventListener("DOMContentLoaded", function () {
     // LOAD CONVERSATIONS
     // =========================================================
     async function loadConversations() {
-        convItemsEl.innerHTML = '<div class="loading">Loading conversations…</div>';
+        convItemsEl.innerHTML = '<div class="loading">Loading conversationsâ€¦</div>';
         try {
             const url = "/api/messages/conversations?filter=" + filter + "&search=" + encodeURIComponent(search);
             const res = await window.apiFetch(url);
@@ -143,7 +143,7 @@ document.addEventListener("DOMContentLoaded", function () {
             const muteIcon = c.muted === 1 ? '<i data-lucide="bell-off" class="mute-icon"></i>' : "";
             const isUnread = (c.unread_count > 0 || c.manually_unread === 1) && c.muted !== 1;
             const unreadBadge = isUnread ? '<span class="conv-badge unread">' + (c.unread_count || 1) + '</span>' : "";
-            const starred = c.starred === 1 ? '<span class="conv-badge starred">★</span>' : "";
+            const starred = c.starred === 1 ? '<span class="conv-badge starred">â˜…</span>' : "";
             const statusBadge = c.status && c.status !== "new"
                 ? '<span class="conv-badge">' + escapeHtml(c.status) + '</span>'
                 : (c.status === "new" ? '<span class="conv-badge new">New</span>' : "");
@@ -212,7 +212,7 @@ document.addEventListener("DOMContentLoaded", function () {
         convItemsEl.querySelectorAll(".conv-item").forEach(el => el.classList.toggle("active", parseInt(el.dataset.id, 10) === id));
         convPanelEl.classList.add("mobile-hidden");
         chatPanelEl.classList.add("mobile-open");
-        chatPanelEl.innerHTML = '<div class="loading" style="margin:auto;">Loading messages…</div>';
+        chatPanelEl.innerHTML = '<div class="loading" style="margin:auto;">Loading messagesâ€¦</div>';
         try {
             const res = await window.apiFetch("/api/messages/conversations/" + id);
             const data = await res.json();
@@ -248,7 +248,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     <div class="chat-avatar">${initial}</div>
                     <div class="chat-header-text">
                         <h3>${escapeHtml(name)}</h3>
-                        <p>${escapeHtml(email)}${email ? " · " : ""}${escapeHtml(status)}</p>
+                        <p>${escapeHtml(email)}${email ? " Â· " : ""}${escapeHtml(status)}</p>
                     </div>
                 </div>
             </div>
@@ -267,6 +267,7 @@ document.addEventListener("DOMContentLoaded", function () {
             <div class="chat-messages" id="chatMessages">
                 ${msgs.length ? renderMessageList(msgs) : '<div class="empty-chat" style="padding:20px;"><p>No messages yet. Say hi!</p></div>'}
             </div>
+            <div class="mobile-context-strip" id="mobileContextStrip"></div>
             <div class="reply-preview" id="replyPreview">
                 <div class="rp-text">
                     <div class="rp-label">Replying to</div>
@@ -275,7 +276,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 <button id="replyCancel"><i data-lucide="x" class="icon"></i></button>
             </div>
             <div class="chat-input-bar">
-                <textarea id="msgInput" placeholder="Type your reply…" rows="1"></textarea>
+                <textarea id="msgInput" placeholder="Type your replyâ€¦" rows="1"></textarea>
                 <button class="send-btn" id="sendBtn" title="Send"><i data-lucide="send" class="icon"></i></button>
             </div>
             <div class="char-counter" id="charCounter"></div>`;
@@ -374,7 +375,7 @@ document.addEventListener("DOMContentLoaded", function () {
             const text = input.value.trim();
             if (!text) return;
             if (!planUnlimited && text.length > planLimit) {
-                showToast("Message too long — your plan allows " + planLimit + " characters", true);
+                showToast("Message too long â€” your plan allows " + planLimit + " characters", true);
                 return;
             }
             sendBtn.disabled = true;
@@ -615,7 +616,7 @@ document.addEventListener("DOMContentLoaded", function () {
             }
             case "pin": {
                 if (msg.pinned === 1) {
-                    // Already pinned → offer unpin
+                    // Already pinned â†’ offer unpin
                     if (!await confirmDialog("Unpin this message?", { title: "Unpin", confirmText: "Unpin", danger: true })) return;
                     try {
                         await window.apiFetch("/api/messages/conversations/" + activeConvId + "/messages/" + msgId + "/pin", { method: "DELETE" });
@@ -888,6 +889,19 @@ document.addEventListener("DOMContentLoaded", function () {
         if (conv.budget)   cards.push('<div class="context-card"><div class="label">Budget</div><div class="value">' + escapeHtml(conv.budget) + '</div></div>');
         if (conv.timeline) cards.push('<div class="context-card"><div class="label">Timeline</div><div class="value">' + escapeHtml(conv.timeline) + '</div></div>');
         contextContentEl.innerHTML = cards.length ? cards.join("") : '<div class="empty-state"><p>No context attached to this conversation.</p></div>';
+
+        // ---- Mobile context strip (compact alternative on phone) ----
+        const strip = document.getElementById("mobileContextStrip");
+        if (strip) {
+            const chips = [];
+            if (conv.context_service_title) chips.push('<span class="ctx-chip"><span class="ctx-key">Service</span><span class="ctx-val">' + escapeHtml(conv.context_service_title) + '</span></span>');
+            if (conv.context_project_title) chips.push('<span class="ctx-chip"><span class="ctx-key">Project</span><span class="ctx-val">' + escapeHtml(conv.context_project_title) + '</span></span>');
+            if (conv.budget)                chips.push('<span class="ctx-chip"><span class="ctx-key">Budget</span><span class="ctx-val">'  + escapeHtml(conv.budget)  + '</span></span>');
+            if (conv.timeline)              chips.push('<span class="ctx-chip"><span class="ctx-key">Timeline</span><span class="ctx-val">' + escapeHtml(conv.timeline) + '</span></span>');
+            if (conv.source)                chips.push('<span class="ctx-chip"><span class="ctx-key">Source</span><span class="ctx-val">'  + escapeHtml(conv.source)  + '</span></span>');
+            strip.innerHTML = chips.join("");
+            strip.classList.toggle("has-items", chips.length > 0);
+        }
     }
 
     // =========================================================
@@ -1027,7 +1041,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         if (planUnlimited) {
             el.className = "char-counter";
-            el.innerHTML = '<span class="plan-tag">Business</span>' + len + ' / ∞';
+            el.innerHTML = '<span class="plan-tag">Business</span>' + len + ' / âˆž';
             return;
         }
 
@@ -1164,7 +1178,7 @@ document.addEventListener("DOMContentLoaded", function () {
     // =========================================================
     // PINNED MESSAGE BAR
     // Shows the most recent active pin above the thread.
-    // Click the bar → scroll to that message + flash highlight.
+    // Click the bar â†’ scroll to that message + flash highlight.
     // =========================================================
     let pinBarIndex = 0;
 
@@ -1288,7 +1302,7 @@ document.addEventListener("DOMContentLoaded", function () {
         var cnt = $("selectionCount");
         if (!bar || !cnt) return;
         if (selectedIds.size === 0) {
-            // Nothing selected → auto-exit
+            // Nothing selected â†’ auto-exit
             exitSelectionMode();
             return;
         }
@@ -1324,7 +1338,7 @@ document.addEventListener("DOMContentLoaded", function () {
         try { if (typeof lucide !== "undefined") lucide.createIcons(); } catch (e) {}
     }
 
-    // Click handler — only active in selection mode (delegated)
+    // Click handler â€” only active in selection mode (delegated)
     document.addEventListener("click", function (e) {
         if (!selectionMode) return;
         var msgEl = e.target.closest("#chatMessages .msg");
@@ -1485,7 +1499,7 @@ document.addEventListener("DOMContentLoaded", function () {
         try { if (typeof lucide !== "undefined") lucide.createIcons(); } catch (e) {}
 
         async function loadList(query) {
-            listEl.innerHTML = '<div class="forward-empty">Loading…</div>';
+            listEl.innerHTML = '<div class="forward-empty">Loadingâ€¦</div>';
             try {
                 const url = "/api/messages/conversations" + (query ? "?search=" + encodeURIComponent(query) : "");
                 const res = await window.apiFetch(url);
@@ -1641,7 +1655,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
     // =========================================================
-    // EDIT MESSAGE — Pro/Business + 10-minute window
+    // EDIT MESSAGE â€” Pro/Business + 10-minute window
     // =========================================================
     const EDIT_WINDOW_MS = 10 * 60 * 1000;
 
@@ -1677,7 +1691,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const botBtn   = $("editBot");
 
         if (!overlay || !input || !cancel || !saveBtn) {
-            showToast("Edit dialog missing — check console", true);
+            showToast("Edit dialog missing â€” check console", true);
             console.error("[Edit] Missing elements:", { overlay, input, cancel, saveBtn, deleteBtn });
             return;
         }
@@ -1765,7 +1779,7 @@ document.addEventListener("DOMContentLoaded", function () {
             };
             try { localStorage.setItem("crevio_bot_context", JSON.stringify(payload)); } catch (e) {}
             window.open("/dashboard/pages/bot.html?from=edit", "_blank");
-            showToast("CrevioBot opened — copy the rewritten text back here");
+            showToast("CrevioBot opened â€” copy the rewritten text back here");
         };
 
         const onSave = async () => {
