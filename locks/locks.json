@@ -325,6 +325,26 @@
         "ctx-chip",
         "has-items"
       ]
+    },
+    {
+      "id": "mobile-menu-prefers-conv-header",
+      "desc": "Mobile menu button sits inline with conversation search (no overlap)",
+      "type": "fileContains",
+      "file": "dashboard/js/mobile-menu.js",
+      "patterns": [
+        ".conv-header",
+        "slotSelectors"
+      ]
+    },
+    {
+      "id": "conv-header-mobile-flex",
+      "desc": "conv-header becomes flex row on mobile so hamburger sits inline",
+      "type": "fileContains",
+      "file": "dashboard/css/mobile-messages.css",
+      "patterns": [
+        "conv-header-mobile-flex",
+        ".conv-header .conv-search"
+      ]
     }
   ]
 }

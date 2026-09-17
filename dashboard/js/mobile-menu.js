@@ -22,13 +22,12 @@
                 background: transparent;
                 border: 1px solid var(--border-color, #334155);
                 color: var(--text-primary, #F1F5F9);
-                width: 38px; height: 38px;
+                width: 40px; height: 40px;
                 border-radius: 8px;
                 cursor: pointer;
                 align-items: center; justify-content: center;
                 padding: 0;
                 flex-shrink: 0;
-                margin-right: 6px;
                 transition: background 0.12s, border-color 0.12s, color 0.12s;
             }
             .mobile-menu-btn:active,
@@ -92,7 +91,8 @@
 
         // Find the best slot for the hamburger
         const slotSelectors = [
-            ".chat-header-left",   // bot / messages pages
+            ".conv-header",        // messages page — conversation list
+            ".chat-header-left",   // bot page + messages chat panel
             ".header",             // settings page
             ".topbar",             // generic
             ".page-header",
