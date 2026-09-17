@@ -1,111 +1,22 @@
+// =========================================================
+// CREVIO — SOCIAL LINKS ROUTES
+// File: backend/routes/socialLinksRoutes.js
+// =========================================================
+
 const express = require("express");
-
 const router = express.Router();
+const auth = require("../middleware/authMiddleware");
+const socialLinksController = require("../controllers/socialLinksController");
 
-const socialLinksController =
-    require("../controllers/socialLinksController");
+router.get("/stats",    auth, socialLinksController.getStats);
+router.put("/reorder",  auth, socialLinksController.reorder);
 
-const authMiddleware =
-    require("../middleware/authMiddleware");
+router.get("/",         auth, socialLinksController.getSocialLinks);
+router.post("/",        auth, socialLinksController.createSocialLink);
 
-
-// ==========================================
-// SOCIAL LINKS ROUTES
-// ==========================================
-
-
-// ==========================================
-// GET ALL SOCIAL LINKS
-// ==========================================
-
-router.get(
-
-    "/",
-
-    authMiddleware,
-
-    socialLinksController.getSocialLinks
-
-);
-
-
-// ==========================================
-// CREATE SOCIAL LINK
-// ==========================================
-
-router.post(
-
-    "/",
-
-    authMiddleware,
-
-    socialLinksController.createSocialLink
-
-);
-
-
-// ==========================================
-// UPDATE SOCIAL LINK
-// ==========================================
-
-router.put(
-
-    "/:id",
-
-    authMiddleware,
-
-    socialLinksController.updateSocialLink
-
-);
-
-
-// ==========================================
-// DELETE SOCIAL LINK
-// ==========================================
-
-router.delete(
-
-    "/:id",
-
-    authMiddleware,
-
-    socialLinksController.deleteSocialLink
-
-);
-
-
-// ==========================================
-// TOGGLE VISIBILITY
-// ==========================================
-
-router.patch(
-
-    "/:id/visibility",
-
-    authMiddleware,
-
-    socialLinksController.toggleSocialLinkVisibility
-
-);
-
-
-// ==========================================
-// UPDATE DISPLAY ORDER
-// ==========================================
-
-router.patch(
-
-    "/:id/order",
-
-    authMiddleware,
-
-    socialLinksController.updateSocialLinkOrder
-
-);
-
-
-// ==========================================
-// EXPORT
-// ==========================================
+router.patch("/:id/visibility", auth, socialLinksController.toggleVisibility);
+router.patch("/:id",            auth, socialLinksController.updateSocialLink);
+router.put("/:id",              auth, socialLinksController.updateSocialLink);
+router.delete("/:id",           auth, socialLinksController.deleteSocialLink);
 
 module.exports = router;

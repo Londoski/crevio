@@ -1,111 +1,18 @@
-// =========================================================
-// CREVIO — AUTHENTICATION ROUTES
-// =========================================================
-
-const express =
-    require("express");
-
-
-const {
-
-    login,
-
-    logout,
-
-    logoutAll
-
-} =
-    require(
-        "../controllers/authController"
-    );
-
-
-const authenticateToken =
-    require(
-        "../middleware/authMiddleware"
-    );
-
-
-const router =
-    express.Router();
-
-
-// =========================================================
-// AUTH API TEST
+﻿// =========================================================
+// CREVIO — AUTH ROUTES
+// File: backend/routes/authRoutes.js
 // =========================================================
 
-router.get(
-    "/",
-    (req, res) => {
+const express = require("express");
+const router = express.Router();
+const authController = require("../controllers/authController");
+const auth = require("../middleware/authMiddleware");
 
-        res.json({
+router.post ("/register",      authController.register);
+router.post ("/login",         authController.login);
+router.post ("/logout",        authController.logout);
+router.post ("/set-password",  authController.setPassword);
+router.patch("/email",         auth, authController.changeEmail);
+router.patch("/password",      auth, authController.changePassword);
 
-            success: true,
-
-            message:
-                "Crevio Auth API is working."
-
-        });
-
-    }
-);
-
-
-// =========================================================
-// LOGIN
-// =========================================================
-
-router.post(
-    "/login",
-    login
-);
-
-
-// =========================================================
-// LOGOUT CURRENT SESSION
-// =========================================================
-
-router.post(
-    "/logout",
-    logout
-);
-
-
-// =========================================================
-// LOGOUT ALL SESSIONS
-// =========================================================
-
-router.post(
-    "/logout-all",
-    authenticateToken,
-    logoutAll
-);
-
-
-// =========================================================
-// CURRENT USER
-// =========================================================
-
-router.get(
-    "/me",
-    authenticateToken,
-    (req, res) => {
-
-        res.json({
-
-            success: true,
-
-            message:
-                "Authentication successful.",
-
-            user:
-                req.user
-
-        });
-
-    }
-);
-
-
-module.exports =
-    router;
+module.exports = router;

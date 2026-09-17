@@ -1,5 +1,5 @@
-// =========================================================
-// CREVIO — SERVER (Root level)
+﻿// =========================================================
+// CREVIO â€” SERVER (Root level)
 // =========================================================
 require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
 
@@ -8,11 +8,12 @@ const path = require("path");
 const cookieParser = require("cookie-parser");
 
 // =========================================================
-// ROUTES – all from ./backend/...
+// ROUTES â€“ all from ./backend/...
 // =========================================================
 const authRoutes = require("./backend/routes/auth");         // change to authRoutes if needed
 const notificationsRouter = require("./backend/routes/notifications");
 const messageRoutes = require("./backend/routes/messageRoutes");
+const botRoutes = require("./backend/routes/botRoutes");
 const serviceRoutes = require("./backend/routes/serviceRoutes");
 const skillRoutes = require("./backend/routes/skillRoutes");
 const projectRoutes = require("./backend/routes/projectRoutes");
@@ -120,6 +121,7 @@ app.use("/api/portfolio", portfolioRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/services", serviceRoutes);
 app.use("/api/messages", messageRoutes);
+app.use("/api/bot", botRoutes);
 app.use("/api/notifications", notificationsRouter);
 
 // =========================================================
@@ -159,7 +161,7 @@ app.use((req, res) => {
 // GLOBAL ERROR HANDLER
 // =========================================================
 app.use((error, req, res, next) => {
-    console.error("❌ Express error:", error);
+    console.error("âŒ Express error:", error);
     if (res.headersSent) {
         return next(error);
     }
@@ -177,37 +179,37 @@ const server = app.listen(PORT, () => {
     console.log("==========================================");
     console.log("              CREVIO SERVER");
     console.log("==========================================");
-    console.log(`🚀 Server: http://localhost:${PORT}`);
-    console.log("✅ Authentication routes loaded");
-    console.log("✅ 2FA routes loaded");
-    console.log("✅ Billing routes loaded");
-    console.log("✅ Webhook routes loaded");
-    console.log("✅ Account routes loaded");
-    console.log("✅ Portfolio routes loaded");
-    console.log("✅ Upload routes loaded");
-    console.log("✅ Skill routes loaded");
-    console.log("✅ Project media routes loaded");
-    console.log("✅ Media library routes loaded");
-    console.log("✅ Social routes loaded");
-    console.log("✅ Message routes loaded");
-    console.log("✅ Notification routes loaded");
-    console.log("✅ Express server is listening");
+    console.log(`ðŸš€ Server: http://localhost:${PORT}`);
+    console.log("âœ… Authentication routes loaded");
+    console.log("âœ… 2FA routes loaded");
+    console.log("âœ… Billing routes loaded");
+    console.log("âœ… Webhook routes loaded");
+    console.log("âœ… Account routes loaded");
+    console.log("âœ… Portfolio routes loaded");
+    console.log("âœ… Upload routes loaded");
+    console.log("âœ… Skill routes loaded");
+    console.log("âœ… Project media routes loaded");
+    console.log("âœ… Media library routes loaded");
+    console.log("âœ… Social routes loaded");
+    console.log("âœ… Message routes loaded");
+    console.log("âœ… Notification routes loaded");
+    console.log("âœ… Express server is listening");
     console.log("==========================================");
     console.log("");
 });
 
 server.on("error", (error) => {
     if (error.code === "EADDRINUSE") {
-        console.error(`❌ Port ${PORT} is already in use. Stop the existing process.`);
+        console.error(`âŒ Port ${PORT} is already in use. Stop the existing process.`);
         return;
     }
-    console.error("❌ Server error:", error);
+    console.error("âŒ Server error:", error);
 });
 
 process.on("uncaughtException", (error) => {
-    console.error("❌ Uncaught exception:", error);
+    console.error("âŒ Uncaught exception:", error);
 });
 
 process.on("unhandledRejection", (reason) => {
-    console.error("❌ Unhandled promise rejection:", reason);
+    console.error("âŒ Unhandled promise rejection:", reason);
 });

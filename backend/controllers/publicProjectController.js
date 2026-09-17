@@ -1,133 +1,43 @@
-const projectModel =
-    require("../models/projectModel");
+// =========================================================
+// CREVIO — PUBLIC PROJECT CONTROLLER
+// File: backend/controllers/publicProjectController.js
+// =========================================================
 
+const db = require("../../database/db");
 
-// ==========================================
-// GET PUBLIC PROJECTS
-// ==========================================
-
-const getPublicProjects = (req, res) => {
-
+// GET /api/public/projects/:username
+exports.getByUsername = (req, res) => {
     try {
+        const user = db.prepare("SELECT id, username FROM users WHERE username = ?").get(req.params.username);
+        if (!user) return res.status(404).json({ success: false, message: "User not found" });
 
-        const projects =
-            projectModel.getAll();
+        const projects = db.prepare(`
+            SELECT id, title, description, url, category, thumbnail, created_at
+            FROM projects
+            WHERE user_id = ?
+            ORDER BY created_at DESC
+            LIMIT 50
+        `).all(user.id);
 
-        res.json({
-
-            success: true,
-
-            count: projects.length,
-
-            projects
-
-        });
-
-    } catch (error) {
-
-        console.error(
-            "Get public projects error:",
-            error
-        );
-
-        res.status(500).json({
-
-            success: false,
-
-            message:
-                "Unable to load projects."
-
-        });
-
+        res.json({ success: true, projects });
+    } catch (err) {
+        res.status(500).json({ success: false, message: "Failed", error: err.message });
     }
-
 };
 
-
-// ==========================================
-// GET SINGLE PUBLIC PROJECT
-// ==========================================
-
-const getPublicProjectById = (req, res) => {
-
+// GET /api/public/projects/:username/:id
+exports.getOne = (req, res) => {
     try {
+        const user = db.prepare("SELECT id FROM users WHERE username = ?").get(req.params.username);
+        if (!user) return res.status(404).json({ success: false, message: "User not found" });
 
-        const { id } = req.params;
+        const project = db.prepare(`
+            SELECT * FROM projects WHERE id = ? AND user_id = ?
+        `).get(req.params.id, user.id);
+        if (!project) return res.status(404).json({ success: false, message: "Project not found" });
 
-
-        // Validate ID
-        if (!id || isNaN(Number(id))) {
-
-            return res.status(400).json({
-
-                success: false,
-
-                message:
-                    "Invalid project ID."
-
-            });
-
-        }
-
-
-        const project =
-            projectModel.findById(
-                Number(id)
-            );
-
-
-        // Project does not exist
-        if (!project) {
-
-            return res.status(404).json({
-
-                success: false,
-
-                message:
-                    "Project not found."
-
-            });
-
-        }
-
-
-        res.json({
-
-            success: true,
-
-            project
-
-        });
-
-    } catch (error) {
-
-        console.error(
-            "Get public project error:",
-            error
-        );
-
-        res.status(500).json({
-
-            success: false,
-
-            message:
-                "Unable to load project."
-
-        });
-
+        res.json({ success: true, project });
+    } catch (err) {
+        res.status(500).json({ success: false, message: "Failed", error: err.message });
     }
-
-};
-
-
-// ==========================================
-// EXPORT
-// ==========================================
-
-module.exports = {
-
-    getPublicProjects,
-
-    getPublicProjectById
-
 };

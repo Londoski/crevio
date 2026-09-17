@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Social — Crevio</title>
+    <title>Social â€” Crevio</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
@@ -404,6 +404,8 @@
             .modal-box { padding: 20px; margin: 10px; }
         }
     </style>
+    <link rel="stylesheet" href="/dashboard/css/shared.css">
+    <link rel="stylesheet" href="/dashboard/css/mobile.css?v=639252484686517300">
 </head>
 <body>
 
@@ -481,25 +483,25 @@
                 <div class="metric-grid" id="metricGrid">
                     <div class="metric-card">
                         <div class="label">Total Social Clicks</div>
-                        <div class="value" id="totalClicks">—</div>
+                        <div class="value" id="totalClicks">â€”</div>
                         <div class="change" id="clicksChange"><span class="positive">+0%</span> vs previous 30 days</div>
                         <canvas class="sparkline" id="sparklineClicks"></canvas>
                     </div>
                     <div class="metric-card">
                         <div class="label">Unique Visitors</div>
-                        <div class="value" id="uniqueVisitors">—</div>
+                        <div class="value" id="uniqueVisitors">â€”</div>
                         <div class="change" id="visitorsChange"><span class="positive">+0%</span> vs previous 30 days</div>
                         <canvas class="sparkline" id="sparklineVisitors"></canvas>
                     </div>
                     <div class="metric-card">
                         <div class="label">Social CTR</div>
-                        <div class="value" id="socialCtr">—</div>
+                        <div class="value" id="socialCtr">â€”</div>
                         <div class="change" id="ctrChange"><span class="positive">+0%</span> vs previous 30 days</div>
                         <canvas class="sparkline" id="sparklineCtr"></canvas>
                     </div>
                     <div class="metric-card">
                         <div class="label">Returning Visitors</div>
-                        <div class="value" id="returningVisitors">—</div>
+                        <div class="value" id="returningVisitors">â€”</div>
                         <div class="change" id="returningChange"><span class="positive">+0%</span> vs previous 30 days</div>
                         <canvas class="sparkline" id="sparklineReturning"></canvas>
                     </div>
@@ -700,5 +702,6 @@
             window.location.href = '/admin/pages/login.html';
         });
     </script>
+    <script src="/dashboard/js/mobile-menu.js?v=639252484686517300"></script>
 </body>
 </html>

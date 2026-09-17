@@ -1,275 +1,206 @@
 // =========================================================
-// CREVIO — PROFILE JS (with avatar fix)
+// CREVIO — PROFILE PAGE
+// File: dashboard/js/profile.js
 // =========================================================
 
-const profileImage = document.getElementById('profileImagePreview');
-const profileInitials = document.getElementById('profileInitials');
-const fileInput = document.getElementById('fileInput');
-const uploadBtn = document.getElementById('uploadBtn');
-const removeBtn = document.getElementById('removeBtn');
-const previewArea = document.getElementById('previewArea');
-const cropImage = document.getElementById('cropImage');
-const saveCropBtn = document.getElementById('saveCropBtn');
-const cancelCropBtn = document.getElementById('cancelCropBtn');
-const messageEl = document.getElementById('profileMessage');
+document.addEventListener("DOMContentLoaded", function () {
+    const $ = (id) => document.getElementById(id);
 
-let cropper = null;
-let selectedFile = null;
+    const form       = $("profileForm");
+    const saveBtn    = $("saveBtn");
+    const toast      = $("toast");
+    const avatarImg  = $("avatarPreview");
+    const avatarIn   = $("avatarInput");
+    const avatarBtn  = $("avatarBtn");
+    const bioInput   = $("bio");
+    const bioCount   = $("bioCount");
 
-// ---- AUTH ----
-function getToken() {
-    const token = localStorage.getItem('crevio_token');
-    if (!token) {
-        window.location.href = '/admin/pages/login.html';
-        return null;
-    }
-    return token;
-}
+    // =========================================================
+    // LOAD PROFILE
+    // =========================================================
+    async function loadProfile() {
+        try {
+            const res  = await window.apiFetch("/api/users/me");
+            const data = await res.json();
 
-// ---- LOAD USER PROFILE ----
-function loadUserProfile() {
-    const token = getToken();
-    if (!token) return;
-
-    fetch('/api/users/me', {
-        headers: { 'Authorization': 'Bearer ' + token }
-    })
-    .then(res => {
-        if (res.status === 401) {
-            localStorage.removeItem('crevio_token');
-            window.location.href = '/admin/pages/login.html';
-            return;
-        }
-        return res.json();
-    })
-    .then(data => {
-        if (data && data.success && data.user) {
-            const user = data.user;
-
-            // Update header avatar (using avatar.js will also handle it, but we do it here too)
-            const avatar = document.getElementById('userAvatar');
-            const nameDisplay = document.getElementById('userNameDisplay');
-            if (avatar && user.display_name) {
-                avatar.textContent = user.display_name.charAt(0).toUpperCase();
-            }
-            if (nameDisplay && user.display_name) {
-                nameDisplay.textContent = user.display_name;
+            if (!data.success || !data.user) {
+                showToast("Could not load profile", true);
+                return;
             }
 
-            // Profile picture
-            if (user.profile_image) {
-                profileImage.src = user.profile_image + '?t=' + Date.now();
-                profileImage.style.display = 'block';
-                profileInitials.style.display = 'none';
+            const u = data.user;
+
+            $("username").value           = u.username || "";
+            $("email").value              = u.email || "";
+            $("display_name").value       = u.display_name || "";
+            $("phone").value              = u.phone || "";
+            $("bio").value                = u.bio || "";
+            $("location").value           = u.location || "";
+            $("primary_profession").value = u.primary_profession || "";
+            $("specialties").value        = u.specialties || "";
+
+            $("displayNamePreview").textContent = u.display_name || u.username || "User";
+            $("usernamePreview").textContent    = "@" + (u.username || "user");
+            $("roleBadge").textContent          = u.role || "creator";
+
+            // Avatar
+            if (u.profile_image) {
+                avatarImg.innerHTML = `<img src="${escapeHtml(u.profile_image)}" alt="">`;
             } else {
-                profileImage.style.display = 'none';
-                profileInitials.style.display = 'block';
-                if (user.display_name) {
-                    const names = user.display_name.split(' ');
-                    const initials = names.map(n => n.charAt(0).toUpperCase()).join('');
-                    profileInitials.textContent = initials || 'JD';
-                }
+                avatarImg.textContent = (u.username || "U").charAt(0).toUpperCase();
             }
 
-            // Also update the header avatar to show the image (not just initials)
-            if (avatar && user.profile_image) {
-                avatar.innerHTML = `<img src="${user.profile_image}?t=${Date.now()}" alt="Profile" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
-            }
+            updateBioCount();
+
+            // Update cached user
+            try {
+                const cached = JSON.parse(localStorage.getItem("user") || "{}");
+                localStorage.setItem("user", JSON.stringify({ ...cached, ...u }));
+            } catch (e) {}
+        } catch (err) {
+            console.error("Load profile error:", err);
+            showToast("Could not load profile: " + err.message, true);
         }
-    })
-    .catch(err => console.error('Error loading profile:', err));
-}
-
-// ---- SHOW MESSAGE ----
-function showMessage(text, type = 'success') {
-    messageEl.textContent = text;
-    messageEl.className = 'message ' + type;
-    setTimeout(() => {
-        messageEl.className = 'message';
-        messageEl.textContent = '';
-    }, 5000);
-}
-
-// ---- UPLOAD BUTTON ----
-uploadBtn.addEventListener('click', function() {
-    fileInput.click();
-});
-
-// ---- FILE SELECT ----
-fileInput.addEventListener('change', function() {
-    const file = this.files[0];
-    if (!file) return;
-
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
-    if (!allowedTypes.includes(file.type)) {
-        showMessage('Unsupported image format. Use JPG, PNG, or WebP.', 'error');
-        this.value = '';
-        return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-        showMessage('Image is too large. Maximum size is 5MB.', 'error');
-        this.value = '';
-        return;
-    }
+    // =========================================================
+    // SAVE PROFILE
+    // =========================================================
+    form?.addEventListener("submit", async (e) => {
+        e.preventDefault();
 
-    selectedFile = file;
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        cropImage.src = e.target.result;
-        previewArea.classList.remove('hidden');
+        const payload = {
+            display_name:       $("display_name").value.trim(),
+            phone:              $("phone").value.trim(),
+            bio:                $("bio").value.trim(),
+            location:           $("location").value.trim(),
+            primary_profession: $("primary_profession").value.trim(),
+            specialties:        $("specialties").value.trim()
+        };
 
-        if (cropper) {
-            cropper.destroy();
-        }
-        cropper = new Cropper(cropImage, {
-            aspectRatio: 1,
-            viewMode: 1,
-            dragMode: 'move',
-            autoCropArea: 0.8,
-            restore: false,
-            guides: true,
-            center: true,
-            highlight: false,
-            cropBoxMovable: true,
-            cropBoxResizable: true,
-            toggleDragModeOnDblclick: false,
-        });
-    };
-    reader.readAsDataURL(file);
-});
-
-// ---- CANCEL CROP ----
-cancelCropBtn.addEventListener('click', function() {
-    if (cropper) {
-        cropper.destroy();
-        cropper = null;
-    }
-    previewArea.classList.add('hidden');
-    fileInput.value = '';
-    selectedFile = null;
-});
-
-// ---- SAVE CROP ----
-saveCropBtn.addEventListener('click', function() {
-    if (!cropper || !selectedFile) {
-        showMessage('No image selected or crop not ready.', 'error');
-        return;
-    }
-
-    const canvas = cropper.getCroppedCanvas({
-        width: 400,
-        height: 400,
-        imageSmoothingEnabled: true,
-        imageSmoothingQuality: 'high',
-    });
-
-    if (!canvas) {
-        showMessage('Unable to process image.', 'error');
-        return;
-    }
-
-    canvas.toBlob(function(blob) {
-        if (!blob) {
-            showMessage('Unable to process image.', 'error');
+        if (payload.bio.length > 500) {
+            showToast("Bio must be under 500 characters", true);
             return;
         }
-        uploadProfilePicture(blob);
-    }, 'image/jpeg', 0.92);
-});
 
-// ---- UPLOAD ----
-async function uploadProfilePicture(blob) {
-    const token = getToken();
-    if (!token) return;
+        saveBtn.disabled = true;
+        const original = saveBtn.innerHTML;
+        saveBtn.innerHTML = "Saving...";
 
-    const formData = new FormData();
-    formData.append('profilePicture', blob, 'profile.jpg');
+        try {
+            const res  = await window.apiFetch("/api/users/me", {
+                method: "PATCH",
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
 
-    uploadBtn.disabled = true;
-    saveCropBtn.disabled = true;
-    cancelCropBtn.disabled = true;
+            if (data.success) {
+                showToast("Profile updated");
+                // Update display name in card immediately
+                $("displayNamePreview").textContent =
+                    payload.display_name || $("username").value || "User";
 
-    try {
-        const res = await fetch('/api/users/profile-picture', {
-            method: 'POST',
-            headers: { 'Authorization': 'Bearer ' + token },
-            body: formData
-        });
-        const data = await res.json();
-
-        if (!res.ok || !data.success) {
-            throw new Error(data.message || 'Upload failed.');
-        }
-
-        showMessage('✅ Profile picture updated!', 'success');
-
-        if (cropper) {
-            cropper.destroy();
-            cropper = null;
-        }
-        previewArea.classList.add('hidden');
-        fileInput.value = '';
-        selectedFile = null;
-
-        // Update localStorage and avatar
-        const userData = localStorage.getItem('crevio_user');
-        if (userData) {
-            try {
-                const user = JSON.parse(userData);
-                user.profile_image = data.profile_image;
-                localStorage.setItem('crevio_user', JSON.stringify(user));
-            } catch (e) {}
-        }
-
-        loadUserProfile(); // reload to show new image
-
-    } catch (err) {
-        console.error('Upload error:', err);
-        showMessage(err.message || 'Upload failed.', 'error');
-    } finally {
-        uploadBtn.disabled = false;
-        saveCropBtn.disabled = false;
-        cancelCropBtn.disabled = false;
-    }
-}
-
-// ---- REMOVE ----
-removeBtn.addEventListener('click', function() {
-    if (!confirm('Remove your profile picture?')) return;
-
-    const token = getToken();
-    if (!token) return;
-
-    fetch('/api/users/profile-picture', {
-        method: 'DELETE',
-        headers: { 'Authorization': 'Bearer ' + token }
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success) {
-            showMessage('✅ Profile picture removed.', 'success');
-            // Update localStorage
-            const userData = localStorage.getItem('crevio_user');
-            if (userData) {
+                // Update cached user
                 try {
-                    const user = JSON.parse(userData);
-                    user.profile_image = null;
-                    localStorage.setItem('crevio_user', JSON.stringify(user));
+                    const cached = JSON.parse(localStorage.getItem("user") || "{}");
+                    localStorage.setItem("user", JSON.stringify({ ...cached, ...payload }));
                 } catch (e) {}
+            } else {
+                showToast(data.message || "Failed to save", true);
             }
-            loadUserProfile();
-        } else {
-            showMessage(data.message || 'Unable to remove.', 'error');
+        } catch (err) {
+            showToast("Failed: " + err.message, true);
+        } finally {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = original || `<i data-lucide="save" class="icon" style="width:16px;height:16px;"></i> Save Changes`;
+            if (typeof lucide !== "undefined") lucide.createIcons();
         }
-    })
-    .catch(err => {
-        console.error('Remove error:', err);
-        showMessage('An error occurred.', 'error');
     });
-});
 
-// ---- INIT ----
-document.addEventListener('DOMContentLoaded', function() {
-    loadUserProfile();
+    // =========================================================
+    // AVATAR UPLOAD
+    // =========================================================
+    avatarBtn?.addEventListener("click", () => avatarIn.click());
+
+    avatarIn?.addEventListener("change", async function () {
+        const file = this.files[0];
+        if (!file) return;
+
+        if (file.size > 5 * 1024 * 1024) {
+            showToast("Image must be under 5MB", true);
+            return;
+        }
+        if (!file.type.startsWith("image/")) {
+            showToast("Only image files allowed", true);
+            return;
+        }
+
+        // Preview instantly
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            avatarImg.innerHTML = `<img src="${e.target.result}" alt="">`;
+        };
+        reader.readAsDataURL(file);
+
+        // Upload
+        const fd = new FormData();
+        fd.append("avatar", file);
+
+        try {
+            const token = localStorage.getItem("token");
+            const res = await fetch("/api/users/me/avatar", {
+                method: "POST",
+                headers: { "Authorization": `Bearer ${token}` },
+                body: fd
+            });
+            const data = await res.json();
+
+            if (data.success && data.url) {
+                showToast("Avatar updated");
+                // Update cached user
+                try {
+                    const cached = JSON.parse(localStorage.getItem("user") || "{}");
+                    localStorage.setItem("user", JSON.stringify({ ...cached, profile_image: data.url }));
+                } catch (e) {}
+            } else {
+                showToast(data.message || "Upload failed", true);
+            }
+        } catch (err) {
+            showToast("Upload failed: " + err.message, true);
+        } finally {
+            this.value = "";
+        }
+    });
+
+    // =========================================================
+    // BIO CHARACTER COUNT
+    // =========================================================
+    function updateBioCount() {
+        if (bioCount && bioInput) bioCount.textContent = bioInput.value.length;
+    }
+    bioInput?.addEventListener("input", updateBioCount);
+
+    // =========================================================
+    // HELPERS
+    // =========================================================
+    let toastTimer;
+    function showToast(msg, isError = false) {
+        if (!toast) return;
+        clearTimeout(toastTimer);
+        toast.textContent = msg;
+        toast.classList.toggle("error", isError);
+        toast.classList.add("show");
+        toastTimer = setTimeout(() => toast.classList.remove("show"), 3000);
+    }
+
+    function escapeHtml(str) {
+        return String(str == null ? "" : str).replace(/[&<>"']/g, s => ({
+            "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+        })[s]);
+    }
+
+    // =========================================================
+    // INIT
+    // =========================================================
+    loadProfile();
 });

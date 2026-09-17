@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio</title>
+    <meta name="description" id="metaDescription" content="">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&family=Playfair+Display:wght@400;600;700;900&family=Roboto:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        :root {
+            --primary: #2563EB;
+            --bg: #0F172A;
+            --text: #F1F5F9;
+            --text-muted: #94A3B8;
+            --card: rgba(255,255,255,0.04);
+            --border: rgba(255,255,255,0.1);
+            --font: 'Inter', sans-serif;
+        }
+        body {
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+        a { color: inherit; text-decoration: none; }
+        img { max-width: 100%; display: block; }
+
+        .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+
+        /* ---- HERO ---- */
+        .hero {
+            padding: 120px 0 80px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero::before {
+            content: "";
+            position: absolute;
+            top: -50%; left: 50%;
+            transform: translateX(-50%);
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, var(--primary), transparent 70%);
+            opacity: 0.15;
+            border-radius: 50%;
+            pointer-events: none;
+        }
+        .hero-avatar {
+            width: 140px; height: 140px;
+            border-radius: 50%;
+            margin: 0 auto 24px;
+            background: var(--primary);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 52px; font-weight: 700; color: #fff;
+            overflow: hidden;
+            border: 4px solid rgba(255,255,255,0.1);
+            position: relative;
+        }
+        .hero-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .hero h1 {
+            font-size: clamp(32px, 5vw, 56px);
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            margin-bottom: 16px;
+            line-height: 1.1;
+        }
+        .hero p.tagline {
+            font-size: clamp(16px, 2vw, 20px);
+            color: var(--text-muted);
+            max-width: 600px;
+            margin: 0 auto 32px;
+        }
+        .hero-actions {
+            display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
+        }
+        .btn {
+            padding: 12px 26px;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-flex; align-items: center; gap: 8px;
+            border: none; font-family: inherit;
+        }
+        .btn-primary { background: var(--primary); color: #fff; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+        .btn-outline { background: transparent; color: var(--text); border: 1.5px solid var(--border); }
+        .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
+
+        /* ---- SECTIONS ---- */
+        section { padding: 64px 0; }
+        section h2 {
+            font-size: clamp(24px, 3vw, 32px);
+            font-weight: 700;
+            margin-bottom: 40px;
+            text-align: center;
+            letter-spacing: -0.02em;
+        }
+        section h2::after {
+            content: "";
+            display: block;
+            width: 48px; height: 3px;
+            background: var(--primary);
+            margin: 14px auto 0;
+            border-radius: 2px;
+        }
+
+        /* ---- ABOUT ---- */
+        .about-content {
+            max-width: 720px;
+            margin: 0 auto;
+            text-align: center;
+            font-size: 17px;
+            color: var(--text-muted);
+            line-height: 1.8;
+        }
+        .about-meta {
+            display: flex; gap: 24px; justify-content: center; flex-wrap: wrap;
+            margin-top: 24px;
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+        .about-meta span { display: flex; align-items: center; gap: 6px; }
+
+        /* ---- PROJECTS ---- */
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 24px;
+        }
+        .project-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        .project-card:hover {
+            transform: translateY(-6px);
+            border-color: var(--primary);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+        .project-thumb {
+            height: 200px;
+            background: linear-gradient(135deg, var(--primary), rgba(0,0,0,0.3));
+            display: flex; align-items: center; justify-content: center;
+            font-size: 48px; font-weight: 700; color: rgba(255,255,255,0.9);
+            overflow: hidden;
+        }
+        .project-thumb img { width: 100%; height: 100%; object-fit: cover; }
+        .project-body { padding: 20px; }
+        .project-body h3 { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
+        .project-body p { font-size: 14px; color: var(--text-muted); line-height: 1.6; }
+        .project-tags { display: flex; gap: 6px; margin-top: 12px; flex-wrap: wrap; }
+        .project-tag {
+            font-size: 11px; padding: 4px 10px;
+            background: rgba(255,255,255,0.06); border-radius: 999px;
+            color: var(--text-muted);
+        }
+
+        /* ---- SERVICES ---- */
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 20px;
+        }
+        .service-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 28px 24px;
+            transition: all 0.3s;
+        }
+        .service-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-4px);
+        }
+        .service-icon {
+            width: 48px; height: 48px;
+            border-radius: 12px;
+            background: rgba(37,99,235,0.15);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px; margin-bottom: 16px;
+            color: var(--primary);
+        }
+        .service-card h3 { font-size: 17px; font-weight: 600; margin-bottom: 8px; }
+        .service-card p { font-size: 14px; color: var(--text-muted); margin-bottom: 16px; }
+        .service-price {
+            font-size: 20px; font-weight: 700; color: var(--primary);
+        }
+        .service-price small { font-size: 12px; color: var(--text-muted); font-weight: 500; }
+
+        /* ---- SKILLS ---- */
+        .skills-wrap {
+            display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;
+            max-width: 800px; margin: 0 auto;
+        }
+        .skill-chip {
+            padding: 10px 20px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            font-size: 14px; font-weight: 500;
+            transition: all 0.2s;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .skill-chip:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            transform: translateY(-2px);
+        }
+        .skill-chip .dot {
+            width: 6px; height: 6px; border-radius: 50%;
+            background: var(--primary);
+        }
+
+        /* ---- SOCIAL ---- */
+        .socials-grid {
+            display: flex; gap: 14px; justify-content: center; flex-wrap: wrap;
+        }
+        .social-btn {
+            width: 52px; height: 52px;
+            border-radius: 12px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s;
+            font-size: 20px;
+            color: var(--text-muted);
+        }
+        .social-btn:hover {
+            background: var(--primary); color: #fff;
+            border-color: var(--primary);
+            transform: translateY(-4px);
+        }
+
+        /* ---- CONTACT ---- */
+        .contact-card {
+            max-width: 560px;
+            margin: 0 auto;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 32px;
+            text-align: center;
+        }
+        .contact-card h3 { font-size: 22px; margin-bottom: 8px; font-weight: 600; }
+        .contact-card p { color: var(--text-muted); margin-bottom: 24px; font-size: 15px; }
+        .contact-form { display: flex; flex-direction: column; gap: 12px; }
+        .contact-form input,
+        .contact-form textarea {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text);
+            font-size: 14px; font-family: inherit;
+        }
+        .contact-form input:focus,
+        .contact-form textarea:focus { outline: none; border-color: var(--primary); }
+        .contact-form textarea { resize: vertical; min-height: 100px; }
+
+        /* ---- FOOTER ---- */
+        footer {
+            padding: 40px 0;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 13px;
+            border-top: 1px solid var(--border);
+            margin-top: 40px;
+        }
+        footer a { color: var(--primary); }
+        footer a:hover { text-decoration: underline; }
+
+        /* ---- TEMPLATE VARIANTS ---- */
+        body.template-bold .hero h1 { font-size: clamp(40px, 7vw, 72px); }
+        body.template-bold section h2 {
+            text-align: left;
+            border-left: 4px solid var(--primary);
+            padding-left: 20px;
+        }
+        body.template-bold section h2::after { display: none; }
+
+        body.template-gallery .projects-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+        body.template-gallery .project-thumb { height: 240px; }
+        body.template-gallery .project-body p { display: none; }
+
+        body.template-professional .hero { text-align: left; padding: 100px 0 60px; }
+        body.template-professional .hero-avatar { margin: 0 0 24px; }
+        body.template-professional .hero-actions { justify-content: flex-start; }
+        body.template-professional .hero p.tagline { margin: 0 0 32px; }
+
+        /* ---- EMPTY / ERROR ---- */
+        .page-state {
+            min-height: 100vh;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            text-align: center; padding: 40px 24px;
+        }
+        .page-state h1 { font-size: 32px; margin-bottom: 12px; }
+        .page-state p { color: var(--text-muted); margin-bottom: 24px; }
+
+        /* ---- LOADER ---- */
+        .loader {
+            width: 32px; height: 32px;
+            border: 3px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ---- RESPONSIVE ---- */
+        @media (max-width: 640px) {
+            .hero { padding: 80px 0 60px; }
+            .hero-avatar { width: 100px; height: 100px; font-size: 36px; }
+            section { padding: 48px 0; }
+            .container { padding: 0 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="app">
+        <!-- Loading state (replaced by JS) -->
+        <div class="page-state">
+            <div class="loader"></div>
+            <p style="margin-top:20px;">Loading portfolio...</p>
+        </div>
+    </div>
+
+    <script>
+        // =========================================================
+        // PUBLIC PORTFOLIO RENDERER
+        // =========================================================
+
+        (async function () {
+            const app = document.getElementById("app");
+
+            // Get slug from URL: /p/{slug}
+            const pathParts = window.location.pathname.split("/");
+            const slug = pathParts[pathParts.length - 1];
+
+            if (!slug) {
+                return show404("Portfolio not specified");
+            }
+
+            try {
+                const res = await fetch(`/api/portfolio/public/${encodeURIComponent(slug)}`);
+                const data = await res.json();
+
+                if (!data.success) {
+                    return show404(data.message || "Portfolio not found");
+                }
+
+                render(data);
+            } catch (err) {
+                console.error("Portfolio load error:", err);
+                show404("Failed to load portfolio");
+            }
+
+            // ---------- RENDER ----------
+            function render({ config, user, projects, services }) {
+                // Apply theme
+                let sections = {};
+                try { sections = JSON.parse(config.sections || "{}"); } catch {}
+
+                const primary = config.primary_color || "#2563EB";
+                const bg      = config.background_color || "#0F172A";
+                const font    = config.font_family || "Inter";
+
+                document.documentElement.style.setProperty("--primary", primary);
+                document.documentElement.style.setProperty("--bg", bg);
+                document.documentElement.style.setProperty("--font", `'${font}', sans-serif`);
+
+                document.title = config.title || `${user.display_name || user.username} — Portfolio`;
+                if (config.meta_description) {
+                    document.getElementById("metaDescription").setAttribute("content", config.meta_description);
+                }
+
+                const body = document.body;
+                body.classList.remove("template-minimal", "template-bold", "template-gallery", "template-professional");
+                body.classList.add(`template-${config.template || "minimal"}`);
+
+                // Build HTML
+                const name    = config.title || user.display_name || user.username || "Creator";
+                const tagline = config.tagline || user.bio || "Welcome to my portfolio";
+                const initial = name.charAt(0).toUpperCase();
+
+                let html = "";
+
+                // ---------- HERO ----------
+                html += `
+                    <section class="hero">
+                        <div class="container">
+                            <div class="hero-avatar">
+                                ${user.profile_image
+                                    ? `<img src="${escapeAttr(user.profile_image)}" alt="${escapeAttr(name)}" onerror="this.parentElement.textContent='${initial}'">`
+                                    : initial}
+                            </div>
+                            <h1>${escapeHtml(name)}</h1>
+                            <p class="tagline">${escapeHtml(tagline)}</p>
+                            ${sections.contact !== false ? `
+                                <div class="hero-actions">
+                                    <a href="#contact" class="btn btn-primary">Get in Touch</a>
+                                    ${sections.projects !== false ? `<a href="#projects" class="btn btn-outline">View Work</a>` : ""}
+                                </div>
+                            ` : ""}
+                        </div>
+                    </section>
+                `;
+
+                // ---------- ABOUT ----------
+                if (sections.about !== false && user.bio) {
+                    html += `
+                        <section id="about">
+                            <div class="container">
+                                <h2>About Me</h2>
+                                <div class="about-content">
+                                    <p>${escapeHtml(user.bio)}</p>
+                                    ${(user.location || user.primary_profession) ? `
+                                        <div class="about-meta">
+                                            ${user.location ? `<span>📍 ${escapeHtml(user.location)}</span>` : ""}
+                                            ${user.primary_profession ? `<span>💼 ${escapeHtml(user.primary_profession)}</span>` : ""}
+                                        </div>
+                                    ` : ""}
+                                </div>
+                            </div>
+                        </section>
+                    `;
+                }
+
+                // ---------- PROJECTS ----------
+                if (sections.projects !== false && projects && projects.length) {
+                    html += `
+                        <section id="projects">
+                            <div class="container">
+                                <h2>Projects</h2>
+                                <div class="projects-grid">
+                                    ${projects.map(p => `
+                                        <div class="project-card" ${p.url ? `onclick="window.open('${escapeAttr(p.url)}','_blank')"` : ""}>
+                                            <div class="project-thumb">
+                                                ${p.thumbnail
+                                                    ? `<img src="${escapeAttr(p.thumbnail)}" alt="${escapeAttr(p.title || '')}">`
+                                                    : (p.title || "P").charAt(0).toUpperCase()}
+                                            </div>
+                                            <div class="project-body">
+                                                <h3>${escapeHtml(p.title || "Untitled Project")}</h3>
+                                                ${p.description ? `<p>${escapeHtml(p.description.slice(0, 120))}${p.description.length > 120 ? "…" : ""}</p>` : ""}
+                                                ${p.category ? `<div class="project-tags"><span class="project-tag">${escapeHtml(p.category)}</span></div>` : ""}
+                                            </div>
+                                        </div>
+                                    `).join("")}
+                                </div>
+                            </div>
+                        </section>
+                    `;
+                }
+
+                // ---------- SERVICES ----------
+                if (sections.services !== false && services && services.length) {
+                    html += `
+                        <section id="services">
+                            <div class="container">
+                                <h2>Services</h2>
+                                <div class="services-grid">
+                                    ${services.map(s => `
+                                        <div class="service-card">
+                                            <div class="service-icon">💼</div>
+                                            <h3>${escapeHtml(s.title || "Service")}</h3>
+                                            <p>${escapeHtml((s.description || "").slice(0, 140))}${(s.description || "").length > 140 ? "…" : ""}</p>
+                                            <div class="service-price">
+                                                $${Number(s.price || 0).toFixed(2)}
+                                                ${s.delivery_time ? `<small>/ ${escapeHtml(s.delivery_time)}</small>` : ""}
+                                            </div>
+                                        </div>
+                                    `).join("")}
+                                </div>
+                            </div>
+                        </section>
+                    `;
+                }
+
+                // ---------- SKILLS ----------
+                if (sections.skills !== false && user.specialties) {
+                    const skillsList = user.specialties.split(",").map(s => s.trim()).filter(Boolean);
+                    if (skillsList.length) {
+                        html += `
+                            <section id="skills">
+                                <div class="container">
+                                    <h2>Skills</h2>
+                                    <div class="skills-wrap">
+                                        ${skillsList.map(s => `
+                                            <div class="skill-chip"><span class="dot"></span>${escapeHtml(s)}</div>
+                                        `).join("")}
+                                    </div>
+                                </div>
+                            </section>
+                        `;
+                    }
+                }
+
+                // ---------- SOCIAL ----------
+                if (sections.social !== false) {
+                    // Will be added later when social_accounts fetched
+                    // Skip for now
+                }
+
+                // ---------- CONTACT ----------
+                if (sections.contact !== false) {
+                    html += `
+                        <section id="contact">
+                            <div class="container">
+                                <h2>Get in Touch</h2>
+                                <div class="contact-card">
+                                    <h3>Let's work together</h3>
+                                    <p>Have a project in mind? Send me a message.</p>
+                                    <form class="contact-form" onsubmit="event.preventDefault(); alert('Contact form coming soon!');">
+                                        <input type="text" placeholder="Your name" required>
+                                        <input type="email" placeholder="Your email" required>
+                                        <textarea placeholder="Your message" required></textarea>
+                                        <button type="submit" class="btn btn-primary" style="justify-content:center;">Send Message</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </section>
+                    `;
+                }
+
+                // ---------- FOOTER ----------
+                html += `
+                    <footer>
+                        <div class="container">
+                            <p>© ${new Date().getFullYear()} ${escapeHtml(name)} · Built with <a href="/">Crevio</a></p>
+                        </div>
+                    </footer>
+                `;
+
+                app.innerHTML = html;
+            }
+
+            // ---------- 404 / ERROR ----------
+            function show404(message) {
+                app.innerHTML = `
+                    <div class="page-state">
+                        <h1>404</h1>
+                        <p>${escapeHtml(message)}</p>
+                        <a href="/" class="btn btn-primary" style="text-decoration:none;">Go Home</a>
+                    </div>
+                `;
+            }
+
+            // ---------- HELPERS ----------
+            function escapeHtml(str) {
+                return String(str == null ? "" : str).replace(/[&<>"']/g, s => ({
+                    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+                })[s]);
+            }
+            function escapeAttr(str) {
+                return escapeHtml(str);
+            }
+        })();
+    </script>
+</body>
+</html>

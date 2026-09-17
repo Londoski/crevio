@@ -1,40 +1,23 @@
 // =========================================================
 // CREVIO — SKILL ROUTES
+// File: backend/routes/skillRoutes.js
 // =========================================================
 
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const skillController = require('../controllers/skillController');
-const { authenticate } = require('../middleware/authMiddleware');
+const auth = require("../middleware/authMiddleware");
+const skillController = require("../controllers/skillController");
 
-// All routes require authentication
-router.use(authenticate);
+router.get("/stats",    auth, skillController.getStats);
 
-// ---- GET selected skills for user ----
-router.get('/selected', skillController.getSelectedSkills);
+router.get("/",         auth, skillController.getSkills);
+router.post("/",        auth, skillController.createSkill);
 
-// ---- SAVE selected skills ----
-router.post('/selected', skillController.saveSelectedSkills);
+router.get("/:id",      auth, skillController.getSkill);
+router.patch("/:id",    auth, skillController.updateSkill);
+router.delete("/:id",   auth, skillController.deleteSkill);
 
-// ---- REMOVE a selected skill ----
-router.delete('/selected/:skillId', skillController.removeSelectedSkill);
-
-// ---- GET all global skills ----
-router.get('/all', skillController.getAllSkills);
-
-// ---- GET skills by category ----
-router.get('/category/:categoryId', skillController.getSkillsByCategory);
-
-// ---- SEARCH skills ----
-router.get('/search', skillController.searchSkills);
-
-// ---- GET categories with user counts ----
-router.get('/categories', skillController.getCategories);
-
-// ---- GET recommended skills ----
-router.get('/recommended', skillController.getRecommendedSkills);
-
-// ---- GET all categories (simple) ----
-router.get('/categories/list', skillController.getAllCategories);
+router.put("/:id/services", auth, skillController.saveServices);
+router.put("/:id/projects", auth, skillController.saveProjects);
 
 module.exports = router;

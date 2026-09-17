@@ -1,0 +1,389 @@
+﻿/* =========================================================
+   CREVIO â€” SHARED MOBILE STYLES
+   File: dashboard/css/mobile.css
+   Loaded after each page's own <style> so it wins on mobile.
+   ========================================================= */
+
+/* ---------- Viewport height fixes for all pages ---------- */
+@media (max-width: 900px) {
+    html, body {
+        height: 100dvh;
+        min-height: 100dvh;
+        overflow-x: hidden;
+    }
+
+    /* ---------- Kill horizontal scroll on every page ---------- */
+    body { max-width: 100vw; }
+    img, video, iframe, table, pre { max-width: 100%; }
+
+    /* ---------- Left app sidebar collapses ---------- */
+    
+
+    /* ---------- Main content takes full width ---------- */
+    .main, .content, .page-content, .container, .dashboard-main {
+        width: 100% !important;
+        margin: 0 !important;
+        padding-left: 12px !important;
+        padding-right: 12px !important;
+    }
+
+    /* ---------- Grid columns collapse to 1 ---------- */
+    .grid-2, .grid-3, .grid-4,
+    [class*="grid-"], [class*="cards-"], [class*="columns-"] {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+    }
+
+    /* ---------- Flex rows wrap ---------- */
+    .row, .flex-row, [class*="row-"] {
+        flex-wrap: wrap !important;
+        gap: 10px !important;
+    }
+
+    /* ---------- Cards: compact ---------- */
+    .card, .panel, .tile, [class*="card-"] {
+        padding: 14px !important;
+        border-radius: 12px !important;
+    }
+
+    /* ---------- Page headers: stack ---------- */
+    .page-header, .section-header {
+        flex-wrap: wrap !important;
+        gap: 12px !important;
+        padding: 14px 0 !important;
+    }
+    .page-header h1, .page-title {
+        font-size: 20px !important;
+    }
+    .page-header h2 { font-size: 17px !important; }
+
+    /* ---------- Tables: horizontal scroll instead of squish ---------- */
+    .table-wrap, .table-container, [class*="table-wrapper"] {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+    }
+    table { min-width: 480px; }
+    table th, table td { padding: 10px 12px !important; font-size: 13px !important; }
+
+    /* ---------- Forms: full width inputs ---------- */
+    input, textarea, select {
+        font-size: 16px !important; /* prevents iOS auto-zoom */
+    }
+    .form-row, [class*="form-row"] {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+    }
+    .form-field { margin-bottom: 14px !important; }
+
+    /* ---------- Buttons: touch-friendly ---------- */
+    button, .btn, [class*="btn-"] {
+        min-height: 40px;
+    }
+    .btn, [class*="btn-primary"], [class*="btn-secondary"] {
+        padding: 10px 16px !important;
+        font-size: 14px !important;
+    }
+
+    /* ---------- Modals: full width on mobile ---------- */
+    .modal, .dialog, [class*="modal-"] {
+        max-width: calc(100vw - 24px) !important;
+        width: 100% !important;
+        padding: 18px !important;
+        border-radius: 16px !important;
+    }
+
+    /* ---------- Sidebar-like right panels hide or slide ---------- */
+    .context-panel, .preview-panel, .details-panel {
+        display: none !important;
+    }
+
+    /* ---------- Top bar / nav bars ---------- */
+    .topbar, .navbar, .nav-header {
+        padding: 10px 14px !important;
+        font-size: 14px !important;
+    }
+
+    /* ---------- Action button rows: wrap ---------- */
+    .actions, [class*="actions-"] {
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+    }
+
+    /* ---------- Long text: break ---------- */
+    p, span, h1, h2, h3, h4, h5, h6, a, li {
+        word-break: break-word;
+        overflow-wrap: anywhere;
+    }
+}
+
+/* ---------- Extra-tight screens ---------- */
+@media (max-width: 480px) {
+    .page-header h1, .page-title { font-size: 18px !important; }
+    .card, .panel, .tile { padding: 12px !important; border-radius: 10px !important; }
+    .main, .content, .page-content, .container, .dashboard-main {
+        padding-left: 10px !important;
+        padding-right: 10px !important;
+    }
+    button, .btn { font-size: 13px !important; }
+}
+
+/* ---------- Prevent browser tap-highlight flash ---------- */
+@media (hover: none) {
+    * {
+        -webkit-tap-highlight-color: transparent;
+    }
+}
+
+/* NO TOOLTIPS ON MOBILE */
+@media (max-width: 900px), (hover: none) {
+    [data-tip]::after, [data-tip]::before { display: none !important; content: none !important; }
+}
+
+
+/* LEFT SIDEBAR DRAWER (mobile) */
+@media (max-width: 900px) {
+    .sidebar {
+        display: flex !important;
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100dvh;
+        width: 260px;
+        max-width: 82vw;
+        z-index: 200;
+        transform: translateX(-100%);
+        transition: transform 0.22s ease;
+        box-shadow: 8px 0 32px rgba(0,0,0,0.5);
+        background: var(--bg-secondary);
+    }
+    .sidebar.open,
+    .sidebar.mobile-open,
+    .sidebar.is-open,
+    body.sidebar-open .sidebar,
+    body.nav-open .sidebar,
+    body.mobile-sidebar-active .sidebar {
+        transform: translateX(0) !important;
+    }
+
+    /* Backdrop */
+    body.sidebar-open::before,
+    body.nav-open::before,
+    body.mobile-sidebar-active::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.55);
+        backdrop-filter: blur(2px);
+        z-index: 150;
+    }
+}
+
+
+/* KILL INTRUDER HAMBURGER — anything that isn't our #mobileMenuBtn */
+@media (max-width: 900px) {
+    /* Floating fixed buttons in top-left */
+    body > button[style*="position: fixed"][style*="top"],
+    body > button[style*="position:fixed"][style*="top"],
+    body > div > button[style*="position: fixed"][style*="top"],
+    body > div > button[style*="position:fixed"][style*="top"] {
+        display: none !important;
+    }
+
+    /* Any class-based toggle that isn't ours */
+    [class*="hamburger"]:not(#mobileMenuBtn),
+    [class*="nav-toggle"]:not(#mobileMenuBtn),
+    [class*="navToggle"]:not(#mobileMenuBtn),
+    [class*="menu-toggle"]:not(#mobileMenuBtn),
+    [class*="sidebar-toggle"]:not(.bot-sidebar-toggle):not(#mobileMenuBtn),
+    [id*="navToggle"]:not(#mobileMenuBtn),
+    [id*="NavToggle"]:not(#mobileMenuBtn),
+    [id*="hamburger"]:not(#mobileMenuBtn) {
+        display: none !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
+    }
+
+    /* Our button always wins */
+    #mobileMenuBtn.mobile-menu-btn {
+        display: flex !important;
+        visibility: visible !important;
+        pointer-events: auto !important;
+    }
+}
+
+/* KILL INTRUDER HAMBURGER — anything that isn't our #mobileMenuBtn */
+@media (max-width: 900px) {
+
+    /* Any floating fixed-position button in the top-left of the viewport */
+    body > button[style*="position"][style*="fixed"][style*="top"],
+    body > button[style*="position:fixed"],
+    body > div > button[style*="position: fixed"][style*="top"],
+    body > div > button[style*="position:fixed"][style*="top"] {
+        display: none !important;
+    }
+
+    /* Class/id-based toggles that aren't ours */
+    [class*="hamburger"]:not(#mobileMenuBtn),
+    [class*="nav-toggle"]:not(#mobileMenuBtn),
+    [class*="navToggle"]:not(#mobileMenuBtn),
+    [class*="menu-toggle"]:not(#mobileMenuBtn),
+    [class*="menuToggle"]:not(#mobileMenuBtn),
+    [class*="mobile-toggle"]:not(#mobileMenuBtn),
+    [class*="mobileToggle"]:not(#mobileMenuBtn),
+    [class*="sidebar-toggle"]:not(.bot-sidebar-toggle):not(#mobileMenuBtn),
+    [id*="navToggle"]:not(#mobileMenuBtn),
+    [id*="NavToggle"]:not(#mobileMenuBtn),
+    [id*="hamburger"]:not(#mobileMenuBtn),
+    [id*="Hamburger"]:not(#mobileMenuBtn),
+    [id*="menuBtn"]:not(#mobileMenuBtn):not(.bot-sidebar-toggle),
+    [id*="MenuBtn"]:not(#mobileMenuBtn):not(.bot-sidebar-toggle) {
+        display: none !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
+    }
+
+    /* Our button always wins */
+    #mobileMenuBtn.mobile-menu-btn {
+        display: flex !important;
+        visibility: visible !important;
+        pointer-events: auto !important;
+    }
+}
+
+/* Hide the auth.js intruder button by its actual ID */
+@media (max-width: 900px) {
+    #crevioMobileToggle,
+    [id="crevioMobileToggle"],
+    [id*="crevioMobile"],
+    #crevioSidebarOverlay {
+        display: none !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
+        width: 0 !important;
+        height: 0 !important;
+        overflow: hidden !important;
+    }
+}
+
+@media (max-width: 900px) {
+
+    /* Use dynamic viewport height — fixes cut-off on mobile chrome */
+    html, body {
+        height: 100dvh !important;
+        height: 100vh;
+        overflow: hidden !important;
+    }
+
+    
+
+    /* Chat panel: full-height column with safe bottom padding */
+    
+
+    
+
+    /* Messages list — tighter, scrollable, leaves room for input */
+    .chat-messages {
+        padding: 12px 12px 8px !important;
+        gap: 6px !important;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Bubbles don't overflow */
+    .msg {
+        max-width: 88% !important;
+        font-size: 14px !important;
+    }
+
+    /* Message day dividers */
+    .day-divider { margin: 10px 0 6px !important; }
+    .day-divider span { font-size: 10.5px !important; padding: 4px 10px !important; }
+
+    /* Reply preview strip */
+    .reply-preview {
+        margin: 0 10px 6px !important;
+        padding: 6px 10px !important;
+    }
+
+    /* Input bar — stays pinned to bottom, nothing cut */
+    .chat-input-bar {
+        padding: 10px 12px calc(10px + env(safe-area-inset-bottom, 0)) !important;
+        gap: 8px !important;
+        background: var(--bg-primary);
+        border-top: 1px solid var(--border-color);
+        position: relative;
+        z-index: 20;
+    }
+    .chat-input-bar textarea {
+        min-height: 40px !important;
+        max-height: 100px !important;
+        padding: 10px 12px !important;
+        font-size: 14px !important;
+    }
+    .send-btn {
+        width: 40px !important;
+        height: 40px !important;
+    }
+
+    /* ---- MESSAGE ACTION TOOLBAR (Copy/Rate/Share) ---- */
+    /* On mobile, layout shifts left-edge toolbar to a floating rounded bar */
+    .msg-toolbar {
+        margin-left: 0 !important;
+        margin-top: 4px !important;
+        margin-bottom: 6px !important;
+        flex-basis: 100%;
+        display: flex;
+        gap: 4px;
+        justify-content: flex-start;
+    }
+    .message.user .msg-toolbar {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        justify-content: flex-end;
+    }
+    .msg-tool {
+        width: 30px !important;
+        height: 30px !important;
+    }
+    .msg-tool .icon { width: 14px !important; height: 14px !important; }
+
+    /* Rate popover — anchor properly, don't go off-screen */
+    .rate-popover {
+        left: 0 !important;
+        right: auto !important;
+        bottom: calc(100% + 6px) !important;
+        min-width: 170px !important;
+    }
+    .message.user .rate-popover {
+        left: auto !important;
+        right: 0 !important;
+    }
+    .rate-popover button {
+        padding: 8px 10px !important;
+        font-size: 13px !important;
+    }
+
+    /* Reactions row */
+    .msg-reactions-row { margin-top: -2px !important; }
+    .msg-reaction-pill { font-size: 11.5px !important; padding: 1px 7px !important; }
+
+    /* Chat header compact */
+    .chat-header {
+        padding: 10px 14px !important;
+        gap: 8px !important;
+    }
+    .chat-avatar { width: 38px !important; height: 38px !important; font-size: 15px !important; }
+    .chat-header-text h3 { font-size: 14px !important; }
+    .chat-header-text p { font-size: 11px !important; }
+
+    /* Back button (mobile only) */
+    #backBtn {
+        width: 34px !important;
+        height: 34px !important;
+    }
+
+    /* Conversation list — leaves room for the sticky search + filters */
+    .conv-items {
+        padding-bottom: env(safe-area-inset-bottom, 0);
+    }
+}

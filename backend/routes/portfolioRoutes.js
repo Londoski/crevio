@@ -1,20 +1,20 @@
 // =========================================================
 // CREVIO — PORTFOLIO ROUTES
+// File: backend/routes/portfolioRoutes.js
 // =========================================================
 
 const express = require("express");
 const router = express.Router();
-const authMiddleware = require("../middleware/authMiddleware");
-const controller = require("../controllers/portfolioController");
+const auth = require("../middleware/authMiddleware");
+const portfolioController = require("../controllers/portfolioController");
 
-// ---- Authenticated routes ----
-router.get("/config", authMiddleware, controller.getConfig);
-router.put("/template", authMiddleware, controller.updateTemplate);
-router.put("/theme", authMiddleware, controller.updateTheme);
-router.post("/publish", authMiddleware, controller.togglePublish);
-router.get("/templates", authMiddleware, controller.getTemplates);
+// Public (no auth) — must come BEFORE the /:id style routes
+router.get("/public/:slug", portfolioController.getPublicPortfolio);
 
-// ---- Public route ----
-router.get("/public/:username", controller.getPublicPortfolio);
+// Protected
+router.get("/config",     auth, portfolioController.getConfig);
+router.put("/config",     auth, portfolioController.saveConfig);
+router.post("/publish",   auth, portfolioController.publish);
+router.get("/templates",  auth, portfolioController.getTemplates);
 
 module.exports = router;

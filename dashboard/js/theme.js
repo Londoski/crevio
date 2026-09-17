@@ -1,48 +1,114 @@
 // =========================================================
-// CREVIO — THEME TOGGLE (Permanent Solution)
+// CREVIO — THEME TOGGLE
+// File: dashboard/js/theme.js
+// Global theme switcher — dark / light / system
 // =========================================================
 
-(function() {
+(function () {
+    "use strict";
+
+    const STORAGE_KEY = "crevio_theme";
+    const DEFAULT_THEME = "dark";
+
+    // ---------- APPLY THEME ----------
     function applyTheme(theme) {
-        var actualTheme = theme;
-        if (theme === 'system') {
-            actualTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        const actualTheme = theme === "system"
+            ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
+            : theme;
+
+        document.documentElement.setAttribute("data-theme", actualTheme);
+
+        // Update body background immediately (avoids flash)
+        if (document.body) {
+            document.body.style.background = actualTheme === "dark" ? "#0F172A" : "#F1F5F9";
         }
-        document.documentElement.setAttribute('data-theme', actualTheme);
-        document.body.style.background = actualTheme === 'dark' ? '#0F172A' : '#F1F5F9';
-        localStorage.setItem('crevio_theme', theme);
+
+        try {
+            localStorage.setItem(STORAGE_KEY, theme);
+        } catch (e) {
+            console.warn("Could not save theme:", e.message);
+        }
+
         updateToggleIcon(theme);
     }
 
+    // ---------- UPDATE TOGGLE ICON ----------
     function updateToggleIcon(theme) {
-        var btn = document.getElementById('themeToggleBtn');
+        const btn = document.getElementById("themeToggleBtn");
         if (!btn) return;
-        var icon = btn.querySelector('.icon');
-        if (icon) {
-            var actualTheme = theme === 'system' ? 
-                (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme;
-            icon.setAttribute('data-lucide', actualTheme === 'dark' ? 'moon' : 'sun');
-        }
-        if (typeof lucide !== 'undefined') lucide.createIcons();
+
+        const icon = btn.querySelector(".icon");
+        if (!icon) return;
+
+        const actualTheme = theme === "system"
+            ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
+            : theme;
+
+        icon.setAttribute("data-lucide", actualTheme === "dark" ? "moon" : "sun");
+
+        if (typeof lucide !== "undefined") lucide.createIcons();
     }
 
-    window.toggleTheme = function() {
-        var current = localStorage.getItem('crevio_theme') || 'dark';
-        var next = current === 'dark' ? 'light' : (current === 'light' ? 'system' : 'dark');
-        applyTheme(next);
-    };
+    // ---------- TOGGLE ----------
+    function toggleTheme() {
+        let current;
+        try {
+            current = localStorage.getItem(STORAGE_KEY) || DEFAULT_THEME;
+        } catch (e) {
+            current = DEFAULT_THEME;
+        }
 
-    document.addEventListener('DOMContentLoaded', function() {
-        var saved = localStorage.getItem('crevio_theme') || 'dark';
+        const next = current === "dark"
+            ? "light"
+            : current === "light"
+                ? "system"
+                : "dark";
+
+        applyTheme(next);
+    }
+
+    // ---------- LISTEN FOR SYSTEM CHANGES ----------
+    if (window.matchMedia) {
+        const mq = window.matchMedia("(prefers-color-scheme: dark)");
+        const handler = () => {
+            let saved;
+            try { saved = localStorage.getItem(STORAGE_KEY); } catch (e) {}
+            if (saved === "system") applyTheme("system");
+        };
+
+        if (mq.addEventListener)        mq.addEventListener("change", handler);
+        else if (mq.addListener)        mq.addListener(handler);
+    }
+
+    // ---------- EXPOSE GLOBALLY ----------
+    window.toggleTheme = toggleTheme;
+    window.applyTheme  = applyTheme;
+
+    // ---------- INIT ON DOM READY ----------
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", init);
+    } else {
+        init();
+    }
+
+    function init() {
+        let saved;
+        try {
+            saved = localStorage.getItem(STORAGE_KEY) || DEFAULT_THEME;
+        } catch (e) {
+            saved = DEFAULT_THEME;
+        }
+
         applyTheme(saved);
-        var btn = document.getElementById('themeToggleBtn');
-        if (btn) {
-            btn.addEventListener('click', function(e) {
+
+        // Wire up the button (in addition to inline onclick, if present)
+        const btn = document.getElementById("themeToggleBtn");
+        if (btn && !btn.dataset.themeWired) {
+            btn.dataset.themeWired = "1";
+            btn.addEventListener("click", function (e) {
                 e.preventDefault();
                 toggleTheme();
             });
         }
-    });
-
-    window.applyTheme = applyTheme;
+    }
 })();

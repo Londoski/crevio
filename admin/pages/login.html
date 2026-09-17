@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login — Crevio Admin</title>
+    <title>Login â€” Crevio Admin</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
@@ -130,7 +130,28 @@
             .login-card { padding: 28px 20px; }
             .brand h1 { font-size: 24px; }
         }
-    </style>
+            /* PASSWORD VISIBILITY TOGGLE */
+        .pwd-toggle-wrap { position: relative; display: block; width: 100%; }
+        .pwd-toggle-wrap input { width: 100%; padding-right: 44px !important; }
+        .pwd-toggle-btn {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: transparent;
+            border: none;
+            color: var(--text-muted, #64748B);
+            width: 32px; height: 32px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            padding: 0;
+            transition: background 0.12s, color 0.12s;
+            z-index: 5;
+        }
+        .pwd-toggle-btn:hover { background: rgba(148,163,184,0.15); color: var(--text-primary, #F1F5F9); }
+        .pwd-toggle-btn svg { width: 16px; height: 16px; }
+</style>
 </head>
 <body>
 
@@ -177,8 +198,8 @@
         <!-- Step 2: 2FA TOTP -->
         <div id="twoFactorSection">
             <div class="login-heading">
-                <h2>Two‑Factor Authentication</h2>
-                <p>Enter the 6‑digit code from your authenticator app</p>
+                <h2>Twoâ€‘Factor Authentication</h2>
+                <p>Enter the 6â€‘digit code from your authenticator app</p>
             </div>
             <div class="form-group">
                 <label for="twoFactorCode">Authenticator Code</label>
@@ -190,12 +211,115 @@
             </div>
             <div id="twoFactorMessage" class="login-message"></div>
             <button class="btn-primary" id="verifyButton">Verify</button>
-            <button class="btn-secondary" id="cancel2faButton">← Back to login</button>
+            <button class="btn-secondary" id="cancel2faButton">â† Back to login</button>
         </div>
 
     </div>
 </div>
 
 <script src="../js/login.js"></script>
+    <script>
+    // =========================================================
+    // PASSWORD VISIBILITY TOGGLE
+    // Auto-detects every <input type="password"> and adds an eye button.
+    // =========================================================
+    (function () {
+        if (window.pwdVisibilityToggle) return;
+        window.pwdVisibilityToggle = true;
+
+        function makeIcon(name) {
+            // Use lucide if available, otherwise inline SVG
+            if (typeof lucide !== "undefined") {
+                const el = document.createElement("i");
+                el.setAttribute("data-lucide", name);
+                el.style.width = "16px";
+                el.style.height = "16px";
+                return el;
+            }
+            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            svg.setAttribute("viewBox", "0 0 24 24");
+            svg.setAttribute("fill", "none");
+            svg.setAttribute("stroke", "currentColor");
+            svg.setAttribute("stroke-width", "2");
+            svg.setAttribute("stroke-linecap", "round");
+            svg.setAttribute("stroke-linejoin", "round");
+            if (name === "eye") {
+                svg.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+            } else {
+                svg.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
+            }
+            return svg;
+        }
+
+        function wrap(input) {
+            if (input.dataset.pwdWrapped === "1") return;
+            input.dataset.pwdWrapped = "1";
+
+            // Already wrapped by a parent? Skip.
+            if (input.parentElement && input.parentElement.classList.contains("pwd-toggle-wrap")) return;
+
+            // Create wrapper
+            const wrap = document.createElement("div");
+            wrap.className = "pwd-toggle-wrap";
+            input.parentNode.insertBefore(wrap, input);
+            wrap.appendChild(input);
+
+            // Create button
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "pwd-toggle-btn";
+            btn.setAttribute("aria-label", "Show password");
+            btn.setAttribute("title", "Show password");
+            btn.appendChild(makeIcon("eye"));
+            wrap.appendChild(btn);
+
+            // Refresh icons AFTER appending to DOM
+            if (typeof lucide !== "undefined") {
+                try { lucide.createIcons(); } catch (e) {}
+            }
+
+            let visible = false;
+            btn.addEventListener("click", function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                visible = !visible;
+                input.type = visible ? "text" : "password";
+                btn.innerHTML = "";
+                btn.appendChild(makeIcon(visible ? "eye-off" : "eye"));
+                btn.setAttribute("aria-label", visible ? "Hide password" : "Show password");
+                btn.setAttribute("title", visible ? "Hide password" : "Show password");
+                if (typeof lucide !== "undefined") {
+                    try { lucide.createIcons(); } catch (e) {}
+                }
+                // Keep focus in the input so the user keeps typing
+                input.focus();
+                try { input.setSelectionRange(input.value.length, input.value.length); } catch (e) {}
+            });
+        }
+
+        function scan() {
+            document.querySelectorAll('input[type="password"]').forEach(wrap);
+        }
+
+        // Initial scan
+        if (document.readyState === "loading") {
+            document.addEventListener("DOMContentLoaded", () => setTimeout(scan, 100));
+        } else {
+            setTimeout(scan, 100);
+        }
+
+        // Rescan when DOM changes (in case the form is dynamic)
+        if (window.MutationObserver) {
+            new MutationObserver(() => {
+                clearTimeout(window.__pwdScanT);
+                window.__pwdScanT = setTimeout(scan, 200);
+            }).observe(document.body, { childList: true, subtree: true });
+        }
+
+        // Also rescan on window load in case lucide icons load late
+        window.addEventListener("load", () => setTimeout(scan, 300));
+    })();
+    </script>
+    <script src="/dashboard/js/password-toggle.js"></script>
 </body>
 </html>

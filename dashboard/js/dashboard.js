@@ -1,159 +1,247 @@
 ﻿// =========================================================
-// CREVIO — DASHBOARD JS (Overview)
+// CREVIO — OVERVIEW PAGE (Command Center)
+// File: dashboard/js/dashboard.js
+// All data comes from /api/dashboard/overview — no hardcoded values
 // =========================================================
 
-function getToken() {
-    const token = localStorage.getItem('crevio_token');
-    if (!token) {
-        window.location.href = '/admin/pages/login.html';
-        return null;
+document.addEventListener("DOMContentLoaded", function () {
+    const $ = (id) => document.getElementById(id);
+
+    // =========================================================
+    // LOAD
+    // =========================================================
+    async function loadOverview() {
+        try {
+            const res  = await window.apiFetch("/api/dashboard/overview");
+            const data = await res.json();
+
+            if (!data.success) {
+                showError("Could not load dashboard data");
+                return;
+            }
+
+            renderUser(data.user);
+            renderPortfolio(data.portfolio);
+            renderStats(data.stats);
+            renderCompletion(data.completion);
+            renderRecentProjects(data.recentProjects);
+            renderRecentActivity(data.recentActivity);
+        } catch (err) {
+            console.error("Load overview error:", err);
+            showError(err.message);
+        }
     }
-    return token;
-}
 
-// ---- LOAD DASHBOARD DATA ----
-async function loadDashboard() {
-    const token = getToken();
-    if (!token) return;
+    // =========================================================
+    // USER / PROFESSIONAL IDENTITY
+    // =========================================================
+    function renderUser(user) {
+        const displayName = user.display_name || user.username || "User";
+        const initial = displayName.charAt(0).toUpperCase();
 
-    try {
-        const res = await fetch('/api/dashboard/overview', {
-            headers: { 'Authorization': 'Bearer ' + token }
-        });
-        if (res.status === 401) {
-            localStorage.removeItem('crevio_token');
-            window.location.href = '/admin/pages/login.html';
+        // Welcome message
+        if ($("userName"))        $("userName").textContent        = displayName.split(" ")[0];
+        if ($("userNameDisplay")) $("userNameDisplay").textContent = displayName;
+
+        // Top-right small avatar
+        const avatar = $("userAvatar");
+        if (avatar) {
+            if (user.profile_image) {
+                avatar.innerHTML = `<img src="${escapeHtml(user.profile_image)}" alt="">`;
+            } else {
+                avatar.textContent = initial;
+            }
+        }
+
+        // Professional identity section
+        if ($("identityName"))  $("identityName").textContent = displayName;
+        if ($("identityProf"))  $("identityProf").textContent = user.primary_profession || "Add your profession";
+        if ($("identitySpecs")) $("identitySpecs").textContent = user.specialties || "";
+        if ($("identityBio"))   $("identityBio").textContent = user.bio || "";
+
+        // Big identity avatar (circle in the identity card)
+        const identityAvatar = $("identityAvatar");
+        if (identityAvatar) {
+            if (user.profile_image) {
+                identityAvatar.innerHTML = `<img src="${escapeHtml(user.profile_image)}" alt="">`;
+            } else {
+                identityAvatar.textContent = initial;
+            }
+        }
+    }
+
+    // =========================================================
+    // PORTFOLIO STATUS
+    // =========================================================
+    function renderPortfolio(portfolio) {
+        const status = (portfolio.status || "draft").toLowerCase();
+        const isPub  = status === "published";
+        const badge  = $("statusBadge");
+        const banner = $("portfolioStatus");
+
+        if ($("portfolioUrl")) $("portfolioUrl").textContent = portfolio.url;
+        if ($("bannerTitle"))  $("bannerTitle").textContent   = portfolio.title || "Your Portfolio";
+
+        if (badge) {
+            badge.className = "status-badge " + (isPub ? "published" : "draft");
+            badge.innerHTML = isPub
+                ? `<i data-lucide="check-circle" class="status-icon"></i><span class="status-text">Published</span>`
+                : `<i data-lucide="circle-dashed" class="status-icon"></i><span class="status-text">Draft</span>`;
+        }
+        if (banner) banner.classList.toggle("published", isPub);
+
+        // Update Preview button link
+        const previewBtn = $("previewBtn");
+        if (previewBtn) previewBtn.href = portfolio.url || "#";
+
+        if (typeof lucide !== "undefined") lucide.createIcons();
+    }
+
+    // =========================================================
+    // STATS
+    // =========================================================
+    function renderStats(stats) {
+        setText("projectsCount",  stats.projects);
+        setText("publishedCount", stats.published);
+        setText("draftsCount",    stats.drafts);
+        setText("mediaCount",     stats.media);
+        setText("servicesCount",  stats.services);
+        setText("skillsCount",    stats.skills);
+    }
+
+    function setText(id, val) {
+        const el = $(id);
+        if (el) el.textContent = val ?? 0;
+    }
+
+    // =========================================================
+    // COMPLETION
+    // =========================================================
+    function renderCompletion(completion) {
+        const pct = completion.percent || 0;
+
+        if ($("completionLabel")) $("completionLabel").textContent = `${pct}% complete`;
+        if ($("completionFill"))  $("completionFill").style.width  = pct + "%";
+
+        const list = $("checklist");
+        if (!list) return;
+
+        list.innerHTML = completion.milestones.map(m => `
+            <a href="${escapeHtml(m.href)}" class="checklist-item ${m.done ? 'done' : ''}" style="text-decoration:none; color:inherit;">
+                <i data-lucide="${m.done ? "check-circle" : "circle"}" class="check" style="width:16px;height:16px;"></i>
+                <span>${escapeHtml(m.label)}</span>
+            </a>
+        `).join("");
+
+        if (typeof lucide !== "undefined") lucide.createIcons();
+    }
+
+    // =========================================================
+    // RECENT PROJECTS
+    // =========================================================
+    function renderRecentProjects(projects) {
+        const container = $("projectsContainer");
+        if (!container) return;
+
+        if (!projects || !projects.length) {
+            container.innerHTML = `
+                <div class="empty-state" style="padding:24px 0; text-align:center;">
+                    <p style="color:var(--text-muted); font-size:14px; margin-bottom:16px;">No projects yet.</p>
+                    <a href="/dashboard/pages/project-create.html" class="primary-button" style="text-decoration:none;">
+                        <i data-lucide="plus" class="icon" style="width:14px;height:14px;"></i>
+                        Create your first project
+                    </a>
+                </div>`;
+            if (typeof lucide !== "undefined") lucide.createIcons();
             return;
         }
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        const data = await res.json();
-        if (!data.success) throw new Error('Failed to load dashboard');
 
-        const overview = data.overview || {};
+        container.innerHTML = projects.map(p => `
+            <a href="/dashboard/pages/project-edit.html?id=${p.id}" class="project-item">
+                ${p.thumbnail
+                    ? `<img src="${escapeHtml(p.thumbnail)}" alt="" class="project-thumb">`
+                    : `<div class="project-thumb" style="display:flex;align-items:center;justify-content:center;color:var(--text-muted);">
+                            <i data-lucide="image" style="width:18px;height:18px;"></i>
+                       </div>`}
+                <div class="project-info">
+                    <h4>${escapeHtml(p.title)}</h4>
+                    <span>${escapeHtml(p.category || "Uncategorized")} · ${formatDate(p.created_at)}</span>
+                </div>
+                <span class="project-badge" style="${p.status === 'published' ? 'color:var(--success);' : ''}">
+                    ${p.status}
+                </span>
+            </a>
+        `).join("");
 
-        // ---- Update stats ----
-        document.getElementById('projectsCount').textContent = overview.total_projects ?? 0;
-        document.getElementById('publishedCount').textContent = overview.published_projects ?? 0;
-        document.getElementById('mediaCount').textContent = overview.total_media ?? 0;
-        document.getElementById('servicesCount').textContent = overview.total_services ?? 0;
-        document.getElementById('skillsCount').textContent = overview.total_skills ?? 0;
-
-        // ---- Portfolio status ----
-        const isPublished = overview.portfolio_published ?? false;
-        const statusBadge = document.getElementById('statusBadge');
-        const statusText = statusBadge.querySelector('.status-text');
-        const statusIcon = statusBadge.querySelector('.status-icon');
-        if (isPublished) {
-            statusBadge.className = 'status-badge published';
-            statusText.textContent = 'Published';
-            statusIcon.setAttribute('data-lucide', 'check-circle');
-        } else {
-            statusBadge.className = 'status-badge draft';
-            statusText.textContent = 'Draft';
-            statusIcon.setAttribute('data-lucide', 'edit-3');
-        }
-
-        const username = overview.username || 'creator';
-        document.getElementById('portfolioUrl').textContent = username + '.crevio.site';
-
-        // ---- COMPLETION (FIXED) ----
-        const completion = overview.completion ?? 0;
-        document.getElementById('completionLabel').textContent = completion + '% complete';
-        document.getElementById('completionFill').style.width = completion + '%';
-
-        // ---- Checklist ----
-        const checklist = overview.checklist || [];
-        const checklistEl = document.getElementById('checklist');
-        if (checklist.length) {
-            let html = '';
-            checklist.forEach(item => {
-                const done = item.done ? 'done' : '';
-                const checkIcon = item.done ? 'check-circle' : 'circle';
-                html += `
-                    <div class="checklist-item ${done}">
-                        <i data-lucide="${checkIcon}" class="check" style="width:16px;height:16px;color:${item.done ? 'var(--success)' : 'var(--text-muted)'};"></i>
-                        ${item.label}
-                    </div>
-                `;
-            });
-            checklistEl.innerHTML = html;
-        } else {
-            checklistEl.innerHTML = '<div class="loading-state">No checklist items</div>';
-        }
-
-        // ---- Recent projects ----
-        const projects = overview.recent_projects || [];
-        const projectsContainer = document.getElementById('projectsContainer');
-        if (projects.length) {
-            let html = '';
-            projects.forEach(p => {
-                const thumb = p.thumbnail_url || '';
-                const status = p.published ? 'Published' : 'Draft';
-                html += `
-                    <a href="/dashboard/pages/project-edit.html?id=${p.id}" class="project-item">
-                        ${thumb ? `<img src="${thumb}" alt="${p.title}" class="project-thumb">` : `<div class="project-thumb" style="background:var(--bg-secondary);display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:18px;font-weight:600;">${p.title.charAt(0)}</div>`}
-                        <div class="project-info">
-                            <h4>${p.title}</h4>
-                            <span>${p.category || 'Uncategorized'} · ${new Date(p.updated_at).toLocaleDateString()}</span>
-                        </div>
-                        <span class="project-badge">${status}</span>
-                    </a>
-                `;
-            });
-            projectsContainer.innerHTML = html;
-        } else {
-            projectsContainer.innerHTML = '<div class="empty-state">No projects yet. <a href="/dashboard/pages/project-create.html" style="color:var(--accent);">Create your first project</a></div>';
-        }
-
-        // ---- Recent activity ----
-        const activities = overview.recent_activity || [];
-        const activityContainer = document.getElementById('activityContainer');
-        if (activities.length) {
-            let html = '';
-            activities.forEach(a => {
-                html += `
-                    <div class="activity-item">
-                        <i data-lucide="${a.icon || 'activity'}" style="width:16px;height:16px;color:var(--text-muted);"></i>
-                        <span>${a.message}</span>
-                        <span class="time">${a.time_ago || ''}</span>
-                    </div>
-                `;
-            });
-            activityContainer.innerHTML = html;
-        } else {
-            activityContainer.innerHTML = '<div class="empty-state">No recent activity</div>';
-        }
-
-        // ---- Refresh Lucide icons ----
-        if (typeof lucide !== 'undefined') lucide.createIcons();
-
-    } catch (err) {
-        console.error('Dashboard load error:', err);
-        document.querySelectorAll('.stat-value').forEach(el => el.textContent = '—');
-        document.getElementById('projectsContainer').innerHTML = '<div class="error-state">Unable to load dashboard.</div>';
+        if (typeof lucide !== "undefined") lucide.createIcons();
     }
-}
 
-// ---- INIT ----
-document.addEventListener('DOMContentLoaded', function() {
-    loadDashboard();
+    // =========================================================
+    // RECENT ACTIVITY
+    // =========================================================
+    function renderRecentActivity(activity) {
+        const container = $("activityContainer");
+        if (!container) return;
 
-    const userData = localStorage.getItem('crevio_user');
-    if (userData) {
+        if (!activity || !activity.length) {
+            container.innerHTML = `<div class="empty-state" style="padding:24px 0; text-align:center; color:var(--text-muted); font-size:14px;">Your recent activity will appear here.</div>`;
+            return;
+        }
+
+        container.innerHTML = activity.map(a => `
+            <a href="${escapeHtml(a.href || '#')}" class="activity-item" style="text-decoration:none; color:inherit;">
+                <i data-lucide="${a.icon || 'activity'}" style="width:16px;height:16px;"></i>
+                <span>${escapeHtml(a.text)}</span>
+                <span class="time">${formatRelativeTime(a.time)}</span>
+            </a>
+        `).join("");
+
+        if (typeof lucide !== "undefined") lucide.createIcons();
+    }
+
+    // =========================================================
+    // ERROR
+    // =========================================================
+    function showError(msg) {
+        const container = $("projectsContainer");
+        if (container) container.innerHTML = `<div class="error-state" style="padding:24px; text-align:center; color:var(--danger); font-size:14px;">${escapeHtml(msg)}</div>`;
+    }
+
+    // =========================================================
+    // HELPERS
+    // =========================================================
+    function formatDate(str) {
+        if (!str) return "";
         try {
-            const user = JSON.parse(userData);
-            const avatar = document.getElementById('userAvatar');
-            const nameDisplay = document.getElementById('userNameDisplay');
-            const userName = document.getElementById('userName');
-            if (avatar && user.display_name) {
-                avatar.textContent = user.display_name.charAt(0).toUpperCase();
-            }
-            if (nameDisplay && user.display_name) {
-                nameDisplay.textContent = user.display_name;
-            }
-            if (userName && user.display_name) {
-                userName.textContent = user.display_name;
-            }
-        } catch (e) { console.error(e); }
+            const d = new Date(str.replace(" ", "T") + (str.includes("Z") ? "" : "Z"));
+            return d.getFullYear().toString();
+        } catch { return ""; }
     }
+
+    function formatRelativeTime(str) {
+        if (!str) return "";
+        try {
+            const d = new Date(str.replace(" ", "T") + (str.includes("Z") ? "" : "Z"));
+            const diff = Date.now() - d.getTime();
+            const m = Math.floor(diff / 60000);
+            if (m < 1)  return "just now";
+            if (m < 60) return m + "m ago";
+            const h = Math.floor(m / 60);
+            if (h < 24) return h + "h ago";
+            const day = Math.floor(h / 24);
+            if (day < 7) return day + "d ago";
+            return d.toLocaleDateString();
+        } catch { return ""; }
+    }
+
+    function escapeHtml(str) {
+        return String(str == null ? "" : str).replace(/[&<>"']/g, s => ({
+            "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+        })[s]);
+    }
+
+    // =========================================================
+    // INIT
+    // =========================================================
+    loadOverview();
 });

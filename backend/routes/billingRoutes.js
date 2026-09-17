@@ -1,17 +1,16 @@
 // =========================================================
 // CREVIO — BILLING ROUTES
+// File: backend/routes/billingRoutes.js
 // =========================================================
 
 const express = require("express");
 const router = express.Router();
-const authMiddleware = require("../middleware/authMiddleware");
-const controller = require("../controllers/billingController");
+const auth = require("../middleware/authMiddleware");
+const billingController = require("../controllers/billingController");
 
-router.get("/status", authMiddleware, controller.getBillingStatus);
-router.get("/plans", authMiddleware, controller.getPlans);
-router.post("/upgrade", authMiddleware, controller.upgradePlan);
-router.post("/cancel", authMiddleware, controller.cancelSubscription);
-router.post("/reactivate", authMiddleware, controller.reactivateSubscription);
-router.get("/payments", authMiddleware, controller.getPaymentHistory);
+router.get("/plan",              auth, billingController.getPlan);
+router.get("/usage",             auth, billingController.getUsage);
+router.get("/payments",          auth, billingController.getPayments);
+router.get("/payments/:id/invoice", auth, billingController.getInvoice);
 
 module.exports = router;

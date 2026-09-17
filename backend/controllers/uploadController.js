@@ -1,83 +1,51 @@
 // =========================================================
-// CREVIO — UPLOAD CONTROLLER (Thumbnails)
+// CREVIO — UPLOAD CONTROLLER (generic uploads)
+// File: backend/controllers/uploadController.js
 // =========================================================
 
-const fs = require("fs");
 const path = require("path");
-const multer = require("multer");
+const fs = require("fs");
 
-// Ensure uploads/thumbnails directory exists
-const thumbnailUploadDir = path.join(__dirname, "../../uploads/thumbnails");
-if (!fs.existsSync(thumbnailUploadDir)) {
-    fs.mkdirSync(thumbnailUploadDir, { recursive: true });
-}
-
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, thumbnailUploadDir);
-    },
-    filename: (req, file, cb) => {
-        const ext = path.extname(file.originalname).toLowerCase();
-        const uniqueName = `thumbnail_${req.user.id}_${Date.now()}${ext}`;
-        cb(null, uniqueName);
-    }
-});
-
-const fileFilter = (req, file, cb) => {
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'];
-    if (allowedTypes.includes(file.mimetype)) {
-        cb(null, true);
-    } else {
-        cb(new Error('Unsupported image format. Use JPG, PNG, or WebP.'), false);
+// POST /api/upload — single file
+exports.uploadSingle = (req, res) => {
+    try {
+        if (!req.file) return res.status(400).json({ success: false, message: "No file uploaded" });
+        const url = `/uploads/${req.file.filename}`;
+        res.json({ success: true, url, filename: req.file.filename, size: req.file.size });
+    } catch (err) {
+        res.status(500).json({ success: false, message: "Upload failed", error: err.message });
     }
 };
 
-const uploadThumbnail = multer({
-    storage,
-    fileFilter,
-    limits: { fileSize: 5 * 1024 * 1024 } // 5MB
-}).single('thumbnail');
-
-const uploadThumbnailFile = (req, res) => {
-    uploadThumbnail(req, res, (err) => {
-        try {
-            if (err) {
-                console.error('Multer error:', err);
-                return res.status(400).json({
-                    success: false,
-                    message: err.message || 'File upload failed.'
-                });
-            }
-
-            if (!req.file) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'Please select an image file.'
-                });
-            }
-
-            // Build URL for the uploaded file
-            const imageUrl = `/uploads/thumbnails/${req.file.filename}`;
-
-            res.json({
-                success: true,
-                message: 'Thumbnail uploaded successfully.',
-                thumbnail_url: imageUrl
-            });
-
-        } catch (error) {
-            console.error('Upload thumbnail error:', error);
-            if (req.file && req.file.path && fs.existsSync(req.file.path)) {
-                try { fs.unlinkSync(req.file.path); } catch (e) {}
-            }
-            res.status(500).json({
-                success: false,
-                message: 'Unable to upload thumbnail.'
-            });
+// POST /api/upload/multiple
+exports.uploadMultiple = (req, res) => {
+    try {
+        if (!req.files || !req.files.length) {
+            return res.status(400).json({ success: false, message: "No files uploaded" });
         }
-    });
+        const files = req.files.map(f => ({
+            url: `/uploads/${f.filename}`,
+            filename: f.filename,
+            size: f.size
+        }));
+        res.json({ success: true, files });
+    } catch (err) {
+        res.status(500).json({ success: false, message: "Upload failed", error: err.message });
+    }
 };
 
-module.exports = {
-    uploadThumbnailFile
+// DELETE /api/upload/:filename
+exports.deleteFile = (req, res) => {
+    try {
+        const filename = path.basename(req.params.filename);
+        const filePath = path.join(__dirname, "..", "..", "uploads", filename);
+
+        if (!fs.existsSync(filePath)) {
+            return res.status(404).json({ success: false, message: "File not found" });
+        }
+        fs.unlinkSync(filePath);
+        res.json({ success: true, message: "Deleted" });
+    } catch (err) {
+        res.status(500).json({ success: false, message: "Failed to delete", error: err.message });
+    }
 };

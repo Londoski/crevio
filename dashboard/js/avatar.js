@@ -1,29 +1,26 @@
 // =========================================================
-// CREVIO — AVATAR HELPER
+// CREVIO — AVATAR SETUP (with fallback)
 // =========================================================
 
-function updateAvatar() {
-    const userData = localStorage.getItem('crevio_user');
-    const avatarEl = document.getElementById('userAvatar');
+document.addEventListener("DOMContentLoaded", function () {
+    const user = window.getCurrentUser ? window.getCurrentUser() : {};
+    const avatarEl = document.getElementById("userAvatar");
     if (!avatarEl) return;
 
-    if (userData) {
-        try {
-            const user = JSON.parse(userData);
-            if (user.profile_image) {
-                avatarEl.innerHTML = `<img src="${user.profile_image}" alt="Profile" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
-            } else {
-                const initials = user.display_name ? user.display_name.split(' ').map(n => n.charAt(0).toUpperCase()).join('') : 'C';
-                avatarEl.textContent = initials;
-                avatarEl.style.background = 'var(--accent)';
-                avatarEl.style.color = '#fff';
-                avatarEl.style.display = 'flex';
-                avatarEl.style.alignItems = 'center';
-                avatarEl.style.justifyContent = 'center';
-            }
-        } catch (e) {}
-    }
-}
+    const name = user.display_name || user.username || user.email || "User";
+    const initial = name.charAt(0).toUpperCase();
 
-// Run on page load
-document.addEventListener('DOMContentLoaded', updateAvatar);
+    if (user.profile_image) {
+        const img = document.createElement("img");
+        img.src = user.profile_image;
+        img.alt = "Avatar";
+        img.onerror = function () {
+            avatarEl.innerHTML = "";
+            avatarEl.textContent = initial;
+        };
+        avatarEl.innerHTML = "";
+        avatarEl.appendChild(img);
+    } else {
+        avatarEl.textContent = initial;
+    }
+});

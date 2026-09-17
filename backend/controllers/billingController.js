@@ -1,227 +1,118 @@
-// =========================================================
-// CREVIO — BILLING CONTROLLER
+﻿// =========================================================
+// CREVIO â€” BILLING CONTROLLER
+// File: backend/controllers/billingController.js
 // =========================================================
 
-const subscriptionModel = require("../models/subscriptionModel");
-const paymentModel = require("../models/paymentModel");
-const usageService = require("../services/usageService");
-const userModel = require("../models/userModel");
-const stripeService = require("../services/stripeService");
-const { getPlan, getAllPlans, PLANS } = require("../config/plans");
+const db = require("../../database/db");
 
-// ----- GET BILLING STATUS -----
-const getBillingStatus = (req, res) => {
+function safeCount(sql, ...params) {
+    try { return db.prepare(sql).get(...params)?.c || 0; }
+    catch (e) { return 0; }
+}
+
+// GET /api/billing/plan
+exports.getPlan = (req, res) => {
     try {
-        const userId = req.user.id;
-        const entitlements = usageService.getUserEntitlements(userId);
-        const subscription = subscriptionModel.findByUserId(userId);
-        const payments = paymentModel.findByUserId(userId, 10);
+        let plan = null;
+        try {
+            plan = db.prepare(
+                "SELECT * FROM subscriptions WHERE user_id = ? ORDER BY created_at DESC LIMIT 1"
+            ).get(req.user.id);
+        } catch (e) { /* ignore */ }
+
+        if (!plan) {
+            return res.json({
+                success: true,
+                plan: {
+                    name: "Free Plan",
+                    description: "Basic features to get you started",
+                    price: 0,
+                    interval: "mo",
+                    status: "Active"
+                }
+            });
+        }
 
         res.json({
             success: true,
-            billing: {
-                subscription: {
-                    plan: entitlements.plan,
-                    planLabel: entitlements.planLabel,
-                    status: subscription?.status || 'active',
-                    current_period_end: subscription?.current_period_end || null,
-                    cancel_at_period_end: subscription?.cancel_at_period_end === 1,
-                    price: entitlements.price
-                },
-                limits: entitlements.limits,
-                features: entitlements.features,
-                payments
+            plan: {
+                name:        plan.plan_name || plan.name || (plan.plan ? (plan.plan.charAt(0).toUpperCase() + plan.plan.slice(1) + " Plan") : "Free Plan"),
+                description: plan.description || "Your current plan",
+                price:       plan.price || 0,
+                interval:    plan.interval || "mo",
+                status:      plan.status || "active"
             }
         });
-    } catch (error) {
-        console.error("Get billing status error:", error);
-        res.status(500).json({
-            success: false,
-            message: "Unable to load billing information."
-        });
+    } catch (err) {
+        res.status(500).json({ success: false, message: "Failed", error: err.message });
     }
 };
 
-// ----- GET ALL PLANS -----
-const getPlans = (req, res) => {
-    try {
-        const plans = getAllPlans();
-        res.json({
-            success: true,
-            plans
-        });
-    } catch (error) {
-        console.error("Get plans error:", error);
-        res.status(500).json({
-            success: false,
-            message: "Unable to load plans."
-        });
-    }
-};
-
-// ----- UPGRADE PLAN (Stripe checkout) -----
-const upgradePlan = async (req, res) => {
-    try {
-        const { planId } = req.body;
-        const userId = req.user.id;
-
-        if (!planId || !Object.values(PLANS).includes(planId)) {
-            return res.status(400).json({
-                success: false,
-                message: "Invalid plan selection."
-            });
-        }
-
-        const currentSubscription = subscriptionModel.findByUserId(userId);
-        const currentPlan = currentSubscription?.plan || PLANS.FREE;
-
-        if (currentPlan === planId) {
-            return res.status(400).json({
-                success: false,
-                message: "You are already on this plan."
-            });
-        }
-
-        if (planId === PLANS.FREE) {
-            return res.status(400).json({
-                success: false,
-                message: "Downgrading to Free is not supported via checkout. Please cancel your subscription and contact support."
-            });
-        }
-
-        const user = userModel.findById(userId);
-        if (!user) {
-            return res.status(404).json({
-                success: false,
-                message: "User not found."
-            });
-        }
-
-        const session = await stripeService.createCheckoutSession(
-            userId,
-            planId,
-            user.email,
-            user.display_name || user.username
-        );
-
-        res.json({
-            success: true,
-            message: "Checkout session created.",
-            checkout_url: session.url,
-            session_id: session.sessionId
-        });
-
-    } catch (error) {
-        console.error("Upgrade plan error:", error);
-        res.status(500).json({
-            success: false,
-            message: error.message || "Unable to process plan change."
-        });
-    }
-};
-
-// ----- CANCEL SUBSCRIPTION -----
-const cancelSubscription = (req, res) => {
+// GET /api/billing/usage
+exports.getUsage = (req, res) => {
     try {
         const userId = req.user.id;
-        const subscription = subscriptionModel.findByUserId(userId);
-
-        if (!subscription) {
-            return res.status(404).json({
-                success: false,
-                message: "No active subscription found."
-            });
-        }
-
-        if (subscription.plan === PLANS.FREE) {
-            return res.status(400).json({
-                success: false,
-                message: "Free plan cannot be cancelled."
-            });
-        }
-
-        subscriptionModel.cancelAtPeriodEnd(userId);
-
         res.json({
             success: true,
-            message: "Subscription will be cancelled at the end of the billing period.",
-            cancel_at_period_end: true
+            usage: {
+                projects_used: safeCount("SELECT COUNT(*) AS c FROM projects WHERE user_id = ?", userId),
+                projects_limit: 10,
+                media_used:    safeCount("SELECT COUNT(*) AS c FROM project_media WHERE user_id = ?", userId),
+                media_limit:   50,
+                services_used: safeCount("SELECT COUNT(*) AS c FROM services WHERE user_id = ?", userId),
+                services_limit: 5,
+                messages_used: safeCount("SELECT COUNT(*) AS c FROM creator_skills WHERE user_id = ?", userId),
+                messages_limit: 100
+            }
         });
-    } catch (error) {
-        console.error("Cancel subscription error:", error);
-        res.status(500).json({
-            success: false,
-            message: "Unable to cancel subscription."
-        });
+    } catch (err) {
+        res.status(500).json({ success: false, message: "Failed", error: err.message });
     }
 };
 
-// ----- REACTIVATE SUBSCRIPTION -----
-const reactivateSubscription = (req, res) => {
+// GET /api/billing/payments
+exports.getPayments = (req, res) => {
     try {
-        const userId = req.user.id;
-        const subscription = subscriptionModel.findByUserId(userId);
-
-        if (!subscription) {
-            return res.status(404).json({
-                success: false,
-                message: "No subscription found."
-            });
+        let payments = [];
+        try {
+            payments = db.prepare(
+                "SELECT * FROM payments WHERE user_id = ? ORDER BY created_at DESC LIMIT 50"
+            ).all(req.user.id);
+        } catch (e) {
+            try {
+                payments = db.prepare("SELECT * FROM payments ORDER BY created_at DESC LIMIT 50").all();
+            } catch (e2) {
+                payments = [];
+            }
         }
-
-        if (subscription.plan === PLANS.FREE) {
-            return res.status(400).json({
-                success: false,
-                message: "Cannot reactivate free plan."
-            });
-        }
-
-        subscriptionModel.reactivate(userId);
-
-        res.json({
-            success: true,
-            message: "Subscription reactivated.",
-            cancel_at_period_end: false
-        });
-    } catch (error) {
-        console.error("Reactivate subscription error:", error);
-        res.status(500).json({
-            success: false,
-            message: "Unable to reactivate subscription."
-        });
+        res.json({ success: true, payments });
+    } catch (err) {
+        res.status(500).json({ success: false, message: "Failed", error: err.message });
     }
 };
 
-// ----- GET PAYMENT HISTORY -----
-const getPaymentHistory = (req, res) => {
+// GET /api/billing/payments/:id/invoice
+exports.getInvoice = (req, res) => {
     try {
-        const userId = req.user.id;
-        const limit = parseInt(req.query.limit) || 50;
-        const payments = paymentModel.findByUserId(userId, limit);
+        const payment = db.prepare("SELECT * FROM payments WHERE id = ?").get(req.params.id);
+        if (!payment) return res.status(404).send("Not found");
 
-        res.json({
-            success: true,
-            count: payments.length,
-            payments
-        });
-    } catch (error) {
-        console.error("Get payment history error:", error);
-        res.status(500).json({
-            success: false,
-            message: "Unable to load payment history."
-        });
+        const text = `
+CREVIO â€” INVOICE
+
+Invoice #: ${payment.id}
+Date: ${payment.created_at || "N/A"}
+Amount: $${(((payment.amount || 0) / 100).toFixed(2))}
+Status: ${payment.status || "unknown"}
+Description: ${payment.description || "Subscription"}
+
+Thank you for your business.
+        `.trim();
+
+        res.setHeader("Content-Type", "text/plain");
+        res.setHeader("Content-Disposition", `attachment; filename="invoice-${payment.id}.txt"`);
+        res.send(text);
+    } catch (err) {
+        res.status(500).send("Failed: " + err.message);
     }
-};
-
-// =========================================================
-// EXPORTS
-// =========================================================
-
-module.exports = {
-    getBillingStatus,
-    getPlans,
-    upgradePlan,
-    cancelSubscription,
-    reactivateSubscription,
-    getPaymentHistory
 };

@@ -1,12 +1,14 @@
 // =========================================================
 // CREVIO — WEBHOOK ROUTES
+// File: backend/routes/webhookRoutes.js
 // =========================================================
 
 const express = require("express");
 const router = express.Router();
 const webhookController = require("../controllers/webhookController");
 
-// Stripe webhook endpoint (raw body required)
-router.post("/stripe", express.raw({ type: 'application/json' }), webhookController.handleStripeWebhook);
+// Note: no auth middleware — webhooks are verified by signature
+router.post("/stripe",   webhookController.stripeWebhook);
+router.post("/paystack", webhookController.paystackWebhook);
 
 module.exports = router;

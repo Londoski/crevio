@@ -1,43 +1,38 @@
 // =========================================================
 // CREVIO — PUBLIC SKILL CONTROLLER
+// File: backend/controllers/publicSkillController.js
 // =========================================================
 
-const userModel = require("../models/userModel");
-const skillModel = require("../models/skillModel");
+const db = require("../../database/db");
 
-// ---- Get public skills for a user (by username) ----
-const getPublicSkills = (req, res) => {
+// GET /api/public/skills/:username
+exports.getByUsername = (req, res) => {
     try {
-        const username = req.params.username;
-        if (!username) {
-            return res.status(400).json({ success: false, message: "Username required." });
+        const user = db.prepare("SELECT id, username FROM users WHERE username = ?").get(req.params.username);
+        if (!user) return res.status(404).json({ success: false, message: "User not found" });
+
+        let skills = [];
+        try {
+            skills = db.prepare(`
+                SELECT cs.id AS id, s.name AS name, sc.name AS category
+                FROM creator_skills cs
+                LEFT JOIN skills s ON s.id = cs.skill_id
+                LEFT JOIN skill_categories sc ON sc.id = s.category_id
+                WHERE cs.user_id = ?
+                ORDER BY cs.id DESC
+            `).all(user.id);
+        } catch (e) {
+            skills = db.prepare(`
+                SELECT cs.id AS id, s.name AS name, 'other' AS category
+                FROM creator_skills cs
+                LEFT JOIN skills s ON s.id = cs.skill_id
+                WHERE cs.user_id = ?
+                ORDER BY cs.id DESC
+            `).all(user.id);
         }
 
-        // Find user by username
-        const user = userModel.findByUsername(username);
-        if (!user) {
-            return res.status(404).json({ success: false, message: "User not found." });
-        }
-
-        // Fetch selected skills
-        const skills = skillModel.getSelectedSkills(user.id);
-
-        // Return public-ready format
-        res.json({
-            success: true,
-            skills: skills.map(s => ({
-                id: s.id,
-                name: s.name,
-                category_name: s.category_name
-            }))
-        });
-
-    } catch (error) {
-        console.error("Get public skills error:", error);
-        res.status(500).json({ success: false, message: "Unable to load skills." });
+        res.json({ success: true, skills });
+    } catch (err) {
+        res.status(500).json({ success: false, message: "Failed", error: err.message });
     }
-};
-
-module.exports = {
-    getPublicSkills
 };

@@ -1,227 +1,341 @@
+﻿// =========================================================
+// CREVIO â€” SETTINGS PAGE
+// File: dashboard/js/settings.js
 // =========================================================
-// CREVIO — SETTINGS JS (redesigned)
-// =========================================================
 
-const container = document.getElementById('settingsContainer');
+document.addEventListener("DOMContentLoaded", function () {
+    const $ = (id) => document.getElementById(id);
 
-function getToken() {
-    const token = localStorage.getItem('crevio_token');
-    if (!token) {
-        window.location.href = '/admin/pages/login.html';
-        return null;
-    }
-    return token;
-}
+    const toast    = $("toast");
+    const saveBtn  = $("saveBtn");
+    const resetBtn = $("resetBtn");
 
-// ---- LOAD USER ----
-async function loadSettings() {
-    const token = getToken();
-    if (!token) return;
+    const STORAGE_KEY = "crevio_settings";
 
-    try {
-        const res = await fetch('/api/users/me', {
-            headers: { 'Authorization': 'Bearer ' + token }
+    const DEFAULTS = {
+        theme:          "dark",
+        language:       "en",
+        timezone:       "Africa/Lagos",
+        notifEmail:     true,
+        notifMessages:  true,
+        notifOrders:    true,
+        notifMarketing: false
+    };
+
+    // =========================================================
+    // LOAD
+    // =========================================================
+    function load() {
+        let saved = {};
+        try {
+            saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+        } catch (e) { saved = {}; }
+
+        const settings = { ...DEFAULTS, ...saved };
+
+        // Theme â€” check multiple sources
+        const themeFromLocal = localStorage.getItem("crevio_theme");
+        const theme = themeFromLocal || settings.theme || "dark";
+
+        applyTheme(theme);
+        document.querySelectorAll("[data-theme-choice]").forEach(el => {
+            el.classList.toggle("active", el.dataset.themeChoice === theme);
         });
-        if (res.status === 401) {
-            localStorage.removeItem('crevio_token');
-            window.location.href = '/admin/pages/login.html';
-            return;
-        }
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        const data = await res.json();
-        if (!data.success || !data.user) throw new Error('Failed to load user');
 
-        renderSettings(data.user);
-    } catch (err) {
-        console.error(err);
-        container.innerHTML = '<div class="loading-state" style="text-align:center;padding:40px 0;color:var(--danger);">Unable to load settings.</div>';
+        // Toggles
+        if ($("notifEmail"))     $("notifEmail").checked     = !!settings.notifEmail;
+        if ($("notifMessages"))  $("notifMessages").checked  = !!settings.notifMessages;
+        if ($("notifOrders"))    $("notifOrders").checked    = !!settings.notifOrders;
+        if ($("notifMarketing")) $("notifMarketing").checked = !!settings.notifMarketing;
+
+        // Selects
+        if ($("language")) $("language").value = settings.language;
+        if ($("timezone")) $("timezone").value = settings.timezone;
     }
-}
 
-// ---- RENDER ----
-function renderSettings(user) {
-    const savedTheme = localStorage.getItem('crevio_theme') || 'dark';
+    // =========================================================
+    // APPLY THEME
+    // =========================================================
+    function applyTheme(theme) {
+        const actualTheme = theme === "system"
+            ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
+            : theme;
 
-    let html = `
-        <!-- Profile -->
-        <div class="card">
-            <h3><i data-lucide="user" class="icon"></i> Profile Information</h3>
-            <form id="profileForm">
-                <div class="form-group">
-                    <label for="displayName">Display Name</label>
-                    <input type="text" id="displayName" value="${user.display_name || ''}" placeholder="Your display name">
-                </div>
-                <div class="form-group">
-                    <label for="bio">Bio</label>
-                    <textarea id="bio" rows="3" placeholder="Tell people about yourself">${user.bio || ''}</textarea>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="location">Location</label>
-                        <input type="text" id="location" value="${user.location || ''}" placeholder="City, Country">
-                    </div>
-                    <div class="form-group">
-                        <label for="profileImage">Profile Image URL</label>
-                        <input type="url" id="profileImage" value="${user.profile_image || ''}" placeholder="https://example.com/avatar.jpg">
-                    </div>
-                </div>
-                <div id="profileMessage" class="message"></div>
-                <div class="form-actions">
-                    <button type="submit" class="btn btn-primary">Save Profile</button>
-                </div>
-            </form>
-        </div>
+        document.documentElement.setAttribute("data-theme", actualTheme);
 
-        <!-- Appearance -->
-        <div class="card">
-            <h3><i data-lucide="palette" class="icon"></i> Appearance</h3>
-            <div class="form-group" style="max-width:300px;">
-                <label for="themeSelect">Theme</label>
-                <select id="themeSelect">
-                    <option value="dark" ${savedTheme === 'dark' ? 'selected' : ''}>Dark</option>
-                    <option value="light" ${savedTheme === 'light' ? 'selected' : ''}>Light</option>
-                    <option value="system" ${savedTheme === 'system' ? 'selected' : ''}>System</option>
-                </select>
-            </div>
-            <div id="themeMessage" class="message"></div>
-            <div class="form-actions">
-                <button class="btn btn-primary" id="applyThemeBtn">Apply Theme</button>
-            </div>
-        </div>
-
-        <!-- Notifications -->
-        <div class="card">
-            <h3><i data-lucide="bell" class="icon"></i> Notification Preferences</h3>
-            <div class="toggle-row">
-                <span class="label">Email Notifications</span>
-                <input type="checkbox" class="toggle-switch" id="emailNotifications" checked>
-            </div>
-            <div class="toggle-row">
-                <span class="label">Security Alerts</span>
-                <input type="checkbox" class="toggle-switch" id="securityAlerts" checked>
-            </div>
-            <div class="toggle-row">
-                <span class="label">Marketing Updates</span>
-                <input type="checkbox" class="toggle-switch" id="marketingUpdates">
-            </div>
-            <div id="notificationMessage" class="message"></div>
-            <div class="form-actions">
-                <button class="btn btn-primary" id="saveNotificationsBtn">Save Preferences</button>
-            </div>
-        </div>
-
-        <!-- Account Management Link -->
-        <div class="card" style="border-color:var(--accent);">
-            <h3><i data-lucide="user-cog" class="icon"></i> Account Management</h3>
-            <p style="color:var(--text-secondary);font-size:14px;margin-bottom:12px;">
-                Manage your account status, deactivation, deletion, and security settings.
-            </p>
-            <a href="/dashboard/pages/account-management.html" style="display:inline-flex;align-items:center;gap:8px;color:var(--accent);text-decoration:none;font-weight:500;padding:8px 16px;border:1px solid var(--border-color);border-radius:10px;transition:all 0.15s;">
-                <i data-lucide="arrow-right" class="icon"></i> Go to Account Management
-            </a>
-        </div>
-    `;
-
-    container.innerHTML = html;
-    refreshIcons();
-
-    // ---- Profile form ----
-    document.getElementById('profileForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        const token = getToken();
-        if (!token) return;
-
-        const data = {
-            display_name: document.getElementById('displayName').value.trim(),
-            bio: document.getElementById('bio').value.trim(),
-            location: document.getElementById('location').value.trim(),
-            profile_image: document.getElementById('profileImage').value.trim()
-        };
-
-        const msg = document.getElementById('profileMessage');
-        msg.className = 'message';
+        if (document.body) {
+            document.body.style.background = actualTheme === "dark" ? "#0F172A" : "#F1F5F9";
+        }
 
         try {
-            const res = await fetch('/api/users/me', {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + token
-                },
-                body: JSON.stringify(data)
-            });
-            const result = await res.json();
-            if (!res.ok || !result.success) throw new Error(result.message || 'Update failed.');
-            msg.className = 'message success';
-            msg.textContent = '✅ Profile updated successfully!';
-            // Update localStorage
-            const userData = localStorage.getItem('crevio_user');
-            if (userData) {
-                try {
-                    const user = JSON.parse(userData);
-                    Object.assign(user, data);
-                    localStorage.setItem('crevio_user', JSON.stringify(user));
-                } catch (e) {}
-            }
-            // Update avatar
-            const avatar = document.getElementById('userAvatar');
-            if (avatar && data.display_name) avatar.textContent = data.display_name.charAt(0).toUpperCase();
-            const nameDisplay = document.getElementById('userNameDisplay');
-            if (nameDisplay && data.display_name) nameDisplay.textContent = data.display_name;
-        } catch (err) {
-            console.error(err);
-            msg.className = 'message error';
-            msg.textContent = '❌ ' + err.message;
-        }
-    });
-
-    // ---- Apply theme ----
-    document.getElementById('applyThemeBtn').addEventListener('click', function() {
-        const theme = document.getElementById('themeSelect').value;
-        localStorage.setItem('crevio_theme', theme);
-        if (theme === 'system') {
-            const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-            document.documentElement.setAttribute('data-theme', systemTheme);
-        } else {
-            document.documentElement.setAttribute('data-theme', theme);
-        }
-        const toggleBtn = document.getElementById('themeToggleBtn');
-        if (toggleBtn) {
-            const icon = toggleBtn.querySelector('.icon');
-            if (icon) icon.setAttribute('data-lucide', theme === 'dark' ? 'moon' : 'sun');
-        }
-        refreshIcons();
-        const msg = document.getElementById('themeMessage');
-        msg.className = 'message success';
-        msg.textContent = '✅ Theme applied!';
-        setTimeout(() => { msg.className = 'message'; }, 3000);
-    });
-
-    // ---- Save notifications ----
-    document.getElementById('saveNotificationsBtn').addEventListener('click', function() {
-        const msg = document.getElementById('notificationMessage');
-        msg.className = 'message success';
-        msg.textContent = '✅ Preferences saved (coming soon)';
-        setTimeout(() => { msg.className = 'message'; }, 3000);
-    });
-}
-
-// ---- HELPERS ----
-function refreshIcons() {
-    if (typeof lucide !== 'undefined') lucide.createIcons();
-}
-
-// ---- INIT ----
-document.addEventListener('DOMContentLoaded', function() {
-    loadSettings();
-    const userData = localStorage.getItem('crevio_user');
-    if (userData) {
-        try {
-            const user = JSON.parse(userData);
-            const avatar = document.getElementById('userAvatar');
-            const name = document.getElementById('userNameDisplay');
-            if (avatar && user.display_name) avatar.textContent = user.display_name.charAt(0).toUpperCase();
-            if (name && user.display_name) name.textContent = user.display_name;
+            localStorage.setItem("crevio_theme", theme);
         } catch (e) {}
     }
+
+    // =========================================================
+    // SAVE
+    // =========================================================
+    function save() {
+        const currentTheme = (() => {
+            const active = document.querySelector("[data-theme-choice].active");
+            return active ? active.dataset.themeChoice : (localStorage.getItem("crevio_theme") || "dark");
+        })();
+
+        const settings = {
+            theme:          currentTheme,
+            language:       $("language")?.value || "en",
+            timezone:       $("timezone")?.value || "Africa/Lagos",
+            notifEmail:     $("notifEmail")?.checked ?? true,
+            notifMessages:  $("notifMessages")?.checked ?? true,
+            notifOrders:    $("notifOrders")?.checked ?? true,
+            notifMarketing: $("notifMarketing")?.checked ?? false
+        };
+
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+            localStorage.setItem("crevio_theme", settings.theme);
+            showToast("Settings saved");
+        } catch (e) {
+            showToast("Could not save: " + e.message, true);
+        }
+    }
+
+    saveBtn?.addEventListener("click", save);
+
+    // =========================================================
+    // THEME PICKER
+    // =========================================================
+    document.querySelectorAll("[data-theme-choice]").forEach(el => {
+        el.addEventListener("click", () => {
+            const theme = el.dataset.themeChoice;
+            document.querySelectorAll("[data-theme-choice]").forEach(t => t.classList.remove("active"));
+            el.classList.add("active");
+
+            applyTheme(theme);
+            save();
+        });
+    });
+
+    // =========================================================
+    // AUTO-SAVE ON TOGGLE / SELECT CHANGE
+    // =========================================================
+    ["notifEmail", "notifMessages", "notifOrders", "notifMarketing"].forEach(id => {
+        $(id)?.addEventListener("change", save);
+    });
+
+    ["language", "timezone"].forEach(id => {
+        $(id)?.addEventListener("change", save);
+    });
+
+    // =========================================================
+    // RESET
+    // =========================================================
+    resetBtn?.addEventListener("click", () => {
+        if (!confirm("Reset all settings to default?")) return;
+
+        try {
+            localStorage.removeItem(STORAGE_KEY);
+            localStorage.removeItem("crevio_theme");
+        } catch (e) {}
+
+        applyTheme(DEFAULTS.theme);
+
+        // Reset toggles
+        if ($("notifEmail"))     $("notifEmail").checked     = DEFAULTS.notifEmail;
+        if ($("notifMessages"))  $("notifMessages").checked  = DEFAULTS.notifMessages;
+        if ($("notifOrders"))    $("notifOrders").checked    = DEFAULTS.notifOrders;
+        if ($("notifMarketing")) $("notifMarketing").checked = DEFAULTS.notifMarketing;
+
+        // Reset selects
+        if ($("language")) $("language").value = DEFAULTS.language;
+        if ($("timezone")) $("timezone").value = DEFAULTS.timezone;
+
+        // Reset theme picker
+        document.querySelectorAll("[data-theme-choice]").forEach(el => {
+            el.classList.toggle("active", el.dataset.themeChoice === DEFAULTS.theme);
+        });
+
+        showToast("Settings reset to defaults");
+    });
+
+    // =========================================================
+    // LISTEN FOR SYSTEM THEME CHANGES
+    // =========================================================
+    if (window.matchMedia) {
+        const mq = window.matchMedia("(prefers-color-scheme: dark)");
+        const handler = () => {
+            const active = document.querySelector("[data-theme-choice].active");
+            if (active?.dataset.themeChoice === "system") {
+                applyTheme("system");
+            }
+        };
+        if (mq.addEventListener) mq.addEventListener("change", handler);
+        else if (mq.addListener) mq.addListener(handler);
+    }
+
+    // =========================================================
+    // HELPERS
+    // =========================================================
+    let toastTimer;
+    function showToast(msg, isError = false) {
+        if (!toast) return;
+        clearTimeout(toastTimer);
+        toast.textContent = msg;
+        toast.classList.toggle("error", isError);
+        toast.classList.add("show");
+        toastTimer = setTimeout(() => toast.classList.remove("show"), 3000);
+    }
+
+    // =========================================================
+    // INIT
+    // =========================================================
+    // =========================================================
+    // ACCOUNT CREDENTIALS — Email & Password
+    // =========================================================
+    function initCredentialsSection() {
+        try {
+            const user = JSON.parse(localStorage.getItem("user") || "null");
+            const label = $("currentEmailLabel");
+            if (label && user && user.email) label.textContent = user.email;
+            else if (label) label.textContent = "Not available";
+        } catch (e) {}
+
+        function openModal(id) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.classList.add("open");
+            const firstInput = el.querySelector("input");
+            if (firstInput) setTimeout(() => firstInput.focus(), 100);
+        }
+
+        $("changeEmailBtn")?.addEventListener("click", () => {
+            const e1 = $("newEmail"); if (e1) e1.value = "";
+            const e2 = $("emailCurrentPassword"); if (e2) e2.value = "";
+            document.querySelectorAll("#emailForm .field-error").forEach(e => { e.classList.remove("show"); e.textContent = ""; });
+            openModal("emailModal");
+        });
+
+        $("changePasswordBtn")?.addEventListener("click", () => {
+            ["currentPassword","newPassword","confirmPassword"].forEach(id => { const el = $(id); if (el) el.value = ""; });
+            document.querySelectorAll("#passwordForm .field-error").forEach(e => { e.classList.remove("show"); e.textContent = ""; });
+            openModal("passwordModal");
+        });
+
+        document.querySelectorAll("[data-close-modal]").forEach(btn => {
+            btn.addEventListener("click", (e) => {
+                const modal = e.target.closest(".modal-overlay");
+                if (modal) modal.classList.remove("open");
+            });
+        });
+
+        document.querySelectorAll(".modal-overlay").forEach(overlay => {
+            overlay.addEventListener("click", (e) => {
+                if (e.target === overlay) overlay.classList.remove("open");
+            });
+        });
+
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "Escape") {
+                document.querySelectorAll(".modal-overlay.open").forEach(m => m.classList.remove("open"));
+            }
+        });
+
+        function setErr(fieldId, message) {
+            const el = $(fieldId);
+            if (!el) return;
+            if (message) { el.textContent = message; el.classList.add("show"); }
+            else { el.textContent = ""; el.classList.remove("show"); }
+        }
+        function clearFormErrors(formId) {
+            document.querySelectorAll("#" + formId + " .field-error").forEach(e => { e.classList.remove("show"); e.textContent = ""; });
+        }
+
+        // ---- CHANGE EMAIL ----
+        $("emailForm")?.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            clearFormErrors("emailForm");
+
+            const newEmail = $("newEmail").value.trim();
+            const currentPassword = $("emailCurrentPassword").value;
+            const btn = $("emailSubmitBtn");
+
+            if (!newEmail)        { setErr("newEmailErr", "Email is required"); return; }
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) { setErr("newEmailErr", "Enter a valid email"); return; }
+            if (!currentPassword) { setErr("emailCurrentPasswordErr", "Password is required"); return; }
+
+            const original = btn.textContent;
+            btn.disabled = true; btn.textContent = "Saving…";
+            try {
+                const res = await window.apiFetch("/api/auth/email", {
+                    method: "PATCH",
+                    body: JSON.stringify({ newEmail, currentPassword })
+                });
+                const data = await res.json();
+                if (!data.success) throw new Error(data.message || "Failed");
+
+                try {
+                    const u = JSON.parse(localStorage.getItem("user") || "{}");
+                    u.email = data.email || newEmail;
+                    localStorage.setItem("user", JSON.stringify(u));
+                } catch (e) {}
+
+                showToast("Email updated — signing you out…");
+                setTimeout(() => {
+                    localStorage.removeItem("token");
+                    localStorage.removeItem("user");
+                    window.location.href = "/admin/pages/login.html";
+                }, 1500);
+            } catch (err) {
+                const msg = err.message || "Failed";
+                if (/current password/i.test(msg))   setErr("emailCurrentPasswordErr", msg);
+                else if (/in use|exists/i.test(msg)) setErr("newEmailErr", msg);
+                else                                  showToast(msg, true);
+                btn.disabled = false; btn.textContent = original;
+            }
+        });
+
+        // ---- CHANGE PASSWORD ----
+        $("passwordForm")?.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            clearFormErrors("passwordForm");
+
+            const currentPassword = $("currentPassword").value;
+            const newPassword     = $("newPassword").value;
+            const confirmPassword = $("confirmPassword").value;
+            const btn = $("passwordSubmitBtn");
+
+            if (!currentPassword) { setErr("currentPasswordErr", "Current password required"); return; }
+            if (!newPassword)     { setErr("newPasswordErr", "New password required"); return; }
+            if (newPassword.length < 8) { setErr("newPasswordErr", "At least 8 characters"); return; }
+            if (!/[A-Za-z]/.test(newPassword) || !/[0-9]/.test(newPassword)) { setErr("newPasswordErr", "Must contain letters and numbers"); return; }
+            if (newPassword !== confirmPassword) { setErr("confirmPasswordErr", "Passwords do not match"); return; }
+            if (newPassword === currentPassword) { setErr("newPasswordErr", "New password must be different"); return; }
+
+            const original = btn.textContent;
+            btn.disabled = true; btn.textContent = "Saving…";
+            try {
+                const res = await window.apiFetch("/api/auth/password", {
+                    method: "PATCH",
+                    body: JSON.stringify({ currentPassword, newPassword, confirmPassword })
+                });
+                const data = await res.json();
+                if (!data.success) throw new Error(data.message || "Failed");
+
+                showToast("Password updated — signing you out…");
+                setTimeout(() => {
+                    localStorage.removeItem("token");
+                    localStorage.removeItem("user");
+                    window.location.href = "/admin/pages/login.html";
+                }, 1500);
+            } catch (err) {
+                const msg = err.message || "Failed";
+                if (/current password/i.test(msg))           setErr("currentPasswordErr", msg);
+                else if (/letters|numbers|8 char/i.test(msg)) setErr("newPasswordErr", msg);
+                else                                          showToast(msg, true);
+                btn.disabled = false; btn.textContent = original;
+            }
+        });
+    }
+    load();
+    initCredentialsSection();
 });

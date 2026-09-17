@@ -1,0 +1,259 @@
+﻿{
+  "_comment": "Every entry here is an APPROVED fix. Do not remove without a replacement. Add new locks as new features ship.",
+  "locks": [
+    {
+      "id": "messages-columns-deleted-for-creator",
+      "desc": "messages.deleted_for_creator column (per-user delete)",
+      "type": "sqliteColumn",
+      "table": "messages",
+      "column": "deleted_for_creator"
+    },
+    {
+      "id": "messages-columns-delivered-at",
+      "desc": "messages.delivered_at column (delivery ticks)",
+      "type": "sqliteColumn",
+      "table": "messages",
+      "column": "delivered_at"
+    },
+    {
+      "id": "messages-columns-reactions",
+      "desc": "messages.reactions column (emoji reactions JSON)",
+      "type": "sqliteColumn",
+      "table": "messages",
+      "column": "reactions"
+    },
+    {
+      "id": "bot_ratings-table",
+      "desc": "bot_ratings table (thumbs up/down on bot replies)",
+      "type": "sqliteTable",
+      "table": "bot_ratings"
+    },
+    {
+      "id": "bot_shares-table",
+      "desc": "bot_shares table (share-to-conversation tracking)",
+      "type": "sqliteTable",
+      "table": "bot_shares"
+    },
+    {
+      "id": "users-plan-column",
+      "desc": "users.plan column (plan-aware message limits)",
+      "type": "sqliteColumn",
+      "table": "users",
+      "column": "plan"
+    },
+    {
+      "id": "subscriptions-source-of-truth",
+      "desc": "subscriptions table is the source of truth for plan",
+      "type": "sqliteTable",
+      "table": "subscriptions"
+    },
+
+    {
+      "id": "messageController-plan-limits",
+      "desc": "messageController enforces plan character limits",
+      "type": "fileContains",
+      "file": "backend/controllers/messageController.js",
+      "patterns": ["PLAN_LIMITS", "getUserPlan", "getPlanLimit", "getMyPlanLimit"]
+    },
+    {
+      "id": "messageController-visitor-endpoint",
+      "desc": "Public visitor endpoint marks creator messages read",
+      "type": "fileContains",
+      "file": "backend/controllers/messageController.js",
+      "patterns": ["getVisitorConversation", "delivered_at=COALESCE"]
+    },
+    {
+      "id": "messageController-scoped-delete",
+      "desc": "Delete message supports ?scope=me vs everyone",
+      "type": "fileContains",
+      "file": "backend/controllers/messageController.js",
+      "patterns": ["req.query.scope", "deleted_for_creator=1"]
+    },
+    {
+      "id": "messageController-single-reaction",
+      "desc": "One reaction per user per message",
+      "type": "fileContains",
+      "file": "backend/controllers/messageController.js",
+      "patterns": ["alreadyHere", "for (const e of Object.keys(reactions))"]
+    },
+    {
+      "id": "authController-changeEmail",
+      "desc": "Email change endpoint with password verification",
+      "type": "fileContains",
+      "file": "backend/controllers/authController.js",
+      "patterns": ["exports.changeEmail", "bcrypt.compare", "DELETE FROM sessions"]
+    },
+    {
+      "id": "authController-changePassword",
+      "desc": "Password change endpoint with bcrypt cost 12",
+      "type": "fileContains",
+      "file": "backend/controllers/authController.js",
+      "patterns": ["exports.changePassword", "bcrypt.hash(newPassword, 12)"]
+    },
+    {
+      "id": "botController-rate-and-share",
+      "desc": "Bot rating + share endpoints",
+      "type": "fileContains",
+      "file": "backend/controllers/botController.js",
+      "patterns": ["exports.rate", "exports.getRatingsBatch", "exports.share"]
+    },
+    {
+      "id": "messageRoutes-extra-endpoints",
+      "desc": "Routes for plan-limit, read-all, visitor, email, password",
+      "type": "fileContains",
+      "file": "backend/routes/messageRoutes.js",
+      "patterns": ["/plan-limit", "/read-all", "/visitor"]
+    },
+    {
+      "id": "authRoutes-email-password",
+      "desc": "Auth routes for email and password change",
+      "type": "fileContains",
+      "file": "backend/routes/authRoutes.js",
+      "patterns": ["changeEmail", "changePassword", "authMiddleware"]
+    },
+    {
+      "id": "server-botRoutes-mounted",
+      "desc": "server.js mounts /api/bot",
+      "type": "fileContains",
+      "file": "server.js",
+      "patterns": ["botRoutes", "app.use(\"/api/bot\""]
+    },
+
+    {
+      "id": "shared-password-toggle",
+      "desc": "Shared password visibility toggle script",
+      "type": "fileContains",
+      "file": "dashboard/js/password-toggle.js",
+      "patterns": ["__crevioPwdToggleInstalled", "pwd-toggle-btn", "MutationObserver"]
+    },
+    {
+      "id": "shared-mobile-menu",
+      "desc": "Shared mobile menu drawer script",
+      "type": "fileContains",
+      "file": "dashboard/js/mobile-menu.js",
+      "patterns": ["__crevioMobileMenu", "mobile-menu-btn", "mobile-menu-overlay", "mobile-open"]
+    },
+    {
+      "id": "shared-mobile-css",
+      "desc": "Shared mobile CSS (drawer, kill-intruder)",
+      "type": "fileContains",
+      "file": "dashboard/css/mobile.css",
+      "patterns": ["LEFT SIDEBAR DRAWER", "crevioMobileToggle"]
+    },
+    {
+      "id": "auth-js-intruder-disabled",
+      "desc": "auth.js no longer creates the duplicate hamburger",
+      "type": "fileContains",
+      "file": "dashboard/js/auth.js",
+      "patterns": ["DISABLED — the shared"]
+    },
+
+    {
+      "id": "messages-page-ui",
+      "desc": "Messages page has all modals + toolbars + mobile override",
+      "type": "fileContains",
+      "file": "dashboard/pages/messages.html",
+      "patterns": [
+        "id=\"confirmOverlay\"",
+        "id=\"deleteOverlay\"",
+        "id=\"deleteEveryone\"",
+        "id=\"deleteMe\"",
+        "id=\"reactionBar\"",
+        "id=\"msgContextMenu\"",
+        "MESSAGES MOBILE OVERRIDE",
+        "mobile-menu.js"
+      ]
+    },
+    {
+      "id": "messages-js-features",
+      "desc": "messages.js has delete dialog, plan limit, askbot, tick logic",
+      "type": "fileContains",
+      "file": "dashboard/js/messages.js",
+      "patterns": [
+        "function confirmDialog",
+        "function deleteDialog",
+        "planLimit",
+        "openCrevioBotWithMessage",
+        "msg-check read",
+        "msg-check delivered",
+        "scope === \"everyone\""
+      ]
+    },
+    {
+      "id": "bot-page-ui",
+      "desc": "Bot page has toolbar, markdown, mobile-menu, no mobile tooltips",
+      "type": "fileContains",
+      "file": "dashboard/pages/bot.html",
+      "patterns": [
+        "msg-toolbar",
+        "CrevioBotToolbar",
+        "marked.min.js",
+        "mobile-menu.js",
+        "NO TOOLTIPS ON MOBILE"
+      ]
+    },
+    {
+      "id": "settings-page-credentials",
+      "desc": "Settings has Change Email + Change Password modals",
+      "type": "fileContains",
+      "file": "dashboard/pages/settings.html",
+      "patterns": [
+        "id=\"changeEmailBtn\"",
+        "id=\"changePasswordBtn\"",
+        "id=\"emailModal\"",
+        "id=\"passwordModal\"",
+        "password-toggle.js",
+        "mobile-menu.js"
+      ]
+    },
+    {
+      "id": "settings-js-handlers",
+      "desc": "settings.js wires email/password forms",
+      "type": "fileContains",
+      "file": "dashboard/js/settings.js",
+      "patterns": [
+        "initCredentialsSection",
+        "/api/auth/email",
+        "/api/auth/password",
+        "initCredentialsSection();"
+      ]
+    },
+    {
+      "id": "security-page-pwd-toggle",
+      "desc": "Security page loads the shared password toggle",
+      "type": "fileContains",
+      "file": "dashboard/pages/security.html",
+      "patterns": ["password-toggle.js", "mobile-menu.js", "mobile.css"]
+    },
+    {
+      "id": "login-page-pwd-toggle",
+      "desc": "Login page loads the shared password toggle",
+      "type": "fileContains",
+      "file": "admin/pages/login.html",
+      "patterns": ["password-toggle.js"]
+    },
+
+    {
+      "id": "every-dashboard-page-has-mobile",
+      "desc": "All dashboard pages include mobile.css AND mobile-menu.js",
+      "type": "everyGlobContains",
+      "glob": "dashboard/pages/*.html",
+      "patterns": ["mobile.css", "mobile-menu.js"]
+    },
+    {
+      "id": "every-dashboard-page-not-broken",
+      "desc": "No dashboard page still hides sidebar with display:none !important",
+      "type": "everyGlobMustNotContain",
+      "glob": "dashboard/pages/*.html",
+      "patterns": [".sidebar { display:none !important"]
+    }
+    
+    {
+  "id": "my-new-fix",
+  "desc": "One-line description of what this protects",
+  "type": "fileContains",
+  "file": "path/to/file.js",
+  "patterns": ["someUniqueStringThatMustAlwaysExist"]
+}
+  ]
+}

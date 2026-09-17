@@ -1,222 +1,463 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crevio Bot — Crevio</title>
+    <title>Crevio Bot — AI Assistant</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
-    <link rel="stylesheet" href="/dashboard/css/dashboard.css">
+    <script src="/dashboard/js/auth.js?v=639252484686517300"></script>
 
     <style>
-        /* ---- Avatar override (small for header) ---- */
-        .user-avatar {
-            width: 32px !important;
-            height: 32px !important;
-            font-size: 13px !important;
-            flex-shrink: 0;
-        }
-        .user-avatar img {
-            width: 32px !important;
-            height: 32px !important;
-            border-radius: 50% !important;
-            object-fit: cover !important;
-        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        html, body { height:100vh; overflow:hidden; scrollbar-width:none; -ms-overflow-style:none; }
+        html::-webkit-scrollbar, body::-webkit-scrollbar { display:none; }
+        body { font-family:'Inter',sans-serif; background:var(--bg-primary); color:var(--text-primary); display:flex; }
 
-        /* ---- Bot specific styles ---- */
-        .bot-container {
-            max-width: 900px;
-            margin: 0 auto;
-        }
+        /* THEME */
+        [data-theme="dark"] { --bg-primary:#0F172A; --bg-secondary:#1E293B; --bg-card:#1E293B; --bg-input:#0F172A; --border-color:#334155; --text-primary:#F1F5F9; --text-secondary:#94A3B8; --text-muted:#64748B; --accent:#2563EB; --accent-hover:#1D4ED8; --accent-dim:rgba(37,99,235,0.15); --danger:#EF4444; --success:#22C55E; --warning:#F59E0B; }
+        [data-theme="light"] { --bg-primary:#F1F5F9; --bg-secondary:#FFFFFF; --bg-card:#FFFFFF; --bg-input:#F8FAFC; --border-color:#E2E8F0; --text-primary:#0F172A; --text-secondary:#475569; --text-muted:#94A3B8; --accent:#2563EB; --accent-hover:#1D4ED8; --accent-dim:rgba(37,99,235,0.1); --danger:#EF4444; --success:#22C55E; --warning:#F59E0B; }
 
-        .bot-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            padding: 28px;
-            margin-bottom: 24px;
-            transition: background 0.3s, border-color 0.3s;
-        }
-        .bot-card h3 {
-            font-size: 18px;
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 4px;
-        }
-        .bot-card .subtitle {
-            font-size: 14px;
-            color: var(--text-secondary);
-            margin-bottom: 20px;
-        }
+        /* LEFT NAV SIDEBAR */
+        .sidebar { width:240px; background:var(--bg-secondary); border-right:1px solid var(--border-color); display:flex; flex-direction:column; padding:24px 16px; height:100vh; flex-shrink:0; overflow-y:auto; }
+        .sidebar-brand { padding-bottom:20px; border-bottom:1px solid var(--border-color); margin-bottom:20px; }
+        .sidebar-brand h1 { font-size:20px; font-weight:700; }
+        .sidebar-brand span { font-size:11px; font-weight:500; text-transform:uppercase; color:var(--text-muted); }
+        .sidebar-nav { display:flex; flex-direction:column; gap:2px; flex:1; }
+        .nav-item { display:flex; align-items:center; gap:12px; padding:10px 12px; border-radius:8px; color:var(--text-secondary); font-size:14px; font-weight:500; transition:all 0.15s; text-decoration:none; }
+        .nav-item:hover { background:var(--accent-dim); color:var(--text-primary); }
+        .nav-item.active { background:var(--accent-dim); color:var(--accent); }
+        .nav-item .icon { width:20px; height:20px; flex-shrink:0; }
+        .nav-divider { height:1px; background:var(--border-color); margin:8px 12px; }
+        .sidebar-footer { padding-top:16px; border-top:1px solid var(--border-color); }
+        .logout-button { background:transparent; border:none; color:var(--danger); font-size:13px; font-weight:500; padding:10px 12px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:12px; width:100%; font-family:inherit; }
+        .logout-button:hover { background:rgba(239,68,68,0.1); }
 
-        /* ---- Chat messages (NO AVATAR) ---- */
-        .chat-messages {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            max-height: 400px;
-            overflow-y: auto;
-            padding-right: 8px;
-            margin-bottom: 16px;
-        }
-        .chat-messages::-webkit-scrollbar {
-            width: 6px;
-        }
-        .chat-messages::-webkit-scrollbar-track {
-            background: var(--bg-primary);
-            border-radius: 3px;
-        }
-        .chat-messages::-webkit-scrollbar-thumb {
-            background: var(--border-color);
-            border-radius: 3px;
-        }
+        /* MAIN CHAT */
+        .main { flex:1; display:flex; flex-direction:column; height:100vh; overflow:hidden; min-width:0; }
+        .chat-header { padding:16px 24px; border-bottom:1px solid var(--border-color); display:flex; align-items:center; justify-content:space-between; gap:12px; flex-shrink:0; }
+        .chat-header-left { display:flex; align-items:center; gap:14px; flex:1; min-width:0; }
+        .bot-avatar { width:44px; height:44px; border-radius:12px; background:linear-gradient(135deg, var(--accent), #8B5CF6); color:#fff; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+        .bot-avatar .icon { width:24px; height:24px; }
+        .bot-info h1 { font-size:17px; font-weight:700; display:flex; align-items:center; gap:8px; }
+        .bot-info p { font-size:13px; color:var(--text-muted); margin-top:2px; }
+        .bot-status { display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--success); margin-right:6px; }
 
-        /* ---- Hide ANY avatar inside the chat messages ---- */
-        .chat-messages .avatar,
-        .chat-messages .user-avatar,
-        .chat-messages img.avatar,
-        .chat-messages .message .avatar {
-            display: none !important;
-            width: 0 !important;
-            height: 0 !important;
-            visibility: hidden !important;
-            opacity: 0 !important;
-            pointer-events: none !important;
-        }
+        /* ICON BUTTONS */
+        .icon-btn { background:transparent; border:1px solid var(--border-color); color:var(--text-secondary); width:38px; height:38px; border-radius:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:background 0.15s, color 0.15s, border-color 0.15s; padding:0; flex-shrink:0; }
+        .icon-btn:hover { background:var(--accent-dim); border-color:var(--accent); color:var(--accent); }
+        .icon-btn:active { transform:scale(0.97); }
+        .icon-btn .icon { width:16px; height:16px; stroke-width:2; }
+        .icon-btn.danger:hover { background:rgba(239,68,68,0.1); border-color:var(--danger); color:var(--danger); }
 
-        .message {
-            display: flex;
-            gap: 12px;
-            max-width: 85%;
-        }
-        .message.bot {
-            align-self: flex-start;
-        }
-        .message.user {
-            align-self: flex-end;
-            flex-direction: row-reverse;
-        }
+        .chat-header > div:last-child { display:flex; gap:6px; align-items:center; }
 
-        /* ---- Bot message (no avatar) ---- */
-        .message .bubble {
-            padding: 12px 16px;
-            border-radius: 12px;
-            font-size: 14px;
-            line-height: 1.6;
-            color: var(--text-primary);
-        }
-        .message.bot .bubble {
-            background: var(--bg-primary);
-            border: 1px solid var(--border-color);
-            border-bottom-left-radius: 4px;
-        }
-        .message.user .bubble {
-            background: var(--accent);
-            color: #fff;
-            border-bottom-right-radius: 4px;
-        }
+        /* MOBILE SIDEBAR TOGGLE */
+        .bot-sidebar-toggle { display:none; background:transparent; border:1px solid var(--border-color); color:var(--text-secondary); width:38px; height:38px; border-radius:12px; cursor:pointer; align-items:center; justify-content:center; padding:0; transition:background 0.15s, color 0.15s, border-color 0.15s; flex-shrink:0; }
+        .bot-sidebar-toggle:hover { background:var(--accent-dim); border-color:var(--accent); color:var(--accent); }
+        .bot-sidebar-toggle .icon { width:16px; height:16px; }
 
-        /* ---- Quick suggestions ---- */
-        .suggestions {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-bottom: 16px;
-        }
-        .suggestions .chip {
-            padding: 6px 16px;
-            border-radius: 999px;
-            border: 1px solid var(--border-color);
-            background: transparent;
-            color: var(--text-secondary);
-            font-size: 13px;
-            cursor: pointer;
-            transition: all 0.15s;
-            font-family: inherit;
-        }
-        .suggestions .chip:hover {
-            border-color: var(--accent);
-            color: var(--text-primary);
-            background: var(--accent-dim);
-        }
+        /* MESSAGES AREA */
+        .messages { flex:1; overflow-y:auto; padding:20px 24px; display:flex; flex-direction:column; gap:20px; max-width:900px; margin:0 auto; width:100%; scrollbar-width:none; }
+        .messages::-webkit-scrollbar { display:none; }
 
-        /* ---- Input ---- */
-        .chat-input-wrap {
-            display: flex;
-            gap: 12px;
-            align-items: center;
-        }
-        .chat-input-wrap input {
-            flex: 1;
-            padding: 10px 14px;
-            border-radius: 10px;
-            border: 1px solid var(--border-color);
-            background: var(--bg-input);
-            color: var(--text-primary);
-            font-size: 14px;
-            font-family: inherit;
-        }
-        .chat-input-wrap input:focus {
-            outline: none;
-            border-color: var(--accent);
-            box-shadow: 0 0 0 3px var(--accent-dim);
-        }
-        .chat-input-wrap button {
-            padding: 10px 20px;
-            border-radius: 10px;
-            border: none;
-            background: var(--accent);
-            color: #fff;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.15s;
-            font-family: inherit;
-        }
-        .chat-input-wrap button:hover {
-            background: var(--accent-hover);
-            transform: translateY(-1px);
-        }
+        .message { display:flex; gap:10px; align-items:flex-start; animation:fadeIn 0.2s ease; flex-wrap:wrap; }
+        .message.user { flex-direction:row-reverse; }
+        @keyframes fadeIn { from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);} }
+        .message.user + .message { margin-top:6px; }
+        .message + .message.user { margin-top:6px; }
 
-        /* ---- Footer links ---- */
-        .bot-footer {
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-            padding-top: 16px;
-            border-top: 1px solid var(--border-color);
-            margin-top: 8px;
-        }
-        .bot-footer a {
-            color: var(--text-secondary);
-            font-size: 13px;
-            transition: color 0.15s;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .bot-footer a:hover {
-            color: var(--text-primary);
-        }
+        .msg-avatar { width:32px; height:32px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-weight:600; font-size:13px; flex-shrink:0; }
+        .msg-avatar.bot { background:linear-gradient(135deg, var(--accent), #8B5CF6); color:#fff; }
+        .msg-avatar.bot .icon { width:20px; height:20px; }
+        .msg-avatar.user { background:var(--bg-card); border:1px solid var(--border-color); color:var(--accent); }
 
-        /* ---- Responsive ---- */
-        @media (max-width: 768px) {
-            .bot-card { padding: 20px; }
-            .message { max-width: 95%; }
-            .suggestions { gap: 6px; }
-            .suggestions .chip { font-size: 12px; padding: 4px 12px; }
-            .chat-input-wrap { flex-direction: column; align-items: stretch; }
+        .msg-bubble { max-width:70%; padding:8px 12px; border-radius:14px; font-size:14px; line-height:1.4; word-wrap:break-word; min-height:0; text-align:left; position:relative; }
+        .message.user .msg-bubble { background:var(--accent); color:#fff; border-top-right-radius:4px; }
+        .message:not(.user) .msg-bubble { background:var(--bg-card); border:1px solid var(--border-color); border-top-left-radius:4px; }
+        .msg-body { white-space:pre-wrap; word-break:break-word; overflow-wrap:anywhere; }
+        .msg-time { display:block; font-size:10.5px; line-height:1; margin-top:4px; color:var(--text-muted); text-align:right; }
+        .message.user .msg-time { color:rgba(255,255,255,0.75); }
+
+        /* USER BUBBLE CLAMP + EXPAND */
+        .msg-bubble.user.clamped .msg-body { display:-webkit-box; -webkit-line-clamp:10; -webkit-box-orient:vertical; overflow:hidden; max-height:220px; }
+        .msg-expand-btn { display:none; align-items:center; gap:3px; margin-top:6px; padding:0; background:transparent; border:none; color:inherit; font-size:11.5px; font-weight:600; font-family:inherit; cursor:pointer; text-decoration:underline; text-underline-offset:3px; opacity:0.9; }
+        .msg-bubble.user.clamped .msg-expand-btn { display:inline-flex; }
+        .msg-expand-btn:hover { opacity:1; }
+        .msg-expand-btn .icon { width:11px; height:11px; }
+
+        /* MESSAGE TOOLBAR */
+        .msg-toolbar { flex-basis:100%; display:flex; gap:2px; margin-top:4px; margin-left:42px; align-items:center; height:32px; z-index:5; }
+        .message.user .msg-toolbar { margin-left:0; margin-right:42px; justify-content:flex-end; }
+        .msg-tool { position:relative; background:transparent; border:none; color:var(--text-muted); width:32px; height:32px; border-radius:8px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:background 0.12s, color 0.12s; padding:0; }
+        .msg-tool:hover { background:var(--bg-card); color:var(--text-primary); }
+        .msg-tool i, .msg-tool svg { width:15px; height:15px; }
+        .msg-tool:disabled { opacity:0.5; cursor:wait; }
+        .msg-tool .tool-tip { position:absolute; bottom:calc(100% + 6px); left:50%; transform:translateX(-50%); background:var(--bg-card); color:var(--text-primary); border:1px solid var(--border-color); padding:5px 9px; border-radius:6px; font-size:11px; font-weight:500; white-space:nowrap; opacity:0; visibility:hidden; transition:opacity 0.12s, visibility 0.12s; pointer-events:none; z-index:10; }
+        .msg-tool:hover .tool-tip { opacity:1; visibility:visible; }
+
+        /* TYPING INDICATOR */
+        .typing { display:flex; gap:4px; padding:4px 0; }
+        .typing span { width:8px; height:8px; border-radius:50%; background:var(--text-muted); animation:typing 1.4s infinite; }
+        .typing span:nth-child(2) { animation-delay:0.2s; }
+        .typing span:nth-child(3) { animation-delay:0.4s; }
+        @keyframes typing { 0%,60%,100%{opacity:0.3; transform:translateY(0);} 30%{opacity:1; transform:translateY(-4px);} }
+
+        /* SUGGESTIONS */
+        .suggestions { padding:0 24px 16px; max-width:900px; margin:0 auto; width:100%; flex-shrink:0; }
+        .suggestions-label { font-size:12px; color:var(--text-muted); margin-bottom:10px; text-transform:uppercase; letter-spacing:0.05em; font-weight:600; }
+        .suggestion-chips { display:flex; gap:8px; flex-wrap:wrap; }
+        .suggestion-chip { background:var(--bg-card); border:1px solid var(--border-color); color:var(--text-secondary); padding:8px 16px; border-radius:999px; font-size:13px; font-family:inherit; cursor:pointer; transition:all 0.15s; }
+        .suggestion-chip:hover { border-color:var(--accent); color:var(--accent); background:var(--accent-dim); }
+
+        /* INPUT BAR */
+        .input-bar { padding:10px 20px 14px; flex-shrink:0; }
+        .input-wrap { max-width:900px; margin:0 auto; background:var(--bg-card); border:1px solid var(--border-color); border-radius:22px; padding:5px 5px 5px 6px; display:flex; align-items:flex-end; gap:6px; transition:border-color 0.15s; }
+        .input-wrap:focus-within { border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-dim); }
+        .input-wrap textarea { flex:1; background:transparent; border:none; outline:none; color:var(--text-primary); font-size:14px; font-family:inherit; padding:6px 10px; resize:none; line-height:1.4; height:32px; min-height:32px; max-height:160px; overflow-y:auto; scrollbar-width:none; }
+        .input-wrap textarea::-webkit-scrollbar { display:none; }
+        .input-wrap textarea::placeholder { color:var(--text-muted); }
+        .send-btn { background:var(--accent); border:none; color:#fff; width:34px; height:34px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:background 0.15s; flex-shrink:0; }
+        .send-btn:hover { background:var(--accent-hover); }
+        .send-btn:disabled { opacity:0.4; cursor:not-allowed; }
+        .send-btn .icon { width:18px; height:18px; }
+        .input-hint { max-width:900px; margin:8px auto 0; font-size:11px; color:var(--text-muted); text-align:center; }
+
+        /* EMPTY STATE */
+        .empty-chat { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:40px; text-align:center; color:var(--text-muted); }
+        .empty-chat .bot-avatar { width:72px; height:72px; border-radius:18px; margin-bottom:20px; }
+        .empty-chat .bot-avatar .icon { width:36px; height:36px; }
+        .empty-chat h2 { font-size:22px; font-weight:700; color:var(--text-primary); margin-bottom:8px; }
+        .empty-chat p { font-size:14px; max-width:400px; }
+
+        /* DISCLAIMER */
+        .bot-disclaimer { display:none; max-width:900px; margin:0 auto 6px; padding:0 24px; font-size:11.5px; line-height:1.4; color:var(--text-muted); text-align:center; user-select:none; }
+        .bot-disclaimer.visible { display:block; }
+
+        /* RIGHT BOT SIDEBAR */
+        .bot-sidebar { width:260px; background:var(--bg-secondary); border-left:1px solid var(--border-color); display:flex; flex-direction:column; height:100vh; flex-shrink:0; overflow:hidden; }
+        .bot-sidebar-top { padding:14px 12px 10px; flex-shrink:0; }
+        .bot-new-chat { width:100%; display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:9px; border:1px solid var(--border-color); background:transparent; color:var(--text-primary); font-size:14px; font-weight:500; font-family:inherit; cursor:pointer; transition:background 0.12s, border-color 0.12s, color 0.12s; }
+        .bot-new-chat:hover { background:var(--accent-dim); border-color:var(--accent); color:var(--accent); }
+        .bot-new-chat .icon { width:16px; height:16px; }
+        .bot-sidebar-section { flex:1; overflow-y:auto; padding:6px 8px 12px; scrollbar-width:none; }
+        .bot-sidebar-section::-webkit-scrollbar { display:none; }
+        .bot-sidebar-label { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-muted); padding:12px 8px 6px; }
+        .bot-conv-list { display:flex; flex-direction:column; gap:1px; }
+        .bot-conv-empty { padding:16px 12px; font-size:13px; color:var(--text-muted); text-align:center; }
+        .bot-conv-item { position:relative; display:flex; flex-direction:column; gap:3px; padding:10px 12px; border-radius:8px; border:none; background:transparent; color:var(--text-secondary); font-family:inherit; cursor:pointer; text-align:left; transition:background 0.12s, color 0.12s; width:100%; }
+        .bot-conv-item:hover { background:var(--accent-dim); color:var(--text-primary); }
+        .bot-conv-item.active { background:var(--accent-dim); color:var(--text-primary); }
+        .bot-conv-title { font-size:13.5px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding-right:22px; }
+        .bot-conv-time { font-size:11px; color:var(--text-muted); }
+        .bot-conv-item.active .bot-conv-time { color:var(--accent); }
+        .bot-conv-del { position:absolute; top:8px; right:6px; width:26px; height:26px; border-radius:6px; border:none; background:transparent; color:var(--text-muted); cursor:pointer; display:none; align-items:center; justify-content:center; padding:0; }
+        .bot-conv-item:hover .bot-conv-del { display:flex; }
+        .bot-conv-del:hover { background:rgba(239,68,68,0.12); color:var(--danger); }
+        .bot-conv-del .icon { width:14px; height:14px; }
+        .bot-sidebar-footer { padding:12px; border-top:1px solid var(--border-color); flex-shrink:0; }
+        .bot-plan-tag { display:flex; align-items:center; justify-content:space-between; font-size:12px; color:var(--text-muted); margin-bottom:10px; }
+        .bot-plan-tag .plan-name { font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--accent); background:var(--accent-dim); padding:3px 9px; border-radius:999px; font-size:10px; }
+        .bot-offer-btn { width:100%; display:flex; align-items:center; justify-content:center; gap:8px; padding:10px 12px; border-radius:10px; border:1px solid var(--accent); background:var(--accent); color:#fff; font-size:13.5px; font-weight:600; font-family:inherit; cursor:pointer; transition:background 0.15s; }
+        .bot-offer-btn:hover { background:var(--accent-hover); }
+        .bot-offer-btn .icon { width:15px; height:15px; }
+
+        /* BOT EMPTY STATE */
+        .bot-empty-state { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:40px; text-align:center; color:var(--text-muted); }
+        .bot-empty-state h2 { font-size:24px; font-weight:700; color:var(--text-primary); margin-bottom:10px; }
+        .bot-empty-state p { font-size:14px; max-width:440px; margin-bottom:22px; }
+        .bot-empty-suggestions { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
+        .bot-empty-suggestions .suggestion-chip { padding:8px 14px; font-size:13px; }
+
+        /* WORKSPACE PANEL */
+        .ws-panel { margin:20px auto 0; max-width:900px; width:100%; padding:0 24px; }
+        .ws-panel-inner { background:var(--bg-card); border:1px solid var(--border-color); border-radius:16px; overflow:hidden; }
+        .ws-panel-header { padding:16px 18px; border-bottom:1px solid var(--border-color); display:flex; align-items:center; justify-content:space-between; gap:12px; }
+        .ws-panel-header h3 { font-size:15px; font-weight:700; display:flex; align-items:center; gap:8px; }
+        .ws-panel-header h3 .icon { width:16px; height:16px; color:var(--accent); }
+        .ws-panel-header button { background:transparent; border:none; color:var(--text-muted); width:28px; height:28px; border-radius:8px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+        .ws-panel-header button:hover { background:var(--bg-input); color:var(--danger); }
+        .ws-panel-header button .icon { width:15px; height:15px; }
+        .ws-summary { display:grid; grid-template-columns:repeat(auto-fit, minmax(110px, 1fr)); gap:1px; background:var(--border-color); }
+        .ws-stat { background:var(--bg-card); padding:14px 16px; }
+        .ws-stat-label { font-size:10.5px; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-muted); font-weight:700; margin-bottom:6px; }
+        .ws-stat-value { font-size:16px; font-weight:700; color:var(--text-primary); }
+        .ws-stat-value.warn { color:var(--warning); }
+        .ws-stat-value.bad { color:var(--danger); }
+        .ws-stat-value.good { color:var(--success); }
+        .ws-issues { padding:6px 0; max-height:360px; overflow-y:auto; }
+        .ws-issue { padding:12px 18px; border-top:1px solid var(--border-color); display:flex; gap:12px; align-items:flex-start; cursor:pointer; transition:background 0.12s; }
+        .ws-issue:hover { background:var(--bg-input); }
+        .ws-issue-sev { width:8px; height:8px; border-radius:50%; flex-shrink:0; margin-top:6px; }
+        .ws-issue-sev.high { background:var(--danger); box-shadow:0 0 6px rgba(239,68,68,0.6); }
+        .ws-issue-sev.medium { background:var(--warning); }
+        .ws-issue-sev.low { background:var(--text-muted); }
+        .ws-issue-body { flex:1; min-width:0; }
+        .ws-issue-title { font-size:13.5px; font-weight:600; color:var(--text-primary); margin-bottom:3px; }
+        .ws-issue-detail { font-size:12.5px; color:var(--text-secondary); line-height:1.45; }
+        .ws-issue-action { font-size:11.5px; color:var(--accent); margin-top:5px; font-weight:600; }
+        .ws-clean { padding:32px 18px; text-align:center; color:var(--text-secondary); }
+        .ws-clean .icon { width:36px; height:36px; color:var(--success); margin-bottom:10px; }
+        .ws-clean h4 { font-size:14px; font-weight:700; color:var(--text-primary); margin-bottom:4px; }
+        .ws-clean p { font-size:12.5px; }
+
+        /* MODAL BASE */
+        .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.6); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; z-index:7000; opacity:0; visibility:hidden; transition:opacity 0.14s, visibility 0.14s; padding:20px; }
+        .modal-overlay.open { opacity:1; visibility:visible; }
+
+        /* TRAIN MODAL */
+        .train-panel { background:var(--bg-card); border:1px solid var(--border-color); border-radius:18px; box-shadow:0 28px 70px rgba(0,0,0,0.65); max-width:min(640px, 96vw); width:100%; max-height:92vh; display:flex; flex-direction:column; overflow:hidden; }
+        .train-head { padding:18px 22px; border-bottom:1px solid var(--border-color); display:flex; align-items:center; justify-content:space-between; gap:12px; }
+        .train-head h2 { font-size:16px; font-weight:700; }
+        .train-head p { font-size:12px; color:var(--text-muted); margin-top:2px; }
+        .train-head button { background:transparent; border:none; color:var(--text-muted); width:32px; height:32px; border-radius:8px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+        .train-head button:hover { background:var(--bg-input); color:var(--danger); }
+        .train-head button .icon { width:16px; height:16px; }
+        .train-body { flex:1; overflow-y:auto; padding:20px 22px; scrollbar-width:thin; }
+        .train-body::-webkit-scrollbar { width:6px; }
+        .train-body::-webkit-scrollbar-thumb { background:var(--border-color); border-radius:3px; }
+        .train-section { margin-bottom:22px; }
+        .train-section-label { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-muted); margin-bottom:10px; }
+        .train-field { margin-bottom:12px; }
+        .train-field label { display:block; font-size:12.5px; font-weight:600; color:var(--text-secondary); margin-bottom:6px; }
+        .train-field input, .train-field textarea { width:100%; background:var(--bg-input); border:1px solid var(--border-color); color:var(--text-primary); padding:10px 12px; border-radius:9px; font-size:13.5px; font-family:inherit; outline:none; transition:border-color 0.12s; }
+        .train-field input:focus, .train-field textarea:focus { border-color:var(--accent); }
+        .train-field textarea { resize:vertical; min-height:70px; max-height:220px; line-height:1.5; }
+        .train-hint { font-size:11px; color:var(--text-muted); margin-top:4px; }
+        .train-chips { display:flex; gap:8px; flex-wrap:wrap; }
+        .train-chip { display:inline-flex; align-items:center; gap:6px; padding:7px 12px; border-radius:999px; border:1px solid var(--border-color); background:transparent; color:var(--text-secondary); font-size:12.5px; font-weight:500; font-family:inherit; cursor:pointer; transition:all 0.12s; }
+        .train-chip:hover { border-color:var(--accent); color:var(--accent); }
+        .train-chip.active { background:var(--accent); border-color:var(--accent); color:#fff; font-weight:600; }
+        .train-toggles { display:flex; flex-direction:column; gap:8px; }
+        .train-toggle { display:flex; align-items:center; gap:12px; padding:10px 12px; border-radius:9px; border:1px solid var(--border-color); cursor:pointer; transition:background 0.12s; font-family:inherit; background:transparent; text-align:left; width:100%; color:var(--text-primary); }
+        .train-toggle:hover { background:var(--bg-input); }
+        .train-toggle-track { width:34px; height:20px; border-radius:999px; background:var(--border-color); position:relative; transition:background 0.15s; flex-shrink:0; }
+        .train-toggle-track::after { content:''; position:absolute; top:2px; left:2px; width:16px; height:16px; border-radius:50%; background:#fff; transition:transform 0.15s; }
+        .train-toggle.active .train-toggle-track { background:var(--accent); }
+        .train-toggle.active .train-toggle-track::after { transform:translateX(14px); }
+        .train-toggle-text { flex:1; }
+        .train-toggle-text strong { display:block; font-size:13px; font-weight:600; }
+        .train-toggle-text span { display:block; font-size:11.5px; color:var(--text-muted); margin-top:1px; }
+        .train-foot { padding:14px 22px; border-top:1px solid var(--border-color); display:flex; gap:10px; align-items:center; flex-shrink:0; }
+        .train-foot .spacer { flex:1; }
+        .train-btn { padding:10px 18px; border-radius:10px; font-size:13.5px; font-weight:600; font-family:inherit; cursor:pointer; border:1px solid transparent; transition:background 0.15s, border-color 0.15s; display:inline-flex; align-items:center; gap:7px; }
+        .train-btn .icon { width:14px; height:14px; }
+        .train-btn.ghost { background:transparent; color:var(--text-secondary); border-color:var(--border-color); }
+        .train-btn.ghost:hover { background:var(--bg-input); color:var(--text-primary); }
+        .train-btn.primary { background:var(--accent); color:#fff; }
+        .train-btn.primary:hover { background:var(--accent-hover); }
+        .train-btn.danger { background:transparent; color:var(--danger); border-color:var(--border-color); }
+        .train-btn.danger:hover { background:rgba(239,68,68,0.1); border-color:var(--danger); }
+
+        /* OFFER MODAL */
+        .offer-box { background:var(--bg-card); border:1px solid var(--border-color); border-radius:18px; box-shadow:0 28px 70px rgba(0,0,0,0.65); max-width:min(480px, 96vw); width:100%; overflow:hidden; }
+        .offer-head { padding:22px 24px 8px; }
+        .offer-head .icon-badge { width:44px; height:44px; border-radius:12px; background:linear-gradient(135deg, var(--accent), #8B5CF6); color:#fff; display:flex; align-items:center; justify-content:center; margin-bottom:14px; }
+        .offer-head .icon-badge .icon { width:22px; height:22px; }
+        .offer-head h2 { font-size:19px; font-weight:700; margin-bottom:6px; }
+        .offer-head p { font-size:13.5px; color:var(--text-secondary); line-height:1.5; }
+        .offer-body { padding:8px 24px 20px; }
+        .offer-option { display:flex; align-items:center; gap:14px; padding:14px; border:1px solid var(--border-color); border-radius:12px; margin-bottom:10px; cursor:pointer; transition:border-color 0.12s, background 0.12s; }
+        .offer-option:hover, .offer-option.selected { border-color:var(--accent); background:var(--accent-dim); }
+        .offer-option-radio { width:20px; height:20px; border-radius:50%; border:2px solid var(--border-color); position:relative; flex-shrink:0; }
+        .offer-option.selected .offer-option-radio { border-color:var(--accent); }
+        .offer-option.selected .offer-option-radio::after { content:''; position:absolute; inset:3px; border-radius:50%; background:var(--accent); }
+        .offer-option-body { flex:1; }
+        .offer-option-name { font-size:14px; font-weight:700; color:var(--text-primary); text-transform:capitalize; }
+        .offer-option-desc { font-size:12px; color:var(--text-muted); margin-top:2px; }
+        .offer-foot { padding:14px 24px 20px; display:flex; gap:10px; align-items:center; }
+        .offer-foot .spacer { flex:1; }
+        .offer-btn { padding:11px 20px; border-radius:10px; font-size:13.5px; font-weight:600; font-family:inherit; cursor:pointer; border:1px solid transparent; transition:background 0.15s, border-color 0.15s; }
+        .offer-btn.ghost { background:transparent; color:var(--text-secondary); border-color:var(--border-color); }
+        .offer-btn.ghost:hover { background:var(--bg-input); color:var(--text-primary); }
+        .offer-btn.primary { background:var(--accent); color:#fff; }
+        .offer-btn.primary:hover { background:var(--accent-hover); }
+        .offer-btn.primary:disabled { opacity:0.5; cursor:not-allowed; }
+        .offer-unavailable { padding:32px 24px; text-align:center; color:var(--text-secondary); }
+        .offer-unavailable .icon { width:36px; height:36px; color:var(--text-muted); margin-bottom:10px; }
+        .offer-unavailable h3 { font-size:15px; font-weight:700; color:var(--text-primary); margin-bottom:6px; }
+        .offer-unavailable p { font-size:13px; line-height:1.5; max-width:340px; margin:0 auto; }
+
+        /* RESET CONFIRM + CREVIO CONFIRM (SHARED) */
+        .dialog-box { background:var(--bg-card); border:1px solid var(--border-color); border-radius:16px; box-shadow:0 28px 70px rgba(0,0,0,0.65); max-width:min(440px, 94vw); width:100%; padding:24px; }
+        .dialog-head { display:flex; gap:14px; align-items:flex-start; margin-bottom:18px; }
+        .dialog-icon { width:42px; height:42px; border-radius:11px; background:rgba(239,68,68,0.12); color:var(--danger); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+        .dialog-icon .icon { width:20px; height:20px; }
+        .dialog-icon.info { background:rgba(37,99,235,0.12); color:var(--accent); }
+        .dialog-body h3 { font-size:16px; font-weight:700; color:var(--text-primary); margin-bottom:6px; }
+        .dialog-body p { font-size:13.5px; color:var(--text-secondary); line-height:1.5; }
+        .dialog-body ul { margin:10px 0 0; padding-left:18px; font-size:13px; color:var(--text-muted); line-height:1.6; }
+        .dialog-actions { display:flex; gap:10px; justify-content:flex-end; }
+        .dialog-btn { padding:10px 18px; border-radius:10px; font-size:13.5px; font-weight:600; font-family:inherit; cursor:pointer; border:1px solid transparent; transition:background 0.15s, border-color 0.15s; }
+        .dialog-btn.cancel { background:transparent; color:var(--text-secondary); border-color:var(--border-color); }
+        .dialog-btn.cancel:hover { background:var(--bg-input); color:var(--text-primary); }
+        .dialog-btn.primary { background:var(--accent); color:#fff; }
+        .dialog-btn.primary:hover { background:var(--accent-hover); }
+        .dialog-btn.danger { background:var(--danger); color:#fff; }
+        .dialog-btn.danger:hover { filter:brightness(1.1); }
+        .dialog-btn:disabled { opacity:0.5; cursor:not-allowed; }
+
+        /* CUSTOM TOOLTIPS (data-tip attribute) */
+        [data-tip] { position:relative; }
+        [data-tip]::after { content:attr(data-tip); position:absolute; top:calc(100% + 10px); left:50%; transform:translateX(-50%) translateY(-4px); background:var(--bg-card); color:var(--text-primary); border:1px solid var(--border-color); padding:7px 12px; border-radius:8px; font-size:12px; font-weight:500; white-space:nowrap; box-shadow:0 8px 22px rgba(0,0,0,0.45); opacity:0; visibility:hidden; pointer-events:none; transition:opacity 0.14s, transform 0.14s, visibility 0.14s; z-index:99999; }
+        [data-tip]:hover::after { opacity:1; visibility:visible; transform:translateX(-50%) translateY(0); }
+
+        /* TOAST */
+        .toast { position:fixed; bottom:24px; right:24px; background:var(--bg-card); border:1px solid var(--border-color); border-left:4px solid var(--success); padding:14px 20px; border-radius:10px; font-size:14px; font-weight:500; box-shadow:0 8px 32px rgba(0,0,0,0.3); transform:translateY(calc(100% + 40px)); opacity:0; visibility:hidden; transition:transform 0.3s, opacity 0.3s, visibility 0.3s; z-index:2147483000; max-width:340px; pointer-events:none; }
+        .toast.show { transform:translateY(0); opacity:1; visibility:visible; pointer-events:auto; }
+        .toast.error { border-left-color:var(--danger); }
+
+        /* MARKDOWN IN BOT BUBBLES */
+        .msg-bubble.bot .msg-body p { margin:0 0 10px; }
+        .msg-bubble.bot .msg-body p:last-child { margin-bottom:0; }
+        .msg-bubble.bot .msg-body strong { font-weight:700; color:var(--text-primary); }
+        .msg-bubble.bot .msg-body em { font-style:italic; }
+        .msg-bubble.bot .msg-body h1, .msg-bubble.bot .msg-body h2, .msg-bubble.bot .msg-body h3, .msg-bubble.bot .msg-body h4 { font-size:15px; font-weight:700; margin:12px 0 6px; color:var(--text-primary); }
+        .msg-bubble.bot .msg-body h1:first-child, .msg-bubble.bot .msg-body h2:first-child, .msg-bubble.bot .msg-body h3:first-child, .msg-bubble.bot .msg-body h4:first-child { margin-top:0; }
+        .msg-bubble.bot .msg-body ul, .msg-bubble.bot .msg-body ol { margin:8px 0; padding-left:22px; }
+        .msg-bubble.bot .msg-body li { margin-bottom:5px; line-height:1.5; }
+        .msg-bubble.bot .msg-body ul li::marker { color:var(--accent); }
+        .msg-bubble.bot .msg-body ol li::marker { color:var(--accent); font-weight:600; }
+        .msg-bubble.bot .msg-body blockquote { border-left:3px solid var(--accent); padding:6px 12px; margin:10px 0; background:rgba(37,99,235,0.08); border-radius:0 6px 6px 0; color:var(--text-secondary); }
+        .msg-bubble.bot .msg-body code { background:rgba(148,163,184,0.15); padding:2px 6px; border-radius:4px; font-family:ui-monospace,Menlo,Consolas,monospace; font-size:13px; }
+        .msg-bubble.bot .msg-body pre { background:rgba(0,0,0,0.3); border:1px solid var(--border-color); padding:12px; border-radius:8px; overflow-x:auto; margin:10px 0; font-size:13px; }
+        .msg-bubble.bot .msg-body pre code { background:transparent; padding:0; }
+        .msg-bubble.bot .msg-body a { color:var(--accent); text-decoration:none; }
+        .msg-bubble.bot .msg-body a:hover { text-decoration:underline; }
+        .msg-bubble.bot .msg-body hr { border:none; border-top:1px solid var(--border-color); margin:12px 0; }
+        .msg-bubble.bot .msg-body table { border-collapse:collapse; margin:10px 0; width:100%; font-size:13px; }
+        .msg-bubble.bot .msg-body th, .msg-bubble.bot .msg-body td { border:1px solid var(--border-color); padding:6px 10px; text-align:left; }
+        .msg-bubble.bot .msg-body th { background:rgba(148,163,184,0.1); font-weight:600; }
+
+        /* LIVE CURSOR */
+        .live-cursor { display:inline-block; margin-left:1px; opacity:0.8; animation:blink 1s steps(2) infinite; font-weight:400; }
+        @keyframes blink { 0%,50%{opacity:0.8;} 51%,100%{opacity:0;} }
+
+        /* RESPONSIVE */
+        @media (max-width: 1200px) { .bot-sidebar { width:240px; } }
+        @media (max-width: 900px) {
+            .sidebar { display:none; }
+            .bot-sidebar { position:fixed; top:0; right:0; height:100vh; z-index:100; transform:translateX(100%); transition:transform 0.2s ease; box-shadow:-8px 0 32px rgba(0,0,0,0.5); }
+            .bot-sidebar.open { transform:translateX(0); }
+            .bot-sidebar-toggle { display:flex; }
+            .suggestions { padding:0 16px 12px; }
+            .messages { padding:16px; }
         }
         @media (max-width: 480px) {
-            .bot-card { padding: 16px; }
+            .msg-bubble { max-width:85%; }
+            .chat-header { padding:12px 16px; }
+            .bot-info p { display:none; }
         }
-    </style>
+    
+/* TOOLTIP FLIP — right-aligned for header buttons */
+.chat-header > div:last-child [data-tip]::after {
+    left: auto;
+    right: 0;
+    transform: translateX(0) translateY(-4px);
+}
+.chat-header > div:last-child [data-tip]:hover::after {
+    transform: translateX(0) translateY(0);
+}
+.chat-header > div:last-child [data-tip]::before {
+    left: auto;
+    right: 14px;
+    margin-left: 0;
+}
+
+
+/* MOBILE FIX */
+@media (max-width: 900px) {
+    html, body { height: 100dvh; overflow: hidden; }
+    .main { height: 100dvh; }
+    .bot-sidebar { height: 100dvh; }
+
+    /* Hide the auth.js?v=639252484686517300 left-nav hamburger on the bot page */
+    
+
+    /* The floating auth.js?v=639252484686517300 toggle button */
+    [id*="navToggle"], [class*="nav-toggle"], [class*="sidebar-toggle"]:not(.bot-sidebar-toggle) {
+        display: none !important;
+    }
+
+    /* Chat header — compact, single row */
+    .chat-header {
+        padding: 10px 12px;
+        gap: 8px;
+    }
+    .chat-header-left {
+        gap: 10px;
+        flex: 1;
+        min-width: 0;
+    }
+    .bot-avatar { width: 36px; height: 36px; border-radius: 10px; }
+    .bot-avatar .icon { width: 18px; height: 18px; }
+    .bot-info h1 { font-size: 15px; }
+    .bot-info p { display: none; }
+
+    .chat-header > div:last-child {
+        gap: 4px;
+    }
+    .icon-btn, .bot-sidebar-toggle {
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
+    }
+    .icon-btn .icon, .bot-sidebar-toggle .icon { width: 14px; height: 14px; }
+
+    /* Messages area — proper scroll */
+    .messages {
+        padding: 14px 14px 6px;
+        gap: 14px;
+    }
+    .msg-bubble { max-width: 88%; font-size: 13.5px; padding: 8px 11px; }
+
+    /* Composer at bottom, never hidden */
+    .suggestions { padding: 0 12px 8px; }
+    .suggestions-label { font-size: 10.5px; margin-bottom: 6px; }
+    .suggestion-chip { padding: 6px 12px; font-size: 12px; }
+
+    .bot-disclaimer {
+        font-size: 10.5px;
+        padding: 0 14px;
+        margin-bottom: 4px;
+    }
+
+    .input-bar { padding: 8px 12px 12px; }
+    .input-wrap { padding: 4px 4px 4px 5px; }
+    .input-wrap textarea { font-size: 14px; padding: 6px 10px; height: 32px; }
+    .send-btn { width: 34px; height: 34px; }
+    .input-hint { display: none; }
+
+    /* Sidebar toggle moves to top-right, next to action buttons */
+    .bot-sidebar-toggle {
+        display: flex;
+         /* goes before the action icons */
+    }
+}
+
+
+/* NO TOOLTIPS ON MOBILE — touch devices have no hover state */
+@media (max-width: 900px), (hover: none) {
+    [data-tip]::after,
+    [data-tip]::before,
+    [data-tip]:hover::after,
+    [data-tip]:hover::before {
+        display: none !important;
+        content: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+    }
+}
+
+</style>
+    <link rel="stylesheet" href="/dashboard/css/mobile.css?v=639252484686517300">
 </head>
 <body>
 
-    <!-- SIDEBAR -->
-    <aside class="sidebar" id="sidebar">
+    <!-- LEFT NAV SIDEBAR -->
+    <aside class="sidebar">
         <div class="sidebar-brand"><h1>Crevio</h1><span>Creator Dashboard</span></div>
         <nav class="sidebar-nav">
             <a href="/dashboard/" class="nav-item"><i data-lucide="layout-dashboard" class="icon"></i> Overview</a>
@@ -242,211 +483,245 @@
             <a href="/" target="_blank" class="nav-item"><i data-lucide="globe" class="icon"></i> View Portfolio</a>
         </nav>
         <div class="sidebar-footer">
-            <span id="themeToggleBtn" class="theme-toggle-btn" onclick="toggleTheme()" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:8px;color:var(--text-secondary);font-size:18px;">
-                <i data-lucide="moon" class="icon"></i>
-            </span>
             <button id="logoutButton" class="logout-button"><i data-lucide="log-out" class="icon"></i> Logout</button>
         </div>
     </aside>
 
-    <div id="sidebarOverlay" class="sidebar-overlay"></div>
-
-    <!-- MAIN -->
-    <main class="dashboard-main">
-
-        <header class="dashboard-header">
-            <div class="topbar-left">
-                <button id="mobileToggle" class="mobile-menu-toggle"><i data-lucide="menu"></i></button>
-                <div>
-                    <h2>Crevio Bot</h2>
-                    <p class="header-description">Ask about my work. Explore projects, services and experience.</p>
+    <!-- MAIN CHAT AREA -->
+    <main class="main">
+        <div class="chat-header">
+            <div class="chat-header-left">
+                <div class="bot-avatar"><i data-lucide="bot" class="icon"></i></div>
+                <div class="bot-info">
+                    <h1><span class="bot-status"></span> Crevio Bot</h1>
+                    <p>Your AI assistant for portfolio &amp; content help</p>
                 </div>
             </div>
-            <div class="topbar-right">
-                <div class="user-profile">
-                    <span class="user-avatar" id="userAvatar">C</span>
-                    <span class="user-name" id="userNameDisplay">Creator</span>
-                </div>
+            <div>
+                <button class="bot-sidebar-toggle" id="botSidebarToggle" type="button" aria-label="Open conversation sidebar" data-tip="Conversations"><i data-lucide="menu" class="icon"></i></button>
+                <button class="icon-btn" id="wsBtn" data-tip="Check my workspace" style="display:none;"><i data-lucide="shield-check" class="icon"></i></button>
+                <button class="icon-btn" id="trainBtn" data-tip="Train your bot"><i data-lucide="settings-2" class="icon"></i></button>
+                <button class="icon-btn danger" id="clearBtn" data-tip="Clear conversation"><i data-lucide="trash-2" class="icon"></i></button>
             </div>
-        </header>
-
-        <div class="bot-container">
-
-            <div class="bot-card">
-                <h3>Portfolio Helper</h3>
-                <p class="subtitle">Ask me anything about my work, projects, or services.</p>
-
-                <!-- Chat Messages (NO AVATAR) -->
-                <div class="chat-messages" id="chatMessages">
-                    <div class="message bot">
-                        <div class="bubble">👋 Hello! I'm Crevio Bot. Ask me about projects, services, or anything you'd like to know.</div>
-                    </div>
-                </div>
-
-                <!-- Quick Suggestions -->
-                <div class="suggestions" id="suggestions">
-                    <button class="chip" data-query="What projects have you worked on?">What projects have you worked on?</button>
-                    <button class="chip" data-query="What services do you offer?">What services do you offer?</button>
-                    <button class="chip" data-query="Tell me about your experience.">Tell me about your experience.</button>
-                    <button class="chip" data-query="How can I contact you?">How can I contact you?</button>
-                </div>
-
-                <!-- Input -->
-                <div class="chat-input-wrap">
-                    <input type="text" id="chatInput" placeholder="Ask Crevio Bot…" autofocus>
-                    <button id="sendBtn">Send</button>
-                </div>
-
-                <!-- Footer -->
-                <div class="bot-footer">
-                    <a href="/dashboard/pages/projects.html"><i data-lucide="folder-open" style="width:16px;height:16px;"></i> Explore my work</a>
-                    <a href="/dashboard/pages/services.html"><i data-lucide="briefcase" style="width:16px;height:16px;"></i> View services</a>
-                    <a href="/dashboard/pages/contact.html"><i data-lucide="mail" style="width:16px;height:16px;"></i> Contact</a>
-                </div>
-            </div>
-
         </div>
 
+        <div class="messages" id="messages">
+            <div class="empty-chat" id="emptyChat">
+                <div class="bot-avatar"><i data-lucide="bot" class="icon"></i></div>
+                <h2>Hi! I'm Crevio Bot</h2>
+                <p>I can help you write bios, brainstorm project ideas, improve your portfolio, and more.</p>
+            </div>
+        </div>
+
+        <div class="ws-panel" id="wsPanel" style="display:none;">
+            <div class="ws-panel-inner">
+                <div class="ws-panel-header">
+                    <h3><i data-lucide="shield-check" class="icon"></i> Workspace check</h3>
+                    <button id="wsClose" aria-label="Close"><i data-lucide="x" class="icon"></i></button>
+                </div>
+                <div class="ws-summary" id="wsSummary"></div>
+                <div class="ws-issues" id="wsIssues"></div>
+            </div>
+        </div>
+
+        <div class="suggestions" id="suggestions">
+            <div class="suggestions-label">Try asking</div>
+            <div class="suggestion-chips">
+                <button class="suggestion-chip" data-prompt="Help me write a bio for my portfolio">Write my bio</button>
+                <button class="suggestion-chip" data-prompt="Suggest project ideas for a video editor">Project ideas</button>
+                <button class="suggestion-chip" data-prompt="What services should I offer as a freelancer?">Service ideas</button>
+                <button class="suggestion-chip" data-prompt="How can I improve my portfolio?">Portfolio tips</button>
+                <button class="suggestion-chip" data-prompt="Help me with pricing for my services">Pricing help</button>
+            </div>
+        </div>
+
+        <div class="bot-disclaimer" id="botDisclaimer" aria-live="polite">
+            Crevio Bot can make mistakes. Please verify important information.
+        </div>
+
+        <div class="input-bar">
+            <div class="input-wrap">
+                <textarea id="msgInput" placeholder="Ask me anything..." rows="1"></textarea>
+                <button class="send-btn" id="sendBtn" title="Send (Enter)"><i data-lucide="send" class="icon"></i></button>
+            </div>
+            <div class="input-hint">Press Enter to send · Shift+Enter for new line</div>
+        </div>
     </main>
 
+    <!-- RIGHT BOT SIDEBAR -->
+    <aside class="bot-sidebar" id="botSidebar">
+        <div class="bot-sidebar-top">
+            <button class="bot-new-chat" id="newChatBtn" type="button"><i data-lucide="plus" class="icon"></i> New Chat</button>
+        </div>
+        <div class="bot-sidebar-section">
+            <div class="bot-sidebar-label">Recent</div>
+            <div class="bot-conv-list" id="botConvList"><div class="bot-conv-empty">Loading…</div></div>
+        </div>
+        <div class="bot-sidebar-footer">
+            <div class="bot-plan-tag">
+                <span>Plan</span>
+                <span class="plan-name" id="botPlanName">…</span>
+            </div>
+            <button class="bot-offer-btn" id="botOfferBtn" type="button" hidden><i data-lucide="gift" class="icon"></i> Claim Offer</button>
+        </div>
+    </aside>
+
+    <!-- MODALS -->
+    <div class="modal-overlay train-overlay" id="trainOverlay">
+        <div class="train-panel" role="dialog" aria-label="Train your bot">
+            <div class="train-head">
+                <div>
+                    <h2>Train your Crevio Bot</h2>
+                    <p>Teach your assistant who you are and how you want it to respond.</p>
+                </div>
+                <button id="trainClose" aria-label="Close"><i data-lucide="x" class="icon"></i></button>
+            </div>
+            <div class="train-body">
+                <div class="train-section">
+                    <div class="train-section-label">Your information</div>
+                    <div class="train-field"><label>Your name</label><input type="text" id="trainUserName" placeholder="e.g. Joseph"></div>
+                    <div class="train-field"><label>Your profession</label><input type="text" id="trainProfession" placeholder="e.g. Video editor, brand designer"></div>
+                    <div class="train-field"><label>About you</label><textarea id="trainAbout" placeholder="A short description of what you do, your style, and what you care about."></textarea></div>
+                </div>
+                <div class="train-section">
+                    <div class="train-section-label">Your bot's identity</div>
+                    <div class="train-field"><label>Bot name</label><input type="text" id="trainBotName" placeholder="CrevioBot"><div class="train-hint">Give it a personal name — like Sasha, Nova, or Atlas.</div></div>
+                </div>
+                <div class="train-section">
+                    <div class="train-section-label">Tone</div>
+                    <div class="train-chips" id="trainTones"></div>
+                </div>
+                <div class="train-section">
+                    <div class="train-section-label">Response length</div>
+                    <div class="train-chips" id="trainLens"></div>
+                </div>
+                <div class="train-section">
+                    <div class="train-section-label">Custom instructions</div>
+                    <div class="train-field"><textarea id="trainCustom" placeholder="Anything you want your assistant to always remember or always do."></textarea><div class="train-hint">These override everything else.</div></div>
+                </div>
+                <div class="train-section">
+                    <div class="train-section-label">Workspace context</div>
+                    <div class="train-toggles">
+                        <button class="train-toggle" data-toggle="include_portfolio"><span class="train-toggle-track"></span><span class="train-toggle-text"><strong>Profile & bio</strong><span>Let the bot reference your profile</span></span></button>
+                        <button class="train-toggle" data-toggle="include_projects"><span class="train-toggle-track"></span><span class="train-toggle-text"><strong>Projects</strong><span>Let the bot reference your projects</span></span></button>
+                        <button class="train-toggle" data-toggle="include_services"><span class="train-toggle-track"></span><span class="train-toggle-text"><strong>Services</strong><span>Let the bot reference your services</span></span></button>
+                        <button class="train-toggle" data-toggle="include_skills"><span class="train-toggle-track"></span><span class="train-toggle-text"><strong>Skills</strong><span>Let the bot reference your skills</span></span></button>
+                    </div>
+                </div>
+            </div>
+            <div class="train-foot">
+                <button class="train-btn danger" id="resetDataBtn" type="button"><i data-lucide="alert-triangle" class="icon"></i> Reset all data</button>
+                <button class="train-btn danger" id="trainReset" type="button"><i data-lucide="rotate-ccw" class="icon"></i> Reset</button>
+                <div class="spacer"></div>
+                <button class="train-btn ghost" id="trainCancel" type="button">Cancel</button>
+                <button class="train-btn primary" id="trainSave" type="button"><i data-lucide="check" class="icon"></i> Save training</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay offer-overlay" id="offerOverlay">
+        <div class="offer-box" role="dialog" aria-label="Your Crevio offer">
+            <div class="offer-head">
+                <div class="icon-badge"><i data-lucide="gift" class="icon"></i></div>
+                <h2 id="offerTitle">Your Crevio offer</h2>
+                <p id="offerSubtitle">Try a higher plan free for 2 days.</p>
+            </div>
+            <div class="offer-body" id="offerBody"></div>
+            <div class="offer-foot" id="offerFoot"></div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="resetConfirmOverlay">
+        <div class="dialog-box">
+            <div class="dialog-head">
+                <div class="dialog-icon"><i data-lucide="alert-triangle" class="icon"></i></div>
+                <div class="dialog-body">
+                    <h3>Delete all your Crevio Bot data?</h3>
+                    <p>This permanently removes:</p>
+                    <ul>
+                        <li>Everything the bot remembers about you</li>
+                        <li>Your bot's training (name, tone, style)</li>
+                        <li>All your bot conversations and messages</li>
+                    </ul>
+                    <p style="margin-top:12px;">This cannot be undone.</p>
+                </div>
+            </div>
+            <div class="dialog-actions">
+                <button class="dialog-btn cancel" id="resetConfirmCancel" type="button">Keep my data</button>
+                <button class="dialog-btn danger" id="resetConfirmOk" type="button">Yes, delete everything</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="crevioConfirmOverlay" role="dialog" aria-modal="true">
+        <div class="dialog-box">
+            <div class="dialog-head">
+                <div class="dialog-icon" id="crevioConfirmIcon"><i data-lucide="alert-triangle" class="icon"></i></div>
+                <div class="dialog-body">
+                    <h3 id="crevioConfirmTitle">Are you sure?</h3>
+                    <p id="crevioConfirmMessage">This action cannot be undone.</p>
+                </div>
+            </div>
+            <div class="dialog-actions">
+                <button class="dialog-btn cancel" id="crevioConfirmCancel" type="button">Cancel</button>
+                <button class="dialog-btn danger" id="crevioConfirmOk" type="button">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <!-- SCRIPTS -->
+    <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+    <script src="/dashboard/js/bot.js?v=639252474812970629"></script>
+    <script src="/dashboard/js/bot-toolbar.js?v=639252474812970629"></script>
+    <script src="/dashboard/js/crevio-confirm.js?v=639252447485493569"></script>
+
     <script>
-        // =========================================================
-        // CREVIO BOT JS
-        // =========================================================
-
-        const chatMessages = document.getElementById('chatMessages');
-        const chatInput = document.getElementById('chatInput');
-        const sendBtn = document.getElementById('sendBtn');
-        const suggestionChips = document.querySelectorAll('.suggestions .chip');
-
-        // ---- REMOVE ANY EXISTING AVATAR FROM CHAT (backup) ----
-        function removeAvatars() {
-            // Remove any avatar elements inside chat messages
-            const avatars = chatMessages.querySelectorAll('.avatar, .user-avatar, img.avatar');
-            avatars.forEach(el => el.remove());
-            // Also remove any avatar containers
-            const avatarContainers = chatMessages.querySelectorAll('[class*="avatar"]');
-            avatarContainers.forEach(el => {
-                if (el.classList.contains('user-avatar') || el.classList.contains('avatar')) {
-                    el.remove();
-                }
-            });
-        }
-
-        // ---- Auto-scroll to bottom ----
-        function scrollToBottom() {
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        }
-
-        // ---- Add message (NO AVATAR) ----
-        function addMessage(text, sender = 'user') {
-            const div = document.createElement('div');
-            div.className = `message ${sender}`;
-            // No avatar element – just the bubble
-            div.innerHTML = `<div class="bubble">${text}</div>`;
-            chatMessages.appendChild(div);
-            removeAvatars(); // safety cleanup
-            scrollToBottom();
-        }
-
-        // ---- Bot response (mock) ----
-        function getBotResponse(query) {
-            const q = query.toLowerCase();
-            if (q.includes('project') || q.includes('work')) {
-                return "I've worked on a variety of projects — from commercial campaigns to documentary films and digital experiences. Check the Projects page for the full portfolio.";
-            } else if (q.includes('service')) {
-                return "I offer video production, photography, graphic design, and digital strategy services. Each project is tailored to tell a compelling story.";
-            } else if (q.includes('experience') || q.includes('background')) {
-                return "I'm a creative professional with over 10 years of experience in visual storytelling, working with brands, agencies, and independent creators.";
-            } else if (q.includes('contact')) {
-                return "You can reach me through the contact page or via email at hello@crevio.com. I'd love to hear about your project!";
-            } else {
-                return "That's a great question! Could you tell me more about what you're looking for? I'm here to help with anything related to my work, projects, or services.";
+    // =========================================================
+    // MARKDOWN RENDERING FOR BOT BUBBLES
+    // =========================================================
+    (function () {
+        function renderBotMarkdown() {
+            if (!window.marked) return;
+            if (!window.__markedReady) {
+                window.marked.setOptions({ breaks: true, gfm: true });
+                window.__markedReady = true;
             }
-        }
-
-        // ---- Handle send ----
-        function handleSend() {
-            const text = chatInput.value.trim();
-            if (!text) return;
-
-            addMessage(text, 'user');
-            chatInput.value = '';
-
-            // Show typing indicator (simulated)
-            setTimeout(() => {
-                const response = getBotResponse(text);
-                addMessage(response, 'bot');
-                removeAvatars(); // final cleanup
-            }, 600);
-        }
-
-        // ---- Event listeners ----
-        sendBtn.addEventListener('click', handleSend);
-        chatInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') handleSend();
-        });
-
-        suggestionChips.forEach(chip => {
-            chip.addEventListener('click', function() {
-                const query = this.dataset.query;
-                chatInput.value = query;
-                handleSend();
-            });
-        });
-
-        // ---- Theme toggle ----
-        function toggleTheme() {
-            var current = document.documentElement.getAttribute('data-theme');
-            var next = current === 'dark' ? 'light' : 'dark';
-            document.documentElement.setAttribute('data-theme', next);
-            localStorage.setItem('crevio_theme', next);
-            var icon = document.querySelector('#themeToggleBtn .icon');
-            if (icon) {
-                icon.setAttribute('data-lucide', next === 'dark' ? 'moon' : 'sun');
-                if (typeof lucide !== 'undefined') lucide.createIcons();
-            }
-        }
-        window.toggleTheme = toggleTheme;
-
-        // ---- Init ----
-        document.addEventListener('DOMContentLoaded', function() {
-            var saved = localStorage.getItem('crevio_theme') || 'dark';
-            document.documentElement.setAttribute('data-theme', saved);
-            var icon = document.querySelector('#themeToggleBtn .icon');
-            if (icon) icon.setAttribute('data-lucide', saved === 'dark' ? 'moon' : 'sun');
-            if (typeof lucide !== 'undefined') lucide.createIcons();
-
-            var userData = localStorage.getItem('crevio_user');
-            if (userData) {
+            document.querySelectorAll('.msg-bubble.bot').forEach(function (bubble) {
+                if (bubble.dataset.mdRendered === '1') return;
+                if (bubble.querySelector('.typing')) return;
+                var body = bubble.querySelector('.msg-body');
+                if (!body) return;
+                var raw = body.textContent || '';
+                if (!raw.trim()) return;
                 try {
-                    var user = JSON.parse(userData);
-                    var avatar = document.getElementById('userAvatar');
-                    var nameDisplay = document.getElementById('userNameDisplay');
-                    if (avatar && user.display_name) avatar.textContent = user.display_name.charAt(0).toUpperCase();
-                    if (nameDisplay && user.display_name) nameDisplay.textContent = user.display_name;
+                    body.innerHTML = window.marked.parse(raw);
+                    bubble.dataset.mdRendered = '1';
                 } catch (e) {}
-            }
+            });
+            if (typeof lucide !== 'undefined') { try { lucide.createIcons(); } catch (e) {} }
+        }
+        var container = document.getElementById('messages');
+        if (container && window.MutationObserver) {
+            var t;
+            new MutationObserver(function () {
+                clearTimeout(t);
+                t = setTimeout(renderBotMarkdown, 180);
+            }).observe(container, { childList: true, subtree: true, characterData: true });
+        }
+        window.addEventListener('load', function () { setTimeout(renderBotMarkdown, 400); });
+    })();
 
-            // Remove any avatars that might have been rendered
-            removeAvatars();
-        });
+    // Logout
+    document.getElementById('logoutButton')?.addEventListener('click', () => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/admin/pages/login.html';
+    });
 
-        // ---- Mobile toggle ----
-        document.getElementById('mobileToggle')?.addEventListener('click', function() {
-            document.getElementById('sidebar')?.classList.toggle('open');
-            document.getElementById('sidebarOverlay')?.classList.toggle('open');
-        });
-        document.getElementById('sidebarOverlay')?.addEventListener('click', function() {
-            document.getElementById('sidebar')?.classList.remove('open');
-            this.classList.remove('open');
-        });
-        document.getElementById('logoutButton')?.addEventListener('click', function() {
-            localStorage.removeItem('crevio_token');
-            localStorage.removeItem('crevio_user');
-            window.location.href = '/admin/pages/login.html';
-        });
+    if (typeof lucide !== 'undefined') lucide.createIcons();
     </script>
-
+    <script src="/dashboard/js/mobile-menu.js?v=639252484686517300"></script>
 </body>
 </html>

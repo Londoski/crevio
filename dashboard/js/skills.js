@@ -1,468 +1,382 @@
 ﻿// =========================================================
-// CREVIO — SKILLS JS (All skills, searchable, scrollable)
+// CREVIO — SKILLS PAGE
+// File: dashboard/js/skills.js
 // =========================================================
 
-// ---- DOM refs ----
-const selectedContainer = document.getElementById('selectedSkillsContainer');
-const recommendedContainer = document.getElementById('recommendedContainer');
-const categoryGrid = document.getElementById('categoryGrid');
-const modal = document.getElementById('skillModal');
-const closeModalBtn = document.getElementById('closeModalBtn');
-const cancelModalBtn = document.getElementById('cancelModalBtn');
-const saveModalBtn = document.getElementById('saveModalBtn');
-const addSkillBtn = document.getElementById('addSkillBtn');
-const skillSearch = document.getElementById('skillSearch');
-const skillListContainer = document.getElementById('skillListContainer');
-const categoryFilter = document.getElementById('categoryFilter');
-const selectedCount = document.getElementById('selectedCount');
-const customSkillArea = document.getElementById('customSkillArea');
-const showCustomSkillBtn = document.getElementById('showCustomSkillBtn');
-const customSkillForm = document.getElementById('customSkillForm');
-const customSkillName = document.getElementById('customSkillName');
-const saveCustomSkillBtn = document.getElementById('saveCustomSkillBtn');
-const cancelCustomSkillBtn = document.getElementById('cancelCustomSkillBtn');
+document.addEventListener("DOMContentLoaded", function () {
+    const $ = (id) => document.getElementById(id);
 
-let allSkills = [];
-let selectedSkillIds = new Set();
-let currentFilterCategory = 'all';
-let allCategories = [];
+    const container = $("skillsContainer");
+    const modal     = $("skillModal");
+    const form      = $("skillForm");
+    const toast     = $("toast");
 
-// ---- AUTH ----
-function getToken() {
-    const token = localStorage.getItem('crevio_token');
-    if (!token) {
-        window.location.href = '/admin/pages/login.html';
-        return null;
-    }
-    return token;
-}
+    let filter = "all", search = "", sort = "az";
+    let debounceTimer;
+    let allServices = [];
+    let allProjects = [];
+    let selectedServiceIds = [];
+    let selectedProjectIds = [];
 
-// ---- API HELPERS ----
-async function apiFetch(endpoint, options = {}) {
-    const token = getToken();
-    if (!token) return null;
-    const res = await fetch(endpoint, {
-        ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + token,
-            ...options.headers
-        }
-    });
-    if (res.status === 401) {
-        localStorage.removeItem('crevio_token');
-        window.location.href = '/admin/pages/login.html';
-        return null;
-    }
-    return res;
-}
-
-// ---- LOAD ALL DATA ----
-async function loadAll() {
-    await loadSelectedSkills();
-    await loadRecommended();
-    await loadCategories();
-    await loadAllSkills();
-}
-
-// ---- LOAD SELECTED SKILLS ----
-async function loadSelectedSkills() {
-    try {
-        const res = await apiFetch('/api/skills/selected');
-        if (!res) return;
-        const data = await res.json();
-        if (!data.success) throw new Error('Failed to load selected skills');
-        renderSelectedSkills(data.skills);
-        selectedSkillIds = new Set(data.skills.map(s => s.id));
-    } catch (err) {
-        console.error(err);
-        selectedContainer.innerHTML = '<div class="empty-state">Unable to load your skills.</div>';
-    }
-}
-
-function renderSelectedSkills(skills) {
-    if (!skills || skills.length === 0) {
-        selectedContainer.innerHTML = `
-            <div class="empty-skills">You haven't added any skills yet.</div>
-            <button class="primary-button" id="addSkillFromEmpty" style="margin-top:8px;">
-                <i data-lucide="plus" class="icon"></i> Add Skill
-            </button>
-        `;
-        document.getElementById('addSkillFromEmpty')?.addEventListener('click', () => openModal());
-        return;
-    }
-    let html = `<div class="skills-chips">`;
-    skills.forEach(s => {
-        html += `
-            <span class="skill-chip" data-id="${s.id}">
-                ${s.name}
-                <button class="remove" data-id="${s.id}" title="Remove skill">×</button>
-            </span>
-        `;
-    });
-    html += `</div>`;
-    selectedContainer.innerHTML = html;
-    selectedContainer.querySelectorAll('.remove').forEach(btn => {
-        btn.addEventListener('click', async function(e) {
-            e.stopPropagation();
-            const id = parseInt(this.dataset.id);
-            await removeSkill(id);
-        });
-    });
-    refreshIcons();
-}
-
-// ---- REMOVE SKILL ----
-async function removeSkill(skillId) {
-    try {
-        const res = await apiFetch(`/api/skills/selected/${skillId}`, { method: 'DELETE' });
-        if (!res) return;
-        const data = await res.json();
-        if (!data.success) throw new Error('Failed to remove skill');
-        await loadSelectedSkills();
-        if (modal.classList.contains('open')) {
-            selectedSkillIds.delete(skillId);
-            updateModalSelectedCount();
-            highlightSelectedSkills();
-        }
-    } catch (err) {
-        console.error(err);
-        alert('❌ ' + err.message);
-    }
-}
-
-// ---- LOAD RECOMMENDED ----
-async function loadRecommended() {
-    try {
-        const res = await apiFetch('/api/skills/recommended');
-        if (!res) return;
-        const data = await res.json();
-        if (!data.success) throw new Error('Failed to load recommendations');
-        renderRecommended(data.skills);
-    } catch (err) {
-        console.error(err);
-        recommendedContainer.innerHTML = '<div class="empty-state">Unable to load recommendations.</div>';
-    }
-}
-
-function renderRecommended(skills) {
-    if (!skills || skills.length === 0) {
-        recommendedContainer.innerHTML = '<div class="empty-state">No recommendations available.</div>';
-        return;
-    }
-    let html = `<div class="recommended-chips">`;
-    skills.forEach(s => {
-        const isSelected = selectedSkillIds.has(s.id);
-        html += `
-            <span class="recommend-chip ${isSelected ? 'selected' : ''}" data-id="${s.id}" style="${isSelected ? 'border-color:var(--accent);color:var(--accent);' : ''}">
-                ${s.name}
-            </span>
-        `;
-    });
-    html += `</div>`;
-    recommendedContainer.innerHTML = html;
-    recommendedContainer.querySelectorAll('.recommend-chip').forEach(chip => {
-        chip.addEventListener('click', async function() {
-            const id = parseInt(this.dataset.id);
-            if (selectedSkillIds.has(id)) {
-                await removeSkill(id);
-            } else {
-                const newIds = [...selectedSkillIds, id];
-                await saveSelectedSkills(newIds);
-                await loadSelectedSkills();
-                await loadRecommended();
+    // =========================================================
+    // LOAD STATS
+    // =========================================================
+    async function loadStats() {
+        try {
+            const res = await window.apiFetch("/api/skills/stats");
+            const d = await res.json();
+            if (d.success) {
+                $("statTotal").textContent    = d.stats.total;
+                $("statServices").textContent = d.stats.usedInServices;
+                $("statProjects").textContent = d.stats.usedInProjects;
+                $("statUnlinked").textContent = d.stats.unlinked;
             }
+        } catch (err) { console.error("Stats error:", err); }
+    }
+
+    // =========================================================
+    // LOAD SKILLS
+    // =========================================================
+    async function loadSkills() {
+        container.innerHTML = `<div class="state-box"><p>Loading skills…</p></div>`;
+        try {
+            const url = `/api/skills?filter=${filter}&sort=${sort}&search=${encodeURIComponent(search)}`;
+            const res = await window.apiFetch(url);
+            const data = await res.json();
+            if (!data.success) throw new Error(data.message);
+            renderSkills(data.skills || []);
+        } catch (err) {
+            console.error("Load error:", err);
+            container.innerHTML = `
+                <div class="state-box error">
+                    <i data-lucide="alert-triangle" class="icon-lg"></i>
+                    <h3>We couldn't load your Skills.</h3>
+                    <p>${escapeHtml(err.message)}</p>
+                    <button class="btn-primary" onclick="location.reload()">Try Again</button>
+                </div>`;
+            if (typeof lucide !== "undefined") lucide.createIcons();
+        }
+    }
+
+    // =========================================================
+    // RENDER
+    // =========================================================
+    function renderSkills(skills) {
+        if (!skills.length) {
+            const isFiltered = search || filter !== "all";
+            container.innerHTML = `
+                <div class="state-box">
+                    <i data-lucide="${isFiltered ? "search-x" : "star"}" class="icon-lg"></i>
+                    <h3>${isFiltered ? "No Skills found" : "No Skills yet"}</h3>
+                    <p>${isFiltered
+                        ? "Try a different search or filter."
+                        : "Add the expertise that represents what you do."}</p>
+                    <button class="btn-primary" id="emptyAddBtn">
+                        <i data-lucide="plus" class="icon" style="width:14px;height:14px;"></i> Add Skill
+                    </button>
+                </div>`;
+            if (typeof lucide !== "undefined") lucide.createIcons();
+            $("emptyAddBtn")?.addEventListener("click", () => openModal());
+            return;
+        }
+
+        container.innerHTML = `<div class="skills-grid">${skills.map(renderCard).join("")}</div>`;
+        if (typeof lucide !== "undefined") lucide.createIcons();
+
+        container.querySelectorAll("[data-edit]").forEach(el => {
+            el.addEventListener("click", (e) => {
+                e.stopPropagation();
+                const id = el.dataset.edit;
+                const s = skills.find(x => String(x.id) === String(id));
+                if (s) openModal(s);
+            });
         });
-    });
-    refreshIcons();
-}
-
-// ---- LOAD CATEGORIES ----
-async function loadCategories() {
-    try {
-        const res = await apiFetch('/api/skills/categories');
-        if (!res) return;
-        const data = await res.json();
-        if (!data.success) throw new Error('Failed to load categories');
-        allCategories = data.categories;
-        renderCategories(allCategories);
-    } catch (err) {
-        console.error(err);
-        categoryGrid.innerHTML = '<div class="empty-state">Unable to load categories.</div>';
+        container.querySelectorAll("[data-delete]").forEach(el => {
+            el.addEventListener("click", async (e) => {
+                e.stopPropagation();
+                const id = el.dataset.delete;
+                const s = skills.find(x => String(x.id) === String(id));
+                if (s) await confirmDelete(s);
+            });
+        });
     }
-}
 
-function renderCategories(categories) {
-    if (!categories || categories.length === 0) {
-        categoryGrid.innerHTML = '<div class="empty-state">No categories available.</div>';
-        return;
-    }
-    let html = '';
-    categories.forEach(cat => {
-        const selectedCount = cat.user_selected_count || 0;
-        html += `
-            <div class="category-card" data-id="${cat.id}" data-slug="${cat.slug}">
-                <div class="cat-header">
-                    <span class="cat-icon">${cat.icon || '📂'}</span>
-                    <span class="arrow">→</span>
+    function renderCard(s) {
+        const icon = iconForCategory(s.category);
+        const hasServices = s.service_count > 0;
+        const hasProjects = s.project_count > 0;
+
+        return `
+            <div class="skill-card">
+                <div class="skill-head">
+                    <div class="skill-icon"><i data-lucide="${icon}" class="icon"></i></div>
+                    <div style="flex:1; min-width:0;">
+                        <div class="skill-title">${escapeHtml(s.name || "Untitled")}</div>
+                        ${s.category ? `<div class="skill-category">${escapeHtml(s.category)}</div>` : ""}
+                    </div>
                 </div>
-                <div class="cat-name">${cat.name}</div>
-                <div class="cat-meta">
-                    <span class="count">${cat.skill_count || 0} skills</span>
-                    ${selectedCount > 0 ? `<span class="selected-badge">${selectedCount} selected</span>` : ''}
+                ${s.description ? `<div class="skill-description">${escapeHtml(s.description)}</div>` : ""}
+                <div class="skill-meta">
+                    <span class="count ${hasServices ? "" : "zero"}">
+                        <i data-lucide="briefcase" class="icon"></i>
+                        ${s.service_count} service${s.service_count === 1 ? "" : "s"}
+                    </span>
+                    <span class="count ${hasProjects ? "" : "zero"}">
+                        <i data-lucide="folder" class="icon"></i>
+                        ${s.project_count} project${s.project_count === 1 ? "" : "s"}
+                    </span>
+                </div>
+                <div class="skill-actions">
+                    <button class="btn-secondary" data-edit="${s.id}">
+                        <i data-lucide="pencil" class="icon" style="width:13px;height:13px;"></i> Edit
+                    </button>
+                    <button class="btn-secondary" data-delete="${s.id}" style="color:var(--danger);">
+                        <i data-lucide="trash-2" class="icon" style="width:13px;height:13px;"></i> Delete
+                    </button>
                 </div>
             </div>
         `;
-    });
-    categoryGrid.innerHTML = html;
-    categoryGrid.querySelectorAll('.category-card').forEach(card => {
-        card.addEventListener('click', function() {
-            const id = parseInt(this.dataset.id);
-            const name = this.querySelector('.cat-name').textContent;
-            openModalWithFilter(id, name);
-        });
-    });
-    refreshIcons();
-}
+    }
 
-// ---- LOAD ALL SKILLS (for modal) ----
-async function loadAllSkills() {
-    try {
-        const res = await apiFetch('/api/skills/all');
-        if (!res) return;
-        const data = await res.json();
-        if (!data.success) throw new Error('Failed to load skills');
-        allSkills = data.skills || [];
-        // If no skills, show a message
-        if (allSkills.length === 0) {
-            skillListContainer.innerHTML = '<div class="empty-state">No skills found. Try adding a custom skill.</div>';
+    function iconForCategory(c) {
+        return {
+            design: "palette",
+            development: "code",
+            video: "video",
+            photography: "camera",
+            marketing: "megaphone",
+            writing: "pen-tool",
+            consulting: "users",
+            other: "star"
+        }[(c || "").toLowerCase()] || "star";
+    }
+
+    // =========================================================
+    // MODAL
+    // =========================================================
+    function openModal(skill = null) {
+        form.reset();
+        $("skillId").value = skill?.id || "";
+        $("modalTitle").textContent = skill ? "Edit Skill" : "Add Skill";
+
+        selectedServiceIds = [];
+        selectedProjectIds = [];
+
+        if (skill) {
+            $("skillName").value        = skill.name || "";
+            $("skillCategory").value    = skill.category || "";
+            $("skillDescription").value = skill.description || "";
+            $("connectionsSection").style.display = "";
+
+            // Load relationships
+            loadConnections(skill.id);
+        } else {
+            $("connectionsSection").style.display = "none";
+        }
+
+        modal.classList.add("open");
+    }
+
+    function closeModal() {
+        modal.classList.remove("open");
+    }
+
+    $("newSkillBtn")?.addEventListener("click", () => openModal());
+    $("cancelBtn")?.addEventListener("click", closeModal);
+    modal?.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
+
+    // =========================================================
+    // LOAD CONNECTIONS (services + projects) for editing
+    // =========================================================
+    async function loadConnections(skillId) {
+        try {
+            const [skillRes, servicesRes, projectsRes] = await Promise.all([
+                window.apiFetch(`/api/skills/${skillId}`),
+                window.apiFetch("/api/services"),
+                window.apiFetch("/api/projects")
+            ]);
+            const skillData   = await skillRes.json();
+            const servicesData = await servicesRes.json();
+            const projectsData = await projectsRes.json();
+
+            allServices = servicesData.services || [];
+            allProjects = projectsData.projects || [];
+            selectedServiceIds = (skillData.skill?.services || []).map(s => s.id);
+            selectedProjectIds = (skillData.skill?.projects || []).map(p => p.id);
+
+            renderServices();
+            renderProjects();
+        } catch (err) {
+            console.error("Load connections error:", err);
+        }
+    }
+
+    function renderServices() {
+        const el = $("servicesSelector");
+        if (!allServices.length) {
+            el.innerHTML = `<p style="color:var(--text-muted);font-size:13px;padding:8px;">No services yet. <a href="/dashboard/pages/service-edit.html" style="color:var(--accent);">Create one →</a></p>`;
             return;
         }
-        buildCategoryFilters();
-        if (modal.classList.contains('open')) {
-            renderSkillList();
-        }
-    } catch (err) {
-        console.error('Load all skills error:', err);
-        skillListContainer.innerHTML = '<div class="empty-state">Unable to load skills. Please refresh.</div>';
-    }
-}
-
-// ---- BUILD CATEGORY FILTER PILLS ----
-function buildCategoryFilters() {
-    const cats = new Set();
-    allSkills.forEach(s => {
-        if (s.category_name) cats.add(s.category_name);
-    });
-    let html = `<button class="filter-btn active" data-category="all">All</button>`;
-    cats.forEach(cat => {
-        html += `<button class="filter-btn" data-category="${cat}">${cat}</button>`;
-    });
-    categoryFilter.innerHTML = html;
-    categoryFilter.querySelectorAll('.filter-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            categoryFilter.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-            currentFilterCategory = this.dataset.category;
-            renderSkillList();
-        });
-    });
-}
-
-// ---- RENDER SKILL LIST IN MODAL ----
-function renderSkillList() {
-    const query = skillSearch.value.trim().toLowerCase();
-    let filtered = allSkills;
-    if (currentFilterCategory !== 'all') {
-        filtered = filtered.filter(s => s.category_name === currentFilterCategory);
-    }
-    if (query.length > 0) {
-        filtered = filtered.filter(s => s.name.toLowerCase().includes(query));
-    }
-
-    if (filtered.length === 0) {
-        skillListContainer.innerHTML = '<div class="empty-state">No skills found.</div>';
-        customSkillArea.style.display = 'none';
-        return;
-    }
-
-    if (currentFilterCategory === 'Other') {
-        customSkillArea.style.display = 'block';
-    } else {
-        customSkillArea.style.display = 'none';
-    }
-
-    let html = '';
-    filtered.forEach(s => {
-        const checked = selectedSkillIds.has(s.id) ? 'checked' : '';
-        html += `
-            <label class="skill-item ${checked ? 'selected' : ''}" data-id="${s.id}">
-                <input type="checkbox" ${checked} value="${s.id}">
-                <span class="skill-name">${s.name}</span>
-                <span class="skill-category">${s.category_name || ''}</span>
+        el.innerHTML = allServices.map(s => `
+            <label class="select-item">
+                <input type="checkbox" data-service-id="${s.id}" ${selectedServiceIds.includes(s.id) ? "checked" : ""}>
+                <span>${escapeHtml(s.title || "Untitled")}</span>
             </label>
-        `;
-    });
-    skillListContainer.innerHTML = html;
-
-    skillListContainer.querySelectorAll('input[type="checkbox"]').forEach(cb => {
-        cb.addEventListener('change', function() {
-            const id = parseInt(this.value);
-            if (this.checked) {
-                selectedSkillIds.add(id);
-                this.closest('.skill-item').classList.add('selected');
-            } else {
-                selectedSkillIds.delete(id);
-                this.closest('.skill-item').classList.remove('selected');
-            }
-            updateModalSelectedCount();
+        `).join("");
+        el.querySelectorAll("[data-service-id]").forEach(cb => {
+            cb.addEventListener("change", function () {
+                const id = parseInt(this.dataset.serviceId, 10);
+                if (this.checked) { if (!selectedServiceIds.includes(id)) selectedServiceIds.push(id); }
+                else { selectedServiceIds = selectedServiceIds.filter(x => x !== id); }
+            });
         });
-    });
-    highlightSelectedSkills();
-    refreshIcons();
-}
+    }
 
-function highlightSelectedSkills() {
-    skillListContainer.querySelectorAll('.skill-item').forEach(item => {
-        const id = parseInt(item.dataset.id);
-        const cb = item.querySelector('input[type="checkbox"]');
-        if (cb) {
-            const checked = selectedSkillIds.has(id);
-            cb.checked = checked;
-            item.classList.toggle('selected', checked);
+    function renderProjects() {
+        const el = $("projectsSelector");
+        if (!allProjects.length) {
+            el.innerHTML = `<p style="color:var(--text-muted);font-size:13px;padding:8px;">No projects yet. <a href="/dashboard/pages/project-edit.html" style="color:var(--accent);">Create one →</a></p>`;
+            return;
+        }
+        el.innerHTML = allProjects.map(p => `
+            <label class="select-item">
+                <input type="checkbox" data-project-id="${p.id}" ${selectedProjectIds.includes(p.id) ? "checked" : ""}>
+                <span>${escapeHtml(p.name || p.title || "Untitled")}</span>
+            </label>
+        `).join("");
+        el.querySelectorAll("[data-project-id]").forEach(cb => {
+            cb.addEventListener("change", function () {
+                const id = parseInt(this.dataset.projectId, 10);
+                if (this.checked) { if (!selectedProjectIds.includes(id)) selectedProjectIds.push(id); }
+                else { selectedProjectIds = selectedProjectIds.filter(x => x !== id); }
+            });
+        });
+    }
+
+    // =========================================================
+    // SAVE
+    // =========================================================
+    form?.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const id = $("skillId").value;
+        const payload = {
+            name:        $("skillName").value.trim(),
+            category:    $("skillCategory").value.trim(),
+            description: $("skillDescription").value.trim()
+        };
+        if (!payload.name) return showToast("Skill name is required", true);
+
+        const saveBtn = $("saveBtn");
+        saveBtn.disabled = true;
+        saveBtn.textContent = "Saving…";
+
+        try {
+            const url    = id ? `/api/skills/${id}` : "/api/skills";
+            const method = id ? "PATCH" : "POST";
+            const res    = await window.apiFetch(url, { method, body: JSON.stringify(payload) });
+            const data   = await res.json();
+
+            if (!data.success) throw new Error(data.message);
+
+            const newId = data.skill?.id || id;
+
+            // Save relationships if editing
+            if (id) {
+                await Promise.all([
+                    window.apiFetch(`/api/skills/${id}/services`, { method: "PUT", body: JSON.stringify({ serviceIds: selectedServiceIds }) }),
+                    window.apiFetch(`/api/skills/${id}/projects`, { method: "PUT", body: JSON.stringify({ projectIds: selectedProjectIds }) })
+                ]);
+            }
+
+            showToast(id ? "Skill updated" : "Skill added");
+            closeModal();
+            await Promise.all([loadStats(), loadSkills()]);
+        } catch (err) {
+            showToast("Failed: " + err.message, true);
+        } finally {
+            saveBtn.disabled = false;
+            saveBtn.textContent = "Save";
         }
     });
-    updateModalSelectedCount();
-}
 
-function updateModalSelectedCount() {
-    selectedCount.textContent = `${selectedSkillIds.size} skills selected`;
-}
+    // =========================================================
+    // DELETE with relationship warning
+    // =========================================================
+    async function confirmDelete(skill) {
+        const totalLinks = (skill.service_count || 0) + (skill.project_count || 0);
+        let msg = `Delete "${skill.name}"?\n\n`;
+        if (totalLinks > 0) {
+            msg += `This skill is currently connected to `;
+            const parts = [];
+            if (skill.service_count > 0) parts.push(`${skill.service_count} service${skill.service_count === 1 ? "" : "s"}`);
+            if (skill.project_count > 0) parts.push(`${skill.project_count} project${skill.project_count === 1 ? "" : "s"}`);
+            msg += parts.join(" and ") + ".\n\n";
+            msg += `Removing it will remove those connections but will NOT delete the services or projects.`;
+        }
+        if (!confirm(msg)) return;
 
-// ---- MODAL OPEN / CLOSE ----
-function openModalWithFilter(categoryId, categoryName) {
-    currentFilterCategory = categoryName;
-    categoryFilter.querySelectorAll('.filter-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.category === categoryName);
-    });
-    openModal();
-}
-
-function openModal() {
-    modal.classList.add('open');
-    skillSearch.value = '';
-    renderSkillList();
-    updateModalSelectedCount();
-    if (currentFilterCategory === 'Other') {
-        customSkillArea.style.display = 'block';
-    } else {
-        customSkillArea.style.display = 'none';
+        try {
+            const res = await window.apiFetch(`/api/skills/${skill.id}`, { method: "DELETE" });
+            const data = await res.json();
+            if (data.success) {
+                showToast("Skill removed");
+                await Promise.all([loadStats(), loadSkills()]);
+            } else {
+                showToast(data.message || "Delete failed", true);
+            }
+        } catch (err) {
+            showToast("Failed: " + err.message, true);
+        }
     }
-    customSkillForm.style.display = 'none';
-    customSkillName.value = '';
-}
 
-function closeModal() {
-    modal.classList.remove('open');
-    currentFilterCategory = 'all';
-    categoryFilter.querySelectorAll('.filter-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.category === 'all');
-    });
-    customSkillArea.style.display = 'none';
-    customSkillForm.style.display = 'none';
-}
-
-// ---- SAVE SELECTED SKILLS ----
-async function saveSelectedSkills(skillIds) {
-    try {
-        const res = await apiFetch('/api/skills/selected', {
-            method: 'POST',
-            body: JSON.stringify({ skillIds })
+    // =========================================================
+    // FILTERS / SEARCH / SORT
+    // =========================================================
+    document.querySelectorAll(".chip").forEach(chip => {
+        chip.addEventListener("click", () => {
+            document.querySelectorAll(".chip").forEach(c => c.classList.remove("active"));
+            chip.classList.add("active");
+            filter = chip.dataset.filter;
+            loadSkills();
         });
-        if (!res) return;
-        const data = await res.json();
-        if (!data.success) throw new Error('Failed to save skills');
-        return data.skills;
-    } catch (err) {
-        console.error(err);
-        throw err;
-    }
-}
-
-// ---- MODAL EVENT LISTENERS ----
-addSkillBtn.addEventListener('click', function() {
-    currentFilterCategory = 'all';
-    categoryFilter.querySelectorAll('.filter-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.category === 'all');
     });
-    openModal();
-});
 
-closeModalBtn.addEventListener('click', closeModal);
-cancelModalBtn.addEventListener('click', closeModal);
+    $("searchInput")?.addEventListener("input", function () {
+        clearTimeout(debounceTimer);
+        const val = this.value;
+        debounceTimer = setTimeout(() => {
+            search = val;
+            loadSkills();
+        }, 300);
+    });
 
-saveModalBtn.addEventListener('click', async function() {
-    try {
-        const skillIds = Array.from(selectedSkillIds);
-        await saveSelectedSkills(skillIds);
-        await loadSelectedSkills();
-        await loadRecommended();
-        await loadCategories();
-        closeModal();
-    } catch (err) {
-        alert('❌ ' + err.message);
+    $("sortSelect")?.addEventListener("change", function () {
+        sort = this.value;
+        loadSkills();
+    });
+
+    // =========================================================
+    // HELPERS
+    // =========================================================
+    function escapeHtml(str) {
+        return String(str == null ? "" : str).replace(/[&<>"']/g, s => ({
+            "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+        })[s]);
     }
-});
 
-// ---- SEARCH ----
-skillSearch.addEventListener('input', function() {
-    renderSkillList();
-});
-
-// ---- CUSTOM SKILL ----
-showCustomSkillBtn.addEventListener('click', function() {
-    customSkillForm.style.display = 'block';
-    customSkillName.focus();
-});
-
-cancelCustomSkillBtn.addEventListener('click', function() {
-    customSkillForm.style.display = 'none';
-    customSkillName.value = '';
-});
-
-saveCustomSkillBtn.addEventListener('click', async function() {
-    const name = customSkillName.value.trim();
-    if (!name || name.length < 2) {
-        alert('Please enter a valid skill name.');
-        return;
+    let toastTimer;
+    function showToast(msg, isError = false) {
+        if (!toast) return;
+        clearTimeout(toastTimer);
+        toast.textContent = msg;
+        toast.classList.toggle("error", isError);
+        toast.classList.add("show");
+        toastTimer = setTimeout(() => toast.classList.remove("show"), 3000);
     }
-    try {
-        const res = await apiFetch('/api/skills/custom', {
-            method: 'POST',
-            body: JSON.stringify({ name, categoryId: null })
-        });
-        if (!res) return;
-        const data = await res.json();
-        if (!data.success) throw new Error('Failed to add custom skill');
-        const newSkill = data.skill;
-        selectedSkillIds.add(newSkill.id);
-        await loadSelectedSkills();
-        await loadAllSkills();
-        customSkillForm.style.display = 'none';
-        customSkillName.value = '';
-        renderSkillList();
-        updateModalSelectedCount();
-    } catch (err) {
-        alert('❌ ' + err.message);
-    }
-});
 
-// ---- HELPERS ----
-function refreshIcons() {
-    if (typeof lucide !== 'undefined') lucide.createIcons();
-}
-
-// ---- INIT ----
-document.addEventListener('DOMContentLoaded', function() {
-    loadAll();
+    // =========================================================
+    // INIT
+    // =========================================================
+    loadStats();
+    loadSkills();
 });

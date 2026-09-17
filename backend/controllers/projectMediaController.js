@@ -1,115 +1,55 @@
 // =========================================================
 // CREVIO — PROJECT MEDIA CONTROLLER
+// File: backend/controllers/projectMediaController.js
 // =========================================================
 
 const db = require("../../database/db");
 
-// ---- Get media for a specific project ----
-const getProjectMedia = (req, res) => {
-    try {
-        const userId = req.user.id;
-        const projectId = parseInt(req.params.projectId);
+function cols(table) {
+    try { return db.prepare(`PRAGMA table_info(${table})`).all().map(c => c.name); }
+    catch (e) { return []; }
+}
 
-        const media = db.prepare(`
+// GET /api/projects/:projectId/media
+exports.getProjectMedia = (req, res) => {
+    try {
+        const rows = db.prepare(`
             SELECT * FROM project_media
             WHERE project_id = ? AND user_id = ?
-            ORDER BY sort_order, created_at
-        `).all(projectId, userId);
+            ORDER BY COALESCE(sort_order, 0), created_at DESC
+        `).all(req.params.projectId, req.user.id);
 
-        res.json({ success: true, media });
-    } catch (error) {
-        console.error("Get project media error:", error);
-        res.status(500).json({ success: false, message: "Unable to load media." });
+        res.json({ success: true, media: rows });
+    } catch (err) {
+        res.status(500).json({ success: false, message: "Failed", error: err.message });
     }
 };
 
-// ---- Add media to a project ----
-const addProjectMedia = (req, res) => {
+// POST /api/projects/:projectId/media — link existing media
+exports.linkMedia = (req, res) => {
     try {
-        const userId = req.user.id;
-        const projectId = parseInt(req.params.projectId);
-        const { media_id } = req.body;
+        const { mediaId } = req.body;
+        if (!mediaId) return res.status(400).json({ success: false, message: "mediaId required" });
 
-        if (!media_id) {
-            return res.status(400).json({ success: false, message: "Media ID required." });
-        }
+        db.prepare("UPDATE project_media SET project_id = ? WHERE id = ? AND user_id = ?")
+          .run(req.params.projectId, mediaId, req.user.id);
 
-        // Check if media belongs to user and is not already assigned
-        const media = db.prepare(`SELECT * FROM project_media WHERE id = ? AND user_id = ?`).get(media_id, userId);
-        if (!media) {
-            return res.status(404).json({ success: false, message: "Media not found." });
-        }
-
-        db.prepare(`UPDATE project_media SET project_id = ? WHERE id = ?`).run(projectId, media_id);
-
-        const updated = db.prepare(`SELECT * FROM project_media WHERE id = ?`).get(media_id);
-        res.json({ success: true, media: updated });
-    } catch (error) {
-        console.error("Add project media error:", error);
-        res.status(500).json({ success: false, message: "Unable to add media to project." });
+        res.json({ success: true, message: "Media linked" });
+    } catch (err) {
+        res.status(500).json({ success: false, message: "Failed", error: err.message });
     }
 };
 
-// ---- Remove media from a project (unassign) ----
-const removeProjectMedia = (req, res) => {
+// DELETE /api/projects/:projectId/media/:mediaId — unlink
+exports.unlinkMedia = (req, res) => {
     try {
-        const userId = req.user.id;
-        const projectId = parseInt(req.params.projectId);
-        const mediaId = parseInt(req.params.mediaId);
+        const r = db.prepare(`
+            UPDATE project_media SET project_id = NULL
+            WHERE id = ? AND project_id = ? AND user_id = ?
+        `).run(req.params.mediaId, req.params.projectId, req.user.id);
 
-        // Verify ownership
-        const media = db.prepare(`SELECT * FROM project_media WHERE id = ? AND user_id = ? AND project_id = ?`).get(mediaId, userId, projectId);
-        if (!media) {
-            return res.status(404).json({ success: false, message: "Media not found in this project." });
-        }
-
-        db.prepare(`UPDATE project_media SET project_id = NULL WHERE id = ?`).run(mediaId);
-        res.json({ success: true, message: "Media removed from project." });
-    } catch (error) {
-        console.error("Remove project media error:", error);
-        res.status(500).json({ success: false, message: "Unable to remove media." });
+        res.json({ success: true, unlinked: r.changes });
+    } catch (err) {
+        res.status(500).json({ success: false, message: "Failed", error: err.message });
     }
-};
-
-// ---- Update media details within project (e.g., sort_order) ----
-const updateProjectMedia = (req, res) => {
-    try {
-        const userId = req.user.id;
-        const projectId = parseInt(req.params.projectId);
-        const mediaId = parseInt(req.params.mediaId);
-        const { sort_order, title, description } = req.body;
-
-        // Verify ownership
-        const media = db.prepare(`SELECT * FROM project_media WHERE id = ? AND user_id = ? AND project_id = ?`).get(mediaId, userId, projectId);
-        if (!media) {
-            return res.status(404).json({ success: false, message: "Media not found in this project." });
-        }
-
-        let updates = [];
-        let params = [];
-        if (sort_order !== undefined) { updates.push("sort_order = ?"); params.push(sort_order); }
-        if (title !== undefined) { updates.push("title = ?"); params.push(title); }
-        if (description !== undefined) { updates.push("description = ?"); params.push(description); }
-
-        if (updates.length === 0) {
-            return res.json({ success: true, media });
-        }
-
-        params.push(mediaId);
-        const sql = `UPDATE project_media SET ${updates.join(", ")} WHERE id = ?`;
-        db.prepare(sql).run(...params);
-
-        const updated = db.prepare(`SELECT * FROM project_media WHERE id = ?`).get(mediaId);
-        res.json({ success: true, media: updated });
-    } catch (error) {
-        console.error("Update project media error:", error);
-        res.status(500).json({ success: false, message: "Unable to update media." });
-    }
-};
-
-module.exports = {
-    getProjectMedia,
-    addProjectMedia,
-    removeProjectMedia,
-    updateProjectMedia
 };

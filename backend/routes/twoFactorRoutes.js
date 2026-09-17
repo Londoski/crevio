@@ -1,89 +1,16 @@
 // =========================================================
 // CREVIO — TWO FACTOR ROUTES
+// File: backend/routes/twoFactorRoutes.js
 // =========================================================
 
 const express = require("express");
-const authMiddleware = require("../middleware/authMiddleware");
-const controller = require("../controllers/twoFactorController");
-const authController = require("../controllers/authController");
-
 const router = express.Router();
+const auth = require("../middleware/authMiddleware");
+const twoFactorController = require("../controllers/twoFactorController");
 
-// =========================================================
-// AUTHENTICATOR SETUP
-// =========================================================
-
-router.post("/setup", authMiddleware, controller.setupAuthenticator);
-
-// =========================================================
-// VERIFY SETUP
-// =========================================================
-
-router.post("/verify-setup", authMiddleware, controller.verifyAuthenticatorSetup);
-
-// =========================================================
-// DISABLE 2FA
-// =========================================================
-
-router.post("/disable", authMiddleware, controller.disableTwoFactor);
-
-// =========================================================
-// RECOVERY CODES
-// =========================================================
-
-router.post("/recovery-codes/regenerate", authMiddleware, controller.regenerateRecoveryCodes);
-
-// =========================================================
-// VERIFY 2FA CHALLENGE (LOGIN)
-// =========================================================
-
-router.post("/verify-challenge", authController.verifyTwoFactorChallenge);
+router.post("/setup",   auth, twoFactorController.setup);
+router.post("/disable", auth, twoFactorController.disable);
+router.post("/verify",  auth, twoFactorController.verify);
+router.get("/status",   auth, twoFactorController.status);
 
 module.exports = router;
-
-// =========================================================
-// AUTHENTICATOR SETUP
-// =========================================================
-
-router.post(
-    "/setup",
-    authMiddleware,
-    controller.setupAuthenticator
-);
-
-
-// =========================================================
-// VERIFY SETUP
-// =========================================================
-
-router.post(
-    "/verify-setup",
-    authMiddleware,
-    controller.verifyAuthenticatorSetup
-);
-
-
-// =========================================================
-// DISABLE 2FA
-// =========================================================
-
-router.post(
-    "/disable",
-    authMiddleware,
-    controller.disableTwoFactor
-);
-
-
-// =========================================================
-// RECOVERY CODES
-// =========================================================
-
-router.post(
-    "/recovery-codes/regenerate",
-    authMiddleware,
-    controller.regenerateRecoveryCodes
-);
-
-
-module.exports =
-    router;

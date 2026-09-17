@@ -1,13 +1,14 @@
 // =========================================================
 // CREVIO — DASHBOARD ROUTES
+// File: backend/routes/dashboardRoutes.js
 // =========================================================
 
 const express = require("express");
 const router = express.Router();
-const authMiddleware = require("../middleware/authMiddleware");
+const auth = require("../middleware/authMiddleware");
 const dashboardController = require("../controllers/dashboardController");
 
-// ---- GET /api/dashboard/overview ----
-router.get("/overview", authMiddleware, dashboardController.getOverview);
+router.get("/overview", auth, dashboardController.getOverview);
+router.get("/activity", auth, dashboardController.getActivity);
 
 module.exports = router;

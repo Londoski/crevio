@@ -8,86 +8,197 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="/dashboard/js/auth.js?v=639252484686517300"></script>
+
     <style>
-        /* Copy the exact same styles from projects.html */
         * { margin:0; padding:0; box-sizing:border-box; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg-primary); color: var(--text-primary); display: flex; min-height: 100vh; transition: background 0.3s, color 0.3s; }
-        a { text-decoration: none; color: inherit; }
-        [data-theme="dark"] { --bg-primary:#0F172A; --bg-secondary:#1E293B; --bg-card:#1E293B; --bg-input:#0F172A; --border-color:#334155; --text-primary:#F1F5F9; --text-secondary:#94A3B8; --text-muted:#64748B; --accent:#2563EB; --accent-hover:#1D4ED8; --accent-dim:rgba(37,99,235,0.15); --danger:#EF4444; --danger-hover:#DC2626; --success:#22C55E; --warning:#F59E0B; }
-        [data-theme="light"] { --bg-primary:#F1F5F9; --bg-secondary:#FFFFFF; --bg-card:#FFFFFF; --bg-input:#F8FAFC; --border-color:#E2E8F0; --text-primary:#0F172A; --text-secondary:#475569; --text-muted:#94A3B8; --accent:#2563EB; --accent-hover:#1D4ED8; --accent-dim:rgba(37,99,235,0.1); --danger:#EF4444; --danger-hover:#DC2626; --success:#22C55E; --warning:#F59E0B; }
-        .sidebar { width:240px; background:var(--bg-secondary); border-right:1px solid var(--border-color); display:flex; flex-direction:column; padding:24px 16px; height:100vh; position:sticky; top:0; flex-shrink:0; transition:background 0.3s,border-color 0.3s; overflow-y:auto; }
+        body { font-family:'Inter',sans-serif; background:var(--bg-primary); color:var(--text-primary); display:flex; min-height:100vh; }
+        a { text-decoration:none; color:inherit; }
+
+        [data-theme="dark"] { --bg-primary:#0F172A; --bg-secondary:#1E293B; --bg-card:#1E293B; --bg-input:#0F172A; --border-color:#334155; --text-primary:#F1F5F9; --text-secondary:#94A3B8; --text-muted:#64748B; --accent:#2563EB; --accent-hover:#1D4ED8; --accent-dim:rgba(37,99,235,0.15); --danger:#EF4444; --success:#22C55E; --warning:#F59E0B; }
+        [data-theme="light"] { --bg-primary:#F1F5F9; --bg-secondary:#FFFFFF; --bg-card:#FFFFFF; --bg-input:#F8FAFC; --border-color:#E2E8F0; --text-primary:#0F172A; --text-secondary:#475569; --text-muted:#94A3B8; --accent:#2563EB; --accent-hover:#1D4ED8; --accent-dim:rgba(37,99,235,0.1); --danger:#EF4444; --success:#22C55E; --warning:#F59E0B; }
+
+        .sidebar { width:240px; background:var(--bg-secondary); border-right:1px solid var(--border-color); display:flex; flex-direction:column; padding:24px 16px; height:100vh; position:sticky; top:0; flex-shrink:0; overflow-y:auto; }
         .sidebar-brand { padding-bottom:20px; border-bottom:1px solid var(--border-color); margin-bottom:20px; }
-        .sidebar-brand h1 { font-size:20px; font-weight:700; color:var(--text-primary); }
+        .sidebar-brand h1 { font-size:20px; font-weight:700; }
         .sidebar-brand span { font-size:11px; font-weight:500; text-transform:uppercase; color:var(--text-muted); }
         .sidebar-nav { display:flex; flex-direction:column; gap:2px; flex:1; }
-        .nav-item { display:flex; align-items:center; gap:12px; padding:10px 12px; border-radius:8px; color:var(--text-secondary); font-size:14px; font-weight:500; transition:all 0.15s; text-decoration:none; }
+        .nav-item { display:flex; align-items:center; gap:12px; padding:10px 12px; border-radius:8px; color:var(--text-secondary); font-size:14px; font-weight:500; transition:all 0.15s; }
         .nav-item:hover { background:var(--accent-dim); color:var(--text-primary); }
         .nav-item.active { background:var(--accent-dim); color:var(--accent); }
         .nav-item .icon { width:20px; height:20px; flex-shrink:0; }
         .nav-divider { height:1px; background:var(--border-color); margin:8px 12px; }
-        .sidebar-footer { padding-top:16px; border-top:1px solid var(--border-color); display:flex; flex-direction:column; gap:8px; }
-        .logout-button { background:transparent; border:none; color:var(--danger); font-size:13px; font-weight:500; padding:10px 12px; border-radius:8px; cursor:pointer; font-family:inherit; display:flex; align-items:center; gap:12px; transition:background 0.15s; width:100%; }
+        .sidebar-footer { padding-top:16px; border-top:1px solid var(--border-color); }
+        .logout-button { background:transparent; border:none; color:var(--danger); font-size:13px; font-weight:500; padding:10px 12px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:12px; width:100%; font-family:inherit; }
         .logout-button:hover { background:rgba(239,68,68,0.1); }
-        .theme-toggle-btn { background:transparent; border:none; color:var(--text-secondary); font-size:18px; cursor:pointer; padding:6px 10px; border-radius:8px; transition:background 0.15s; display:inline-flex; align-items:center; gap:6px; width:fit-content; }
-        .theme-toggle-btn:hover { background:var(--accent-dim); color:var(--text-primary); }
-        .theme-toggle-btn .icon { width:18px; height:18px; }
-        .sidebar-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:199; }
-        .sidebar-overlay.open { display:block; }
-        .dashboard-main { flex:1; padding:28px 36px; background:var(--bg-primary); min-height:100vh; transition:background 0.3s; }
-        .dashboard-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:28px; flex-wrap:wrap; gap:12px; }
-        .topbar-left { display:flex; align-items:center; gap:16px; }
-        .mobile-menu-toggle { display:none; background:none; border:none; color:var(--text-secondary); font-size:24px; cursor:pointer; }
-        .topbar-left h2 { font-size:24px; font-weight:700; color:var(--text-primary); }
-        .header-description { font-size:14px; color:var(--text-secondary); }
-        .topbar-right { display:flex; align-items:center; gap:16px; }
-        .primary-button { padding:8px 18px; border-radius:8px; border:none; background:var(--accent); color:#fff; font-size:13px; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:6px; transition:all 0.15s; text-decoration:none; }
-        .primary-button:hover { background:var(--accent-hover); transform:translateY(-1px); }
-        .user-profile { display:flex; align-items:center; gap:8px; }
-        .user-avatar { width:32px; height:32px; border-radius:50%; background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:600; font-size:13px; }
-        .user-name { font-size:14px; font-weight:500; color:var(--text-primary); }
-        .card { background:var(--bg-card); border:1px solid var(--border-color); border-radius:16px; padding:24px; margin-bottom:24px; }
-        .settings-grid { display:grid; grid-template-columns:1fr 1fr; gap:24px; }
+
+        .main { flex:1; padding:28px 36px; background:var(--bg-primary); min-height:100vh; max-width:900px; }
+        .header { margin-bottom:28px; }
+        .header h1 { font-size:24px; font-weight:700; }
+        .header p { font-size:14px; color:var(--text-secondary); margin-top:2px; }
+
+        .card { background:var(--bg-card); border:1px solid var(--border-color); border-radius:14px; padding:24px; margin-bottom:20px; }
+        .card h2 { font-size:16px; font-weight:600; margin-bottom:6px; display:flex; align-items:center; gap:8px; }
+        .card h2 .icon { width:18px; height:18px; color:var(--accent); }
+        .card p.desc { font-size:13px; color:var(--text-secondary); margin-bottom:20px; }
+
+        .setting-row { display:flex; justify-content:space-between; align-items:center; padding:16px 0; border-bottom:1px solid var(--border-color); gap:20px; }
+        .setting-row:last-child { border-bottom:none; padding-bottom:0; }
+        .setting-row:first-of-type { padding-top:0; }
+        .setting-info h3 { font-size:14px; font-weight:600; margin-bottom:3px; }
+        .setting-info p { font-size:13px; color:var(--text-muted); }
+
         .form-group { margin-bottom:16px; }
-        .form-group label { display:block; font-size:13px; font-weight:500; color:var(--text-secondary); margin-bottom:4px; }
-        .form-group input, .form-group textarea, .form-group select { width:100%; padding:10px 14px; border-radius:10px; border:1px solid var(--border-color); background:var(--bg-input); color:var(--text-primary); font-size:14px; font-family:inherit; box-sizing:border-box; transition:border 0.2s; }
-        .form-group input:focus, .form-group textarea:focus, .form-group select:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-dim); }
-        .form-group textarea { resize:vertical; min-height:80px; }
-        .form-actions { display:flex; gap:12px; margin-top:16px; justify-content:flex-end; }
-        .form-actions .btn { padding:10px 20px; border-radius:10px; font-weight:600; font-size:14px; cursor:pointer; border:none; font-family:inherit; transition:all 0.15s; }
-        .form-actions .btn-primary { background:var(--accent); color:#fff; }
-        .form-actions .btn-primary:hover { background:var(--accent-hover); }
-        .form-actions .btn-secondary { background:transparent; border:1px solid var(--border-color); color:var(--text-secondary); }
-        .form-actions .btn-secondary:hover { background:var(--bg-card); color:var(--text-primary); }
-        .toggle-row { display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--border-color); }
-        .toggle-row:last-child { border-bottom:none; }
-        .toggle-row .label { color:var(--text-secondary); font-size:14px; }
-        .toggle-switch { appearance:none; width:44px; height:24px; background:var(--border-color); border-radius:999px; position:relative; cursor:pointer; transition:background 0.3s; flex-shrink:0; }
-        .toggle-switch:checked { background:var(--accent); }
-        .toggle-switch::before { content:''; position:absolute; width:18px; height:18px; background:#fff; border-radius:50%; top:3px; left:3px; transition:transform 0.3s; }
-        .toggle-switch:checked::before { transform:translateX(20px); }
-        .message { padding:10px 14px; border-radius:10px; font-size:14px; margin-top:8px; display:none; }
-        .message.success { display:block; background:rgba(34,197,94,0.1); color:var(--success); border:1px solid rgba(34,197,94,0.2); }
-        .message.error { display:block; background:rgba(239,68,68,0.1); color:var(--danger); border:1px solid rgba(239,68,68,0.2); }
-        .account-link { display:inline-flex; align-items:center; gap:8px; color:var(--accent); text-decoration:none; font-weight:500; padding:8px 16px; border:1px solid var(--border-color); border-radius:10px; transition:all 0.15s; }
-        .account-link:hover { background:var(--accent-dim); border-color:var(--accent); }
-        .loading-state { padding:40px 0; text-align:center; color:var(--text-muted); font-size:14px; }
-        @media (max-width:1024px) { .settings-grid { grid-template-columns:1fr; } }
+        .form-group:last-child { margin-bottom:0; }
+        .form-group label { display:block; font-size:13px; color:var(--text-secondary); margin-bottom:6px; font-weight:500; }
+        .form-group select {
+            width:100%; max-width:320px;
+            background:var(--bg-input); border:1px solid var(--border-color);
+            color:var(--text-primary); padding:10px 12px; border-radius:10px;
+            font-size:14px; font-family:inherit;
+        }
+        .form-group select:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-dim); }
+
+        /* Theme picker */
+        .theme-picker { display:flex; gap:10px; flex-wrap:wrap; }
+        .theme-option {
+            background:var(--bg-input); border:2px solid var(--border-color);
+            border-radius:12px; padding:14px 22px; cursor:pointer;
+            display:flex; flex-direction:column; align-items:center; gap:8px;
+            font-size:12px; font-weight:500; color:var(--text-secondary);
+            transition:all 0.15s; font-family:inherit;
+            min-width:100px;
+        }
+        .theme-option:hover { border-color:var(--accent); color:var(--text-primary); }
+        .theme-option.active { border-color:var(--accent); color:var(--accent); background:var(--accent-dim); }
+        .theme-option .icon { width:22px; height:22px; }
+
+        /* Toggle switch */
+        .toggle { position:relative; display:inline-block; width:44px; height:24px; flex-shrink:0; }
+        .toggle input { opacity:0; width:0; height:0; }
+        .toggle .slider { position:absolute; cursor:pointer; inset:0; background:var(--border-color); border-radius:999px; transition:0.2s; }
+        .toggle .slider:before { content:""; position:absolute; height:18px; width:18px; left:3px; bottom:3px; background:#fff; border-radius:50%; transition:0.2s; }
+        .toggle input:checked + .slider { background:var(--accent); }
+        .toggle input:checked + .slider:before { transform:translateX(20px); }
+
+        /* Buttons */
+        .btn-primary { padding:10px 22px; border-radius:10px; border:none; background:var(--accent); color:#fff; font-size:14px; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:6px; transition:all 0.15s; font-family:inherit; }
+        .btn-primary:hover { background:var(--accent-hover); }
+        .btn-primary:disabled { opacity:0.6; cursor:not-allowed; }
+        .btn-secondary { padding:10px 22px; border-radius:10px; border:1px solid var(--border-color); background:transparent; color:var(--text-secondary); font-size:14px; font-weight:500; cursor:pointer; transition:all 0.15s; font-family:inherit; display:inline-flex; align-items:center; gap:6px; }
+        .btn-secondary:hover { background:var(--bg-input); color:var(--text-primary); }
+
+        /* Action links (Security / Account) */
+        .action-link {
+            display:flex; align-items:center; justify-content:space-between;
+            padding:16px 20px; background:var(--bg-input);
+            border:1px solid var(--border-color); border-radius:12px;
+            margin-bottom:10px; cursor:pointer; transition:all 0.15s;
+        }
+        .action-link:last-child { margin-bottom:0; }
+        .action-link:hover { border-color:var(--accent); background:var(--accent-dim); }
+        .action-link-left { display:flex; align-items:center; gap:14px; }
+        .action-link-left .icon { width:20px; height:20px; color:var(--accent); }
+        .action-link-left h3 { font-size:14px; font-weight:600; margin-bottom:2px; }
+        .action-link-left p { font-size:12px; color:var(--text-muted); }
+        .action-link-right .icon { width:16px; height:16px; color:var(--text-muted); }
+
+        .actions-row { display:flex; justify-content:flex-end; gap:10px; margin-top:20px; }
+
+        .toast { position:fixed; bottom:24px; right:24px; background:var(--bg-card); border:1px solid var(--border-color); border-left:4px solid var(--success); padding:14px 20px; border-radius:10px; font-size:14px; font-weight:500; box-shadow:0 8px 32px rgba(0,0,0,0.3); transform:translateY(calc(100% + 40px)); opacity:0; visibility:hidden; transition:transform 0.3s ease, opacity 0.3s ease, visibility 0.3s ease; z-index:1000; max-width:340px; pointer-events:none; }
+        .toast.show { transform:translateY(0); opacity:1; visibility:visible; pointer-events:auto; }
+        .toast.error { border-left-color:var(--danger); }
+
+        /* MODALS for Change Email / Change Password */
+        .modal-overlay {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.55);
+            backdrop-filter: blur(4px);
+            display: flex; align-items: center; justify-content: center;
+            padding: 20px;
+            z-index: 9000;
+            opacity: 0; visibility: hidden;
+            transition: opacity 0.14s, visibility 0.14s;
+        }
+        .modal-overlay.open { opacity: 1; visibility: visible; }
+
+        .modal-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            max-width: min(440px, 94vw);
+            width: 100%;
+            padding: 22px;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.55);
+        }
+        .modal-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 6px;
+        }
+        .modal-header h2 { font-size: 17px; font-weight: 700; margin: 0; }
+        .modal-header .close-x {
+            background: transparent; border: none; color: var(--text-muted);
+            width: 30px; height: 30px; border-radius: 8px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .modal-header .close-x:hover { background: var(--bg-input); color: var(--danger); }
+        .modal-header .close-x svg { width: 16px; height: 16px; }
+
+        .modal-sub {
+            font-size: 13px; color: var(--text-muted);
+            margin-bottom: 18px;
+        }
+
+        .modal-form .form-group { margin-bottom: 14px; }
+        .modal-form input[type="email"],
+        .modal-form input[type="password"],
+        .modal-form input[type="text"] {
+            width: 100%;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 11px 14px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+        .modal-form input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-dim);
+        }
+
+        .field-error {
+            display: none;
+            font-size: 12px;
+            color: var(--danger);
+            margin-top: 6px;
+        }
+        .field-error.show { display: block; }
+
+        .modal-actions {
+            display: flex; gap: 10px; justify-content: flex-end;
+            margin-top: 20px;
+        }
+
+        .pwd-hint {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 6px;
+            line-height: 1.4;
+        }
         @media (max-width:768px) {
             .sidebar { display:none; }
-            .dashboard-main { padding:16px 20px; }
-            .mobile-menu-toggle { display:block; }
-            .dashboard-header { flex-direction:column; align-items:flex-start; gap:12px; }
-            .topbar-right { width:100%; justify-content:space-between; }
-            .user-name { display:none; }
-            .form-actions { flex-direction:column; align-items:stretch; }
-            .toggle-row { flex-wrap:wrap; gap:8px; }
+            .main { padding:16px 20px; }
+            .setting-row { flex-direction:column; align-items:flex-start; }
         }
     </style>
+    <link rel="stylesheet" href="/dashboard/css/mobile.css?v=639252484686517300">
 </head>
 <body>
 
-    <!-- SIDEBAR -->
-    <aside class="sidebar" id="sidebar">
+    <aside class="sidebar">
         <div class="sidebar-brand"><h1>Crevio</h1><span>Creator Dashboard</span></div>
         <nav class="sidebar-nav">
             <a href="/dashboard/" class="nav-item"><i data-lucide="layout-dashboard" class="icon"></i> Overview</a>
@@ -98,6 +209,7 @@
             <a href="/dashboard/pages/social-links.html" class="nav-item"><i data-lucide="share-2" class="icon"></i> My Socials</a>
             <div class="nav-divider"></div>
             <a href="/dashboard/pages/portfolio.html" class="nav-item"><i data-lucide="layout-template" class="icon"></i> Portfolio</a>
+            <a href="/dashboard/pages/portfolio-edit.html" class="nav-item"><i data-lucide="edit-3" class="icon"></i> Edit Portfolio</a>
             <a href="/dashboard/pages/bot.html" class="nav-item"><i data-lucide="bot" class="icon"></i> Crevio Bot</a>
             <div class="nav-divider"></div>
             <a href="/dashboard/pages/messages.html" class="nav-item"><i data-lucide="mail" class="icon"></i> Messages</a>
@@ -112,57 +224,284 @@
             <a href="/" target="_blank" class="nav-item"><i data-lucide="globe" class="icon"></i> View Portfolio</a>
         </nav>
         <div class="sidebar-footer">
-            <span id="themeToggleBtn" class="theme-toggle-btn" onclick="toggleTheme()" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:8px;color:var(--text-secondary);font-size:18px;">
-                <i data-lucide="moon" class="icon"></i>
-            </span>
             <button id="logoutButton" class="logout-button"><i data-lucide="log-out" class="icon"></i> Logout</button>
         </div>
     </aside>
 
-    <div id="sidebarOverlay" class="sidebar-overlay"></div>
-
-    <!-- MAIN -->
-    <main class="dashboard-main">
-
-        <header class="dashboard-header">
-            <div class="topbar-left">
-                <button id="mobileToggle" class="mobile-menu-toggle"><i data-lucide="menu"></i></button>
-                <div>
-                    <h2>Settings</h2>
-                    <p class="header-description">Manage your preferences and account</p>
-                </div>
-            </div>
-            <div class="topbar-right">
-                <div class="user-profile">
-                    <span class="user-avatar" id="userAvatar">C</span>
-                    <span class="user-name" id="userNameDisplay">Creator</span>
-                </div>
-            </div>
-        </header>
-
-        <div id="settingsContainer">
-            <div class="loading-state">Loading settings...</div>
+    <main class="main">
+        <div class="header">
+            <h1>Settings</h1>
+            <p>Customize your Crevio experience</p>
         </div>
 
+        <!-- APPEARANCE -->
+        <div class="card">
+            <h2><i data-lucide="palette" class="icon"></i> Appearance</h2>
+            <p class="desc">Choose how Crevio looks to you</p>
+
+            <div class="setting-row">
+                <div class="setting-info">
+                    <h3>Theme</h3>
+                    <p>Switch between light, dark, or system default</p>
+                </div>
+                <div class="theme-picker">
+                    <button type="button" class="theme-option" data-theme-choice="light">
+                        <i data-lucide="sun" class="icon"></i>
+                        Light
+                    </button>
+                    <button type="button" class="theme-option" data-theme-choice="dark">
+                        <i data-lucide="moon" class="icon"></i>
+                        Dark
+                    </button>
+                    <button type="button" class="theme-option" data-theme-choice="system">
+                        <i data-lucide="monitor" class="icon"></i>
+                        System
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- LANGUAGE & REGION -->
+        <div class="card">
+            <h2><i data-lucide="globe" class="icon"></i> Language &amp; Region</h2>
+            <p class="desc">Set your preferred language and timezone</p>
+
+            <div class="form-group">
+                <label>Language</label>
+                <select id="language">
+                    <option value="en">English</option>
+                    <option value="es">Español</option>
+                    <option value="fr">Français</option>
+                    <option value="pt">Português</option>
+                    <option value="ar">العربية</option>
+                    <option value="yo">Yorùbá</option>
+                    <option value="ig">Igbo</option>
+                    <option value="ha">Hausa</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Timezone</label>
+                <select id="timezone">
+                    <option value="Africa/Lagos">Africa/Lagos (WAT)</option>
+                    <option value="Africa/Cairo">Africa/Cairo (EET)</option>
+                    <option value="Africa/Nairobi">Africa/Nairobi (EAT)</option>
+                    <option value="Europe/London">Europe/London (GMT)</option>
+                    <option value="Europe/Paris">Europe/Paris (CET)</option>
+                    <option value="America/New_York">America/New_York (EST)</option>
+                    <option value="America/Los_Angeles">America/Los_Angeles (PST)</option>
+                    <option value="Asia/Dubai">Asia/Dubai (GST)</option>
+                    <option value="Asia/Tokyo">Asia/Tokyo (JST)</option>
+                    <option value="UTC">UTC</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- NOTIFICATIONS -->
+        <div class="card">
+            <h2><i data-lucide="bell" class="icon"></i> Notifications</h2>
+            <p class="desc">Choose what updates you want to receive</p>
+
+            <div class="setting-row">
+                <div class="setting-info">
+                    <h3>Email Notifications</h3>
+                    <p>Get notified via email about activity</p>
+                </div>
+                <label class="toggle">
+                    <input type="checkbox" id="notifEmail" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="setting-row">
+                <div class="setting-info">
+                    <h3>New Messages</h3>
+                    <p>Notify me when I receive a new message</p>
+                </div>
+                <label class="toggle">
+                    <input type="checkbox" id="notifMessages" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="setting-row">
+                <div class="setting-info">
+                    <h3>New Orders / Bookings</h3>
+                    <p>Notify me when someone books a service</p>
+                </div>
+                <label class="toggle">
+                    <input type="checkbox" id="notifOrders" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="setting-row">
+                <div class="setting-info">
+                    <h3>Marketing &amp; Tips</h3>
+                    <p>Product updates and portfolio tips</p>
+                </div>
+                <label class="toggle">
+                    <input type="checkbox" id="notifMarketing">
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+
+                <!-- ACCOUNT CREDENTIALS -->
+        <div class="card">
+            <h2><i data-lucide="at-sign" class="icon"></i> Account Credentials</h2>
+            <p class="desc">Update the email and password you use to sign in</p>
+
+            <div class="setting-row">
+                <div class="setting-info">
+                    <h3>Email Address</h3>
+                    <p id="currentEmailLabel">Loading…</p>
+                </div>
+                <button class="btn-secondary" id="changeEmailBtn">
+                    <i data-lucide="mail" class="icon" style="width:16px;height:16px;"></i>
+                    Change Email
+                </button>
+            </div>
+
+            <div class="setting-row">
+                <div class="setting-info">
+                    <h3>Password</h3>
+                    <p>Last changed when you set your account password</p>
+                </div>
+                <button class="btn-secondary" id="changePasswordBtn">
+                    <i data-lucide="lock" class="icon" style="width:16px;height:16px;"></i>
+                    Change Password
+                </button>
+            </div>
+        </div>
+        <!-- ACCOUNT LINKS -->
+        <div class="card">
+            <h2><i data-lucide="user-cog" class="icon"></i> Account</h2>
+            <p class="desc">Manage sensitive account settings</p>
+
+            <a href="/dashboard/pages/security.html" class="action-link">
+                <div class="action-link-left">
+                    <i data-lucide="shield" class="icon"></i>
+                    <div>
+                        <h3>Password &amp; Security</h3>
+                        <p>Change password, enable 2FA, manage sessions</p>
+                    </div>
+                </div>
+                <div class="action-link-right">
+                    <i data-lucide="chevron-right" class="icon"></i>
+                </div>
+            </a>
+
+            <a href="/dashboard/pages/profile.html" class="action-link">
+                <div class="action-link-left">
+                    <i data-lucide="user" class="icon"></i>
+                    <div>
+                        <h3>Profile</h3>
+                        <p>Update your name, bio, and public info</p>
+                    </div>
+                </div>
+                <div class="action-link-right">
+                    <i data-lucide="chevron-right" class="icon"></i>
+                </div>
+            </a>
+
+            <a href="/dashboard/pages/account-management.html" class="action-link">
+                <div class="action-link-left">
+                    <i data-lucide="alert-triangle" class="icon" style="color:var(--danger);"></i>
+                    <div>
+                        <h3 style="color:var(--danger);">Danger Zone</h3>
+                        <p>Deactivate or permanently delete your account</p>
+                    </div>
+                </div>
+                <div class="action-link-right">
+                    <i data-lucide="chevron-right" class="icon"></i>
+                </div>
+            </a>
+        </div>
+
+        <div class="actions-row">
+            <button class="btn-secondary" id="resetBtn">
+                <i data-lucide="rotate-ccw" class="icon" style="width:16px;height:16px;"></i>
+                Reset to Defaults
+            </button>
+            <button class="btn-primary" id="saveBtn">
+                <i data-lucide="save" class="icon" style="width:16px;height:16px;"></i>
+                Save Settings
+            </button>
+        </div>
     </main>
 
+        <!-- CHANGE EMAIL MODAL -->
+    <div class="modal-overlay" id="emailModal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h2>Change Email</h2>
+                <button class="close-x" data-close-modal><i data-lucide="x"></i></button>
+            </div>
+            <p class="modal-sub">You must confirm your current password to continue.</p>
+            <form class="modal-form" id="emailForm" autocomplete="off">
+                <div class="form-group">
+                    <label>New Email</label>
+                    <input type="email" id="newEmail" placeholder="you@example.com" required>
+                    <div class="field-error" id="newEmailErr"></div>
+                </div>
+                <div class="form-group">
+                    <label>Current Password</label>
+                    <input type="password" id="emailCurrentPassword" placeholder="Enter your current password" required>
+                    <div class="field-error" id="emailCurrentPasswordErr"></div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" data-close-modal>Cancel</button>
+                    <button type="submit" class="btn-primary" id="emailSubmitBtn">Save Email</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- CHANGE PASSWORD MODAL -->
+    <div class="modal-overlay" id="passwordModal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h2>Change Password</h2>
+                <button class="close-x" data-close-modal><i data-lucide="x"></i></button>
+            </div>
+            <p class="modal-sub">Choose a strong password. Minimum 8 characters with letters and numbers.</p>
+            <form class="modal-form" id="passwordForm" autocomplete="off">
+                <div class="form-group">
+                    <label>Current Password</label>
+                    <input type="password" id="currentPassword" placeholder="Enter your current password" required>
+                    <div class="field-error" id="currentPasswordErr"></div>
+                </div>
+                <div class="form-group">
+                    <label>New Password</label>
+                    <input type="password" id="newPassword" placeholder="At least 8 characters" required>
+                    <div class="pwd-hint">Must contain letters and numbers.</div>
+                    <div class="field-error" id="newPasswordErr"></div>
+                </div>
+                <div class="form-group">
+                    <label>Confirm New Password</label>
+                    <input type="password" id="confirmPassword" placeholder="Repeat new password" required>
+                    <div class="field-error" id="confirmPasswordErr"></div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" data-close-modal>Cancel</button>
+                    <button type="submit" class="btn-primary" id="passwordSubmitBtn">Save Password</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="toast" id="toast"></div>
+
     <script src="/dashboard/js/settings.js"></script>
-    <script src="/dashboard/js/theme.js"></script>
-    <script src="/dashboard/js/avatar.js"></script>
     <script>
-        document.getElementById('mobileToggle')?.addEventListener('click', function() {
-            document.getElementById('sidebar')?.classList.toggle('open');
-            document.getElementById('sidebarOverlay')?.classList.toggle('open');
-        });
-        document.getElementById('sidebarOverlay')?.addEventListener('click', function() {
-            document.getElementById('sidebar')?.classList.remove('open');
-            this.classList.remove('open');
-        });
-        document.getElementById('logoutButton')?.addEventListener('click', function() {
-            localStorage.removeItem('crevio_token');
-            localStorage.removeItem('crevio_user');
+        document.getElementById('logoutButton')?.addEventListener('click', () => {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
             window.location.href = '/admin/pages/login.html';
         });
+        if (typeof lucide !== 'undefined') lucide.createIcons();
     </script>
+    <script src="/dashboard/js/password-toggle.js"></script>
+    <script src="/dashboard/js/mobile-menu.js?v=639252484686517300"></script>
 </body>
 </html>

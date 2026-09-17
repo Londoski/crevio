@@ -1,374 +1,314 @@
 // =========================================================
-// CREVIO PROJECT EDIT JS (FIXED)
+// CREVIO — PROJECT EDITOR (create + edit)
+// File: dashboard/js/project-edit.js
 // =========================================================
 
-// ----- DOM REFS -----
-const form = document.getElementById('projectForm');
-const formContainer = document.getElementById('projectFormContainer');
-const loadingState = document.getElementById('loadingState');
-const mediaSection = document.getElementById('mediaSection');
-const mediaGrid = document.getElementById('mediaGrid');
-const mediaCount = document.getElementById('mediaCount');
-const fileInput = document.getElementById('fileInput');
-const uploadArea = document.getElementById('uploadArea');
-const uploadStatus = document.getElementById('uploadStatus');
-const submitBtn = document.getElementById('submitBtn');
-const deleteBtn = document.getElementById('deleteBtn');
-const saveOrderBtn = document.getElementById('saveOrderBtn');
-const messageEl = document.getElementById('formMessage');
+document.addEventListener("DOMContentLoaded", function () {
+    const $ = (id) => document.getElementById(id);
 
-// Delete modal
-const deleteModal = document.getElementById('deleteModal');
-const deleteMessage = document.getElementById('deleteMessage');
-const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
-const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+    const toast = $("toast");
 
-// ----- STATE -----
-let projectId = null;
-let currentMedia = [];
+    let projectId = null;
+    let currentStatus = "draft";
+    let coverUrl = null;        // server URL (what gets saved)
+    let coverLocalPreview = null; // temporary local preview
 
-// ----- GET PROJECT ID -----
-function getProjectId() {
-    const params = new URLSearchParams(window.location.search);
-    const id = params.get('id');
-    if (!id) { window.location.href = '/dashboard/pages/projects.html'; return null; }
-    return parseInt(id);
-}
-projectId = getProjectId();
-
-// ----- AUTH -----
-function getToken() {
-    const token = localStorage.getItem('crevio_token');
-    if (!token) {
-        window.location.href = '/admin/pages/login.html';
-        return null;
+    function getIdFromURL() {
+        const p = new URLSearchParams(window.location.search);
+        return p.get("id") ? parseInt(p.get("id"), 10) : null;
     }
-    return token;
-}
 
-// ----- THEME / LOGOUT / MOBILE (shared) -----
-function initTheme() {
-    const saved = localStorage.getItem('crevio_theme') || 'dark';
-    document.documentElement.setAttribute('data-theme', saved);
-}
-initTheme();
+    // =========================================================
+    // LOAD
+    // =========================================================
+    async function loadProject(id) {
+        try {
+            const res  = await apiFetch(`/api/projects/${id}`);
+            const data = await res.json();
+            if (!data.success || !data.project) throw new Error("Not found");
 
-document.getElementById('logoutButton')?.addEventListener('click', () => {
-    localStorage.removeItem('crevio_token');
-    localStorage.removeItem('crevio_user');
-    window.location.href = '/admin/pages/login.html';
-});
+            const p = data.project;
+            projectId = p.id;
 
-const themeToggle = document.getElementById('themeToggle');
-if (themeToggle) {
-    themeToggle.addEventListener('click', () => {
-        const current = document.documentElement.getAttribute('data-theme');
-        const next = current === 'dark' ? 'light' : 'dark';
-        document.documentElement.setAttribute('data-theme', next);
-        localStorage.setItem('crevio_theme', next);
-        if (typeof lucide !== 'undefined') lucide.createIcons();
-    });
-}
+            $("title").value         = p.name || "";
+            $("description").value   = p.description || "";
+            $("category").value      = p.category || "";
+            $("project_year").value  = p.project_year || "";
+            $("client_name").value   = p.client_name || "";
+            $("role").value          = p.role || "";
+            $("content").value       = p.content || "";
 
-const mobileToggle = document.getElementById('mobileToggle');
-const sidebar = document.getElementById('sidebar');
-const overlay = document.getElementById('sidebarOverlay');
-if (mobileToggle && sidebar && overlay) {
-    mobileToggle.addEventListener('click', () => {
-        sidebar.classList.toggle('open');
-        overlay.classList.toggle('open');
-    });
-    overlay.addEventListener('click', () => {
-        sidebar.classList.remove('open');
-        overlay.classList.remove('open');
-    });
-}
+            if (p.thumbnail_url) {
+                coverUrl = p.thumbnail_url;
+                showCoverPreview(coverUrl);
+            }
 
-// User info
-const userData = localStorage.getItem('crevio_user');
-if (userData) {
-    try {
-        const user = JSON.parse(userData);
-        const avatarEl = document.getElementById('userAvatar');
-        const nameDisplay = document.getElementById('userNameDisplay');
-        if (avatarEl && user.display_name) avatarEl.textContent = user.display_name.charAt(0).toUpperCase();
-        if (nameDisplay && user.display_name) nameDisplay.textContent = user.display_name;
-    } catch (e) { console.error(e); }
-}
+            currentStatus = p.published ? "published" : "draft";
+            updateStatusUI();
 
-// ----- HELPERS -----
-function refreshIcons() {
-    if (typeof lucide !== 'undefined') lucide.createIcons();
-}
-function showMessage(text, type = 'success') {
-    messageEl.style.display = 'block';
-    messageEl.textContent = text;
-    messageEl.className = 'form-message ' + type;
-}
-function hideMessage() {
-    messageEl.style.display = 'none';
-}
+            $("pageTitle").textContent    = "Edit Project";
+            $("pageSubtitle").textContent = `Editing "${p.name || "Untitled"}"`;
 
-// ----- LOAD PROJECT -----
-async function loadProject() {
-    const token = getToken();
-    if (!token || !projectId) return;
+            $("deleteBtn").style.display = "";
+            $("duplicateBtn").style.display = "";
 
-    try {
-        const res = await fetch(`/api/projects/${projectId}`, {
-            headers: { 'Authorization': 'Bearer ' + token }
-        });
+            $("descCount").textContent = (p.description || "").length;
+        } catch (err) {
+            console.error("Load error:", err);
+            showToast("Could not load project: " + err.message, true);
+        }
+    }
 
-        if (res.status === 401) {
-            localStorage.removeItem('crevio_token');
-            window.location.href = '/admin/pages/login.html';
+    // =========================================================
+    // SAVE
+    // =========================================================
+    async function save(status) {
+        const title = $("title").value.trim();
+        if (!title) {
+            showToast("Project title is required", true);
+            $("title").focus();
             return;
         }
-        if (!res.ok) throw new Error('HTTP ' + res.status);
 
-        const data = await res.json();
-        if (!data.success || !data.project) throw new Error('Project not found');
+        const payload = {
+            name:          title,
+            description:   $("description").value.trim(),
+            category:      $("category").value.trim(),
+            project_year:  $("project_year").value ? parseInt($("project_year").value, 10) : null,
+            client_name:   $("client_name").value.trim() || null,
+            role:          $("role").value.trim() || null,
+            content:       $("content").value.trim() || null,
+            thumbnail_url: coverUrl,
+            published:     status === "published"
+        };
 
-        populateForm(data.project);
-        currentMedia = data.project.media || [];
-        renderMedia(currentMedia);
+        console.log("💾 Saving project with payload:", payload);
 
-        loadingState.style.display = 'none';
-        formContainer.style.display = 'block';
-        mediaSection.style.display = 'block';
+        const btn = status === "published" ? $("publishBtn") : $("saveDraftBtn");
+        const original = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = "Saving…";
 
-        document.getElementById('pageTitle').textContent = data.project.title || 'Edit Project';
-
-    } catch (err) {
-        console.error('Load error:', err);
-        loadingState.innerHTML = `<div class="error-state">Unable to load project.</div>`;
-    }
-}
-
-// ----- POPULATE FORM (USING .value) -----
-function populateForm(project) {
-    // All fields are inputs/textarea, so we set .value
-    document.getElementById('title').value = project.title || '';
-    document.getElementById('description').value = project.description || '';
-    document.getElementById('category').value = project.category || '';
-    document.getElementById('year').value = project.year || '';
-    document.getElementById('client_name').value = project.client_name || '';
-    document.getElementById('project_url').value = project.project_url || '';
-    document.getElementById('thumbnail_url').value = project.thumbnail_url || '';
-}
-
-// ----- RENDER MEDIA -----
-function renderMedia(mediaItems) {
-    if (!mediaItems || mediaItems.length === 0) {
-        mediaGrid.innerHTML = `<div class="empty-state" style="grid-column:1/-1; padding:20px 0;">No media uploaded yet.</div>`;
-        mediaCount.textContent = '0 files';
-        saveOrderBtn.style.display = 'none';
-        return;
-    }
-
-    const sorted = [...mediaItems].sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
-    let html = '';
-    sorted.forEach(media => {
-        const isImage = media.media_type === 'image';
-        html += `
-            <div class="media-item" data-id="${media.id}" data-order="${media.sort_order || 0}">
-                <div class="preview">
-                    ${isImage ? `<img src="${media.media_url}" alt="${media.title || 'Media'}" loading="lazy" onerror="this.parentElement.innerHTML='<span class=placeholder>Image unavailable</span>'">` :
-                    `<video src="${media.media_url}" preload="metadata" controls></video>`}
-                </div>
-                <div class="info">
-                    <span class="title" title="${media.title || 'Untitled'}">${media.title || 'Untitled'}</span>
-                    <div class="actions">
-                        <input type="number" class="order-input" value="${media.sort_order || 0}" min="0" data-id="${media.id}">
-                        <button class="danger" data-id="${media.id}" title="Delete media">
-                            <i data-lucide="trash-2" style="width:16px;height:16px;"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
-    });
-
-    mediaGrid.innerHTML = html;
-    mediaCount.textContent = mediaItems.length + ' files';
-    saveOrderBtn.style.display = 'block';
-    refreshIcons();
-
-    // Delete media events
-    mediaGrid.querySelectorAll('.actions .danger').forEach(btn => {
-        btn.addEventListener('click', () => deleteMedia(parseInt(btn.dataset.id)));
-    });
-}
-
-// ----- SAVE PROJECT -----
-form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const token = getToken();
-    if (!token) return;
-
-    const data = {
-        title: document.getElementById('title').value.trim(),
-        description: document.getElementById('description').value.trim(),
-        category: document.getElementById('category').value.trim(),
-        year: parseInt(document.getElementById('year').value) || null,
-        client_name: document.getElementById('client_name').value.trim(),
-        project_url: document.getElementById('project_url').value.trim(),
-        thumbnail_url: document.getElementById('thumbnail_url').value.trim()
-    };
-
-    if (!data.title) { showMessage('Project title is required.', 'error'); return; }
-
-    hideMessage();
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = 'Saving...';
-
-    try {
-        const res = await fetch(`/api/projects/${projectId}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-            body: JSON.stringify(data)
-        });
-        const result = await res.json();
-        if (!res.ok || !result.success) throw new Error(result.message || 'Update failed.');
-        showMessage('Project updated successfully!', 'success');
-        document.getElementById('pageTitle').textContent = data.title;
-        await loadProject();
-    } catch (err) {
-        console.error('Update error:', err);
-        showMessage(err.message || 'Unable to update project.', 'error');
-    } finally {
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = '<i data-lucide="save" class="icon"></i> Save Changes';
-        refreshIcons();
-    }
-});
-
-// ----- UPLOAD MEDIA -----
-uploadArea.addEventListener('click', () => fileInput.click());
-uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.style.borderColor = 'var(--accent)'; });
-uploadArea.addEventListener('dragleave', () => { uploadArea.style.borderColor = ''; });
-uploadArea.addEventListener('drop', (e) => {
-    e.preventDefault();
-    uploadArea.style.borderColor = '';
-    if (e.dataTransfer.files.length) {
-        fileInput.files = e.dataTransfer.files;
-        uploadFiles();
-    }
-});
-fileInput.addEventListener('change', uploadFiles);
-
-async function uploadFiles() {
-    const token = getToken();
-    if (!token) return;
-    const files = fileInput.files;
-    if (!files.length) return;
-
-    uploadStatus.textContent = `Uploading ${files.length} file(s)...`;
-    uploadStatus.style.color = 'var(--text-secondary)';
-
-    let successCount = 0, errorCount = 0;
-    for (const file of files) {
-        const formData = new FormData();
-        formData.append('media', file);
         try {
-            const res = await fetch(`/api/projects/${projectId}/media/upload`, {
-                method: 'POST',
-                headers: { 'Authorization': 'Bearer ' + token },
-                body: formData
-            });
-            const data = await res.json();
-            if (res.ok && data.success) successCount++; else errorCount++;
-        } catch (err) { errorCount++; console.error(err); }
-    }
+            const method = projectId ? "PATCH" : "POST";
+            const url    = projectId ? `/api/projects/${projectId}` : "/api/projects";
+            const res    = await apiFetch(url, { method, body: JSON.stringify(payload) });
+            const data   = await res.json();
 
-    await loadProject();
-    uploadStatus.textContent = errorCount === 0 ? `✅ ${successCount} file(s) uploaded!` : `⚠️ ${successCount} uploaded, ${errorCount} failed.`;
-    uploadStatus.style.color = errorCount === 0 ? '#22c55e' : '#ef4444';
-    fileInput.value = '';
-    setTimeout(() => { uploadStatus.textContent = ''; }, 5000);
-}
+            if (!data.success) throw new Error(data.message || "Save failed");
 
-// ----- DELETE MEDIA -----
-async function deleteMedia(mediaId) {
-    if (!confirm('Delete this media permanently?')) return;
-    const token = getToken();
-    if (!token) return;
-    try {
-        const res = await fetch(`/api/projects/${projectId}/media/${mediaId}`, {
-            method: 'DELETE',
-            headers: { 'Authorization': 'Bearer ' + token }
-        });
-        const data = await res.json();
-        if (!res.ok || !data.success) throw new Error(data.message || 'Delete failed.');
-        await loadProject();
-    } catch (err) {
-        console.error('Delete media error:', err);
-        alert(err.message || 'Unable to delete media.');
-    }
-}
+            if (data.project && data.project.id) projectId = data.project.id;
+            currentStatus = status === "published" ? "published" : "draft";
+            updateStatusUI();
 
-// ----- SAVE MEDIA ORDER -----
-saveOrderBtn.addEventListener('click', async () => {
-    const token = getToken();
-    if (!token) return;
-    const inputs = mediaGrid.querySelectorAll('.order-input');
-    const updates = [];
-    inputs.forEach(input => updates.push({ mediaId: parseInt(input.dataset.id), sortOrder: parseInt(input.value) || 0 }));
-    if (!updates.length) return;
-    saveOrderBtn.disabled = true;
-    saveOrderBtn.innerHTML = 'Saving...';
-    try {
-        for (const update of updates) {
-            const res = await fetch(`/api/projects/${projectId}/media/${update.mediaId}/order`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-                body: JSON.stringify({ sort_order: update.sortOrder })
-            });
-            if (!res.ok) throw new Error('Failed to update order');
+            showToast(status === "published" ? "Project published" : "Saved as draft");
+
+            if (!window.location.search.includes("id=") && projectId) {
+                const u = new URL(window.location);
+                u.searchParams.set("id", projectId);
+                window.history.replaceState({}, "", u);
+                $("pageTitle").textContent = "Edit Project";
+                $("deleteBtn").style.display = "";
+                $("duplicateBtn").style.display = "";
+            }
+        } catch (err) {
+            console.error("Save error:", err);
+            showToast("Save failed: " + err.message, true);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = original;
+            if (typeof lucide !== "undefined") lucide.createIcons();
         }
-        await loadProject();
-        uploadStatus.textContent = '✅ Media order updated!';
-        uploadStatus.style.color = '#22c55e';
-        setTimeout(() => { uploadStatus.textContent = ''; }, 3000);
-    } catch (err) {
-        console.error('Save order error:', err);
-        alert('Unable to save media order.');
-    } finally {
-        saveOrderBtn.disabled = false;
-        saveOrderBtn.innerHTML = '<i data-lucide="save" class="icon"></i> Save Order';
-        refreshIcons();
     }
-});
 
-// ----- DELETE PROJECT -----
-deleteBtn.addEventListener('click', () => {
-    deleteMessage.textContent = 'Are you sure you want to delete this project? This will also delete all associated media. This action cannot be undone.';
-    deleteModal.classList.add('open');
-});
-cancelDeleteBtn.addEventListener('click', () => deleteModal.classList.remove('open'));
-deleteModal.addEventListener('click', (e) => { if (e.target === deleteModal) deleteModal.classList.remove('open'); });
-
-confirmDeleteBtn.addEventListener('click', async () => {
-    const token = getToken();
-    if (!token) return;
-    confirmDeleteBtn.disabled = true;
-    confirmDeleteBtn.textContent = 'Deleting...';
-    try {
-        const res = await fetch(`/api/projects/${projectId}`, {
-            method: 'DELETE',
-            headers: { 'Authorization': 'Bearer ' + token }
-        });
-        const data = await res.json();
-        if (!res.ok || !data.success) throw new Error(data.message || 'Delete failed.');
-        deleteModal.classList.remove('open');
-        window.location.href = '/dashboard/pages/projects.html';
-    } catch (err) {
-        console.error('Delete project error:', err);
-        alert(err.message || 'Unable to delete project.');
-        confirmDeleteBtn.disabled = false;
-        confirmDeleteBtn.textContent = 'Delete';
+    // =========================================================
+    // STATUS UI
+    // =========================================================
+    function updateStatusUI() {
+        const isPub = currentStatus === "published";
+        $("statusValue").textContent = isPub ? "Published" : "Draft";
+        $("statusDot").className = "status-dot " + (isPub ? "published" : "draft");
     }
-});
 
-// ----- INIT -----
-loadProject();
+    // =========================================================
+    // COVER UPLOAD
+    // =========================================================
+    $("coverUploader")?.addEventListener("click", () => $("coverInput").click());
+
+    $("coverInput")?.addEventListener("change", async function () {
+        const file = this.files[0];
+        this.value = "";
+
+        if (!file) return;
+
+        // Validate
+        if (file.size > 8 * 1024 * 1024) {
+            return showToast("Image too large (max 8MB)", true);
+        }
+        if (!file.type.startsWith("image/")) {
+            return showToast("Only image files are allowed", true);
+        }
+
+        // ---- IMMEDIATE local preview ----
+        // This ALWAYS shows, regardless of upload success
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            coverLocalPreview = e.target.result;
+            showCoverPreview(coverLocalPreview);
+            console.log("🖼️ Local preview loaded");
+        };
+        reader.readAsDataURL(file);
+
+        // ---- Upload to server ----
+        const fd = new FormData();
+        fd.append("cover", file);
+
+        try {
+            const token = localStorage.getItem("token");
+            console.log("📤 Uploading cover:", file.name, file.type, file.size);
+
+            const res = await fetch("/api/projects/upload-cover", {
+                method: "POST",
+                headers: { "Authorization": `Bearer ${token}` },
+                body: fd
+            });
+
+            console.log("📥 Upload response status:", res.status);
+
+            const data = await res.json();
+            console.log("📥 Upload response body:", data);
+
+            if (data.success && data.url) {
+                coverUrl = data.url;
+                showCoverPreview(coverUrl);
+                showToast("✅ Cover uploaded — remember to save the project");
+            } else {
+                // Upload failed — keep local preview but warn user it won't be saved
+                showToast("⚠️ Cover uploaded to page but not saved to server. Save may not persist the cover.", true);
+                console.error("Upload failed:", data);
+            }
+        } catch (err) {
+            console.error("Upload error:", err);
+            // Keep local preview
+            showToast("⚠️ Server upload failed: " + err.message + " — cover preview will not be saved", true);
+        }
+    });
+
+    function showCoverPreview(url) {
+        const img = $("coverPreviewImg");
+        const wrap = $("coverPreview");
+        if (!img || !wrap) {
+            console.error("Missing cover preview elements");
+            return;
+        }
+        img.src = url;
+        wrap.classList.add("show");
+    }
+
+    $("coverRemove")?.addEventListener("click", () => {
+        coverUrl = null;
+        coverLocalPreview = null;
+        $("coverPreview").classList.remove("show");
+        $("coverPreviewImg").src = "";
+    });
+
+    // =========================================================
+    // DELETE
+    // =========================================================
+    $("deleteBtn")?.addEventListener("click", async () => {
+        if (!projectId) return;
+        if (!confirm("Delete this project permanently? This cannot be undone.")) return;
+        try {
+            const res = await apiFetch(`/api/projects/${projectId}`, { method: "DELETE" });
+            const data = await res.json();
+            if (data.success) {
+                showToast("Project deleted");
+                setTimeout(() => location.href = "/dashboard/pages/projects.html", 800);
+            } else {
+                showToast(data.message || "Delete failed", true);
+            }
+        } catch (err) {
+            showToast("Delete failed: " + err.message, true);
+        }
+    });
+
+    // =========================================================
+    // DUPLICATE
+    // =========================================================
+    $("duplicateBtn")?.addEventListener("click", async () => {
+        if (!projectId) return;
+        try {
+            const res = await apiFetch(`/api/projects/${projectId}/duplicate`, { method: "POST" });
+            const data = await res.json();
+            if (data.success && data.project) {
+                showToast("Project duplicated");
+                setTimeout(() => location.href = `/dashboard/pages/project-edit.html?id=${data.project.id}`, 600);
+            } else {
+                showToast(data.message || "Duplicate failed", true);
+            }
+        } catch (err) {
+            showToast("Duplicate failed: " + err.message, true);
+        }
+    });
+
+    // =========================================================
+    // PREVIEW
+    // =========================================================
+    $("previewBtn")?.addEventListener("click", () => {
+        if (!projectId) return showToast("Save the project first to preview it", true);
+        window.open(`/p/preview/project/${projectId}`, "_blank");
+    });
+
+    // =========================================================
+    // BUTTON HANDLERS
+    // =========================================================
+    $("saveDraftBtn")?.addEventListener("click", () => save("draft"));
+    $("publishBtn")?.addEventListener("click",   () => save("published"));
+
+    $("description")?.addEventListener("input", function () {
+        $("descCount").textContent = this.value.length;
+    });
+
+    // =========================================================
+    // HELPERS
+    // =========================================================
+    async function apiFetch(url, options = {}) {
+        const token = localStorage.getItem("token");
+        const headers = {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+            ...(options.headers || {})
+        };
+        const res = await fetch(url, { ...options, headers });
+        if (res.status === 401) {
+            localStorage.removeItem("token");
+            window.location.href = "/admin/pages/login.html";
+            throw new Error("Unauthorized");
+        }
+        return res;
+    }
+
+    let toastTimer;
+    function showToast(msg, isError = false) {
+        if (!toast) return;
+        clearTimeout(toastTimer);
+        toast.textContent = msg;
+        toast.classList.toggle("error", isError);
+        toast.classList.add("show");
+        toastTimer = setTimeout(() => toast.classList.remove("show"), 3000);
+    }
+
+    // =========================================================
+    // INIT
+    // =========================================================
+    projectId = getIdFromURL();
+    if (projectId) {
+        loadProject(projectId);
+    } else {
+        $("pageTitle").textContent = "New Project";
+        $("pageSubtitle").textContent = "Create a new project for your portfolio";
+        updateStatusUI();
+    }
+
+    if (typeof lucide !== "undefined") lucide.createIcons();
+});

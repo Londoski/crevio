@@ -1,14 +1,32 @@
-const express = require('express');
+// =========================================================
+// CREVIO — SERVICE ROUTES
+// File: backend/routes/serviceRoutes.js
+// =========================================================
+
+const express = require("express");
 const router = express.Router();
-const serviceController = require('../controllers/serviceController');
-const { authenticate } = require('../middleware/authMiddleware');
+const auth = require("../middleware/authMiddleware");
+const serviceController = require("../controllers/serviceController");
 
-router.use(authenticate);
+// Public — no auth
+router.get("/public/:slug/:serviceId", serviceController.getPublicService);
 
-router.get('/', serviceController.getServices);
-router.get('/:id', serviceController.getService);
-router.post('/', serviceController.createService);
-router.put('/:id', serviceController.updateService);
-router.delete('/:id', serviceController.deleteService);
+// Protected — stats first
+router.get("/stats",    auth, serviceController.getStats);
+
+// Main CRUD
+router.get("/",         auth, serviceController.getServices);
+router.post("/",        auth, serviceController.createService);
+router.get("/:id",      auth, serviceController.getService);
+router.patch("/:id",    auth, serviceController.updateService);
+router.put("/:id",      auth, serviceController.updateService);
+router.delete("/:id",   auth, serviceController.deleteService);
+
+// Sub-resources
+router.put("/:id/included-items", auth, serviceController.saveIncludedItems);
+router.put("/:id/faqs",           auth, serviceController.saveFaqs);
+router.put("/:id/projects",       auth, serviceController.saveProjects);
+router.put("/:id/skills",         auth, serviceController.saveSkills);
+router.put("/:id/process",        auth, serviceController.saveProcess);
 
 module.exports = router;

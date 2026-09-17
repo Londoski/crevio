@@ -1,285 +1,302 @@
 // =========================================================
-// CREVIO — ACCOUNT MANAGEMENT JS (FULLY WORKING)
+// CREVIO — ACCOUNT MANAGEMENT PAGE
+// File: dashboard/js/account-management.js
 // =========================================================
 
-console.log('✅ account-management.js loaded');
+document.addEventListener("DOMContentLoaded", function () {
+    const $ = (id) => document.getElementById(id);
 
-// ----- AUTH -----
-function getToken() {
-    const token = localStorage.getItem('crevio_token');
-    if (!token) {
-        window.location.href = '/admin/pages/login.html';
-        return null;
-    }
-    return token;
-}
+    const toast            = $("toast");
+    const deactivateModal  = $("deactivateModal");
+    const deleteModal      = $("deleteModal");
+    const deleteInput      = $("deleteConfirmInput");
+    const confirmDelete    = $("confirmDelete");
+    const exportBtn        = $("exportBtn");
+    const deactivateBtn    = $("deactivateBtn");
+    const deleteBtn        = $("deleteBtn");
 
-// ----- DOM REFS -----
-const deactivateBtn = document.getElementById('deactivateBtn');
-const deleteBtn = document.getElementById('deleteBtn');
-const logoutBtn = document.getElementById('logoutBtn');
+    // =========================================================
+    // LOAD OVERVIEW
+    // =========================================================
+    async function loadOverview() {
+        const container = $("overviewContainer");
+        container.innerHTML = `<div class="loading">Loading account info...</div>`;
 
-const deactivateModal = document.getElementById('deactivateModal');
-const cancelDeactivateBtn = document.getElementById('cancelDeactivateBtn');
-const confirmDeactivateBtn = document.getElementById('confirmDeactivateBtn');
+        try {
+            const res  = await window.apiFetch("/api/account/overview");
+            const data = await res.json();
 
-const deleteModal = document.getElementById('deleteModal');
-const cancelDeleteModalBtn = document.getElementById('cancelDeleteModalBtn');
-const proceedDeleteBtn = document.getElementById('proceedDeleteBtn');
+            if (!data.success || !data.account) {
+                container.innerHTML = `<div class="loading">Could not load account info.</div>`;
+                return;
+            }
 
-const feedbackModal = document.getElementById('feedbackModal');
-const skipFeedbackBtn = document.getElementById('skipFeedbackBtn');
-const finalDeleteBtn = document.getElementById('finalDeleteBtn');
+            const a = data.account;
+            const status      = (a.account_status || "active").toLowerCase();
+            const statusClass = status === "active" ? "active"
+                                : status === "deactivated" ? "warning"
+                                : status === "pending_deletion" ? "danger"
+                                : "muted";
+            const statusLabel = status === "active" ? "Active"
+                                : status === "deactivated" ? "Deactivated"
+                                : status === "pending_deletion" ? "Pending Deletion"
+                                : status.charAt(0).toUpperCase() + status.slice(1);
 
-const finalConfirmModal = document.getElementById('finalConfirmModal');
-const cancelFinalBtn = document.getElementById('cancelFinalBtn');
-const confirmFinalDeleteBtn = document.getElementById('confirmFinalDeleteBtn');
+            const memberSince = a.created_at ? formatDate(a.created_at) : "Unknown";
 
-const tabBtns = document.querySelectorAll('.tab-btn');
-const panelControl = document.getElementById('panel-control');
-const panelInfo = document.getElementById('panel-info');
+            container.innerHTML = `
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="label">Username</div>
+                        <div class="value">${escapeHtml(a.username || "—")}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="label">Email</div>
+                        <div class="value">${escapeHtml(a.email || "—")}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="label">Display Name</div>
+                        <div class="value">${escapeHtml(a.display_name || "—")}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="label">Role</div>
+                        <div class="value" style="text-transform:capitalize;">${escapeHtml(a.role || "creator")}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="label">Account Status</div>
+                        <div class="value"><span class="badge ${statusClass}">${statusLabel}</span></div>
+                    </div>
+                    <div class="info-item">
+                        <div class="label">Member Since</div>
+                        <div class="value">${memberSince}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="label">Projects</div>
+                        <div class="value">${a.totalProjects ?? 0}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="label">Services</div>
+                        <div class="value">${a.totalServices ?? 0}</div>
+                    </div>
+                </div>
+            `;
 
-let selectedReason = null;
+            // Deletion banner
+            if (a.deletion_scheduled_for) {
+                const banner = `
+                    <div class="deletion-banner">
+                        <div class="left">
+                            <h3>⚠️ Account scheduled for deletion</h3>
+                            <p>Your account will be permanently deleted on <strong>${formatDate(a.deletion_scheduled_for)}</strong>.</p>
+                        </div>
+                        <button class="btn-primary" id="cancelDeletionBtn">
+                            <i data-lucide="x-circle" class="icon" style="width:14px;height:14px;"></i>
+                            Cancel Deletion
+                        </button>
+                    </div>
+                `;
+                $("deletionBannerContainer").innerHTML = banner;
+                if (typeof lucide !== "undefined") lucide.createIcons();
 
-// ----- TABS -----
-tabBtns.forEach(btn => {
-    btn.addEventListener('click', function() {
-        tabBtns.forEach(b => b.classList.remove('active'));
-        this.classList.add('active');
-        const tab = this.dataset.tab;
-        if (tab === 'control') {
-            panelControl.style.display = 'block';
-            panelInfo.style.display = 'none';
-        } else {
-            panelControl.style.display = 'none';
-            panelInfo.style.display = 'block';
-            loadAccountInfo();
+                $("cancelDeletionBtn")?.addEventListener("click", async () => {
+                    if (!confirm("Cancel account deletion? Your account will be restored.")) return;
+                    try {
+                        const res  = await window.apiFetch("/api/account/cancel-deletion", { method: "POST" });
+                        const data = await res.json();
+                        if (data.success) {
+                            showToast("Deletion cancelled");
+                            loadOverview();
+                        } else {
+                            showToast(data.message || "Failed", true);
+                        }
+                    } catch (err) { showToast("Failed: " + err.message, true); }
+                });
+            } else {
+                $("deletionBannerContainer").innerHTML = "";
+            }
+        } catch (err) {
+            console.error("Load overview error:", err);
+            container.innerHTML = `<div class="loading">Could not load account info.</div>`;
         }
-    });
-});
+    }
 
-// ----- LOAD ACCOUNT INFO -----
-async function loadAccountInfo() {
-    const token = getToken();
-    if (!token) return;
-    const container = document.getElementById('accountInfoContainer');
-    try {
-        const res = await fetch('/api/account/info', {
-            headers: { 'Authorization': 'Bearer ' + token }
+    // =========================================================
+    // MODAL OPEN/CLOSE
+    // =========================================================
+    document.querySelectorAll("[data-close-modal]").forEach(btn => {
+        btn.addEventListener("click", () => {
+            deactivateModal.classList.remove("open");
+            deleteModal.classList.remove("open");
         });
-        if (res.status === 401) {
-            localStorage.removeItem('crevio_token');
-            window.location.href = '/admin/pages/login.html';
-            return;
-        }
-        const data = await res.json();
-        if (!data.success) throw new Error(data.message || 'Failed to load account info');
-        renderAccountInfo(data.account);
-    } catch (err) {
-        console.error(err);
-        container.innerHTML = '<div class="loading-state" style="color:var(--danger);">Unable to load account information.</div>';
-    }
-}
-
-function renderAccountInfo(account) {
-    const statusClass = account.account_status === 'active' ? 'active' :
-                        account.account_status === 'deactivated' ? 'deactivated' :
-                        account.account_status === 'pending_deletion' ? 'pending_deletion' : '';
-    const statusLabel = account.account_status ? account.account_status.charAt(0).toUpperCase() + account.account_status.slice(1).replace('_', ' ') : '—';
-
-    const getBadge = (verified) => {
-        if (verified) {
-            return `<span class="badge-verified">Verified</span>`;
-        } else {
-            return `<span class="badge-unverified">Not Verified</span>`;
-        }
-    };
-
-    const html = `
-        <div class="info-grid">
-            <div class="info-item"><div class="label">Username</div><div class="value">${account.username || '—'}</div></div>
-            <div class="info-item"><div class="label">Display Name</div><div class="value">${account.display_name || '—'}</div></div>
-            <div class="info-item"><div class="label">Email</div><div class="value">${account.email || '—'} ${getBadge(account.email_verified)}</div></div>
-            <div class="info-item"><div class="label">Phone</div><div class="value">${account.phone || '—'} ${getBadge(account.phone_verified)}</div></div>
-            <div class="info-item"><div class="label">Location</div><div class="value">${account.location || '—'}</div></div>
-            <div class="info-item"><div class="label">Account Created</div><div class="value">${new Date(account.created_at).toLocaleDateString()}</div></div>
-            <div class="info-item"><div class="label">Account Status</div><div class="value"><span class="status-badge ${statusClass}">${statusLabel}</span></div></div>
-            <div class="info-item"><div class="label">Two-Factor</div><div class="value">${account.two_factor_enabled ? 'Enabled' : 'Disabled'}</div></div>
-        </div>
-    `;
-    document.getElementById('accountInfoContainer').innerHTML = html;
-    refreshIcons();
-}
-
-// ----- DEACTIVATE -----
-if (deactivateBtn) {
-    deactivateBtn.addEventListener('click', function() {
-        const username = localStorage.getItem('crevio_user') ? JSON.parse(localStorage.getItem('crevio_user')).username : 'User';
-        document.getElementById('deactivateTitle').textContent = username + ': Deactivate this account?';
-        deactivateModal.classList.add('open');
     });
-}
 
-if (cancelDeactivateBtn) {
-    cancelDeactivateBtn.addEventListener('click', function() {
-        deactivateModal.classList.remove('open');
+    [deactivateModal, deleteModal].forEach(m => {
+        m?.addEventListener("click", (e) => {
+            if (e.target === m) m.classList.remove("open");
+        });
     });
-}
 
-if (confirmDeactivateBtn) {
-    confirmDeactivateBtn.addEventListener('click', async function() {
-        const token = getToken();
-        if (!token) return;
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+            deactivateModal.classList.remove("open");
+            deleteModal.classList.remove("open");
+        }
+    });
+
+    // =========================================================
+    // EXPORT DATA
+    // =========================================================
+    exportBtn?.addEventListener("click", async () => {
+        exportBtn.disabled = true;
+        const original = exportBtn.innerHTML;
+        exportBtn.innerHTML = `<i data-lucide="loader" class="icon" style="width:14px;height:14px;"></i> Preparing...`;
+        if (typeof lucide !== "undefined") lucide.createIcons();
+
         try {
-            const res = await fetch('/api/account/deactivate', {
-                method: 'POST',
-                headers: { 'Authorization': 'Bearer ' + token }
+            const token = localStorage.getItem("token");
+            const res = await fetch("/api/account/export", {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+
+            if (!res.ok) throw new Error("Export failed (" + res.status + ")");
+
+            const blob = await res.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `crevio-export-${Date.now()}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            showToast("Data export downloaded");
+        } catch (err) {
+            showToast("Export failed: " + err.message, true);
+        } finally {
+            exportBtn.disabled = false;
+            exportBtn.innerHTML = original;
+            if (typeof lucide !== "undefined") lucide.createIcons();
+        }
+    });
+
+    // =========================================================
+    // DEACTIVATE
+    // =========================================================
+    deactivateBtn?.addEventListener("click", () => {
+        $("deactivateReason").value = "";
+        deactivateModal.classList.add("open");
+    });
+
+    $("confirmDeactivate")?.addEventListener("click", async () => {
+        const reason = $("deactivateReason").value.trim();
+        const btn = $("confirmDeactivate");
+        btn.disabled = true;
+        btn.textContent = "Deactivating...";
+
+        try {
+            const res  = await window.apiFetch("/api/account/deactivate", {
+                method: "POST",
+                body: JSON.stringify({ reason })
             });
             const data = await res.json();
-            if (!res.ok || !data.success) throw new Error(data.message || 'Deactivation failed.');
-            alert('✅ Account deactivated. You can reactivate by logging in again.');
-            localStorage.removeItem('crevio_token');
-            localStorage.removeItem('crevio_user');
-            window.location.href = '/admin/pages/login.html';
+
+            if (data.success) {
+                deactivateModal.classList.remove("open");
+                showToast("Account deactivated. Logging out...");
+                loadOverview();
+                setTimeout(() => {
+                    localStorage.removeItem("token");
+                    localStorage.removeItem("user");
+                    window.location.href = "/admin/pages/login.html";
+                }, 2000);
+            } else {
+                showToast(data.message || "Failed to deactivate", true);
+                btn.disabled = false;
+                btn.textContent = "Yes, Deactivate";
+            }
         } catch (err) {
-            console.error(err);
-            alert('❌ ' + err.message);
+            showToast("Failed: " + err.message, true);
+            btn.disabled = false;
+            btn.textContent = "Yes, Deactivate";
         }
-        deactivateModal.classList.remove('open');
     });
-}
 
-// ----- DELETE (first step) -----
-if (deleteBtn) {
-    deleteBtn.addEventListener('click', function() {
-        deleteModal.classList.add('open');
+    // =========================================================
+    // DELETE
+    // =========================================================
+    deleteBtn?.addEventListener("click", () => {
+        $("deleteConfirmInput").value = "";
+        $("deleteReason").value = "";
+        confirmDelete.disabled = true;
+        deleteModal.classList.add("open");
     });
-}
 
-if (cancelDeleteModalBtn) {
-    cancelDeleteModalBtn.addEventListener('click', function() {
-        deleteModal.classList.remove('open');
+    deleteInput?.addEventListener("input", function () {
+        confirmDelete.disabled = this.value.trim() !== "DELETE";
     });
-}
 
-if (proceedDeleteBtn) {
-    proceedDeleteBtn.addEventListener('click', function() {
-        deleteModal.classList.remove('open');
-        feedbackModal.classList.add('open');
-        document.querySelectorAll('input[name="exitReason"]').forEach(r => r.checked = false);
-        document.getElementById('feedbackConfirm').classList.remove('show');
-        selectedReason = null;
-    });
-}
+    confirmDelete?.addEventListener("click", async () => {
+        const reason = $("deleteReason").value.trim();
+        confirmDelete.disabled = true;
+        confirmDelete.textContent = "Deleting...";
 
-// ----- FEEDBACK -----
-document.querySelectorAll('input[name="exitReason"]').forEach(radio => {
-    radio.addEventListener('change', function() {
-        selectedReason = this.value;
-        document.getElementById('feedbackConfirm').classList.add('show');
-        document.getElementById('feedbackConfirm').textContent = 'Thanks for your feedback';
-    });
-});
-
-if (skipFeedbackBtn) {
-    skipFeedbackBtn.addEventListener('click', function() {
-        feedbackModal.classList.remove('open');
-        finalConfirmModal.classList.add('open');
-    });
-}
-
-if (finalDeleteBtn) {
-    finalDeleteBtn.addEventListener('click', function() {
-        feedbackModal.classList.remove('open');
-        finalConfirmModal.classList.add('open');
-    });
-}
-
-// ----- FINAL DELETE -----
-if (cancelFinalBtn) {
-    cancelFinalBtn.addEventListener('click', function() {
-        finalConfirmModal.classList.remove('open');
-    });
-}
-
-if (confirmFinalDeleteBtn) {
-    confirmFinalDeleteBtn.addEventListener('click', async function() {
-        const token = getToken();
-        if (!token) return;
         try {
-            const res = await fetch('/api/account/request-deletion', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + token
-                },
-                body: JSON.stringify({ reason: selectedReason })
+            const res  = await window.apiFetch("/api/account/delete", {
+                method: "POST",
+                body: JSON.stringify({ reason })
             });
             const data = await res.json();
-            if (!res.ok || !data.success) throw new Error(data.message || 'Deletion request failed.');
-            alert('✅ Deletion requested. You have 30 days to cancel. Your account will be permanently deleted after that.');
-            localStorage.removeItem('crevio_token');
-            localStorage.removeItem('crevio_user');
-            window.location.href = '/admin/pages/login.html';
+
+            if (data.success) {
+                deleteModal.classList.remove("open");
+                showToast("Account scheduled for deletion");
+                loadOverview();
+                setTimeout(() => {
+                    localStorage.removeItem("token");
+                    localStorage.removeItem("user");
+                    window.location.href = "/admin/pages/login.html";
+                }, 2500);
+            } else {
+                showToast(data.message || "Failed", true);
+                confirmDelete.disabled = false;
+                confirmDelete.textContent = "Delete Forever";
+            }
         } catch (err) {
-            console.error(err);
-            alert('❌ ' + err.message);
+            showToast("Failed: " + err.message, true);
+            confirmDelete.disabled = false;
+            confirmDelete.textContent = "Delete Forever";
         }
-        finalConfirmModal.classList.remove('open');
     });
-}
 
-// ----- LOGOUT -----
-if (logoutBtn) {
-    logoutBtn.addEventListener('click', function() {
-        const token = getToken();
-        if (token) {
-            fetch('/api/auth/logout', {
-                method: 'POST',
-                headers: { 'Authorization': 'Bearer ' + token }
-            }).catch(() => {});
-        }
-        localStorage.removeItem('crevio_token');
-        localStorage.removeItem('crevio_user');
-        window.location.href = '/admin/pages/login.html';
-    });
-}
+    // =========================================================
+    // HELPERS
+    // =========================================================
+    let toastTimer;
+    function showToast(msg, isError = false) {
+        if (!toast) return;
+        clearTimeout(toastTimer);
+        toast.textContent = msg;
+        toast.classList.toggle("error", isError);
+        toast.classList.add("show");
+        toastTimer = setTimeout(() => toast.classList.remove("show"), 3500);
+    }
 
-// ----- HELPERS -----
-function refreshIcons() {
-    if (typeof lucide !== 'undefined') lucide.createIcons();
-}
-
-// ----- INIT -----
-document.addEventListener('DOMContentLoaded', function() {
-    const userData = localStorage.getItem('crevio_user');
-    if (userData) {
+    function formatDate(str) {
         try {
-            const user = JSON.parse(userData);
-            const avatar = document.getElementById('userAvatar');
-            const nameDisplay = document.getElementById('userNameDisplay');
-            if (avatar && user.display_name) avatar.textContent = user.display_name.charAt(0).toUpperCase();
-            if (nameDisplay && user.display_name) nameDisplay.textContent = user.display_name;
-        } catch (e) { console.error(e); }
+            const d = new Date(str.replace(" ", "T") + (str.includes("Z") ? "" : "Z"));
+            return d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+        } catch { return str; }
     }
-    // Load account info if info tab is active
-    if (document.querySelector('.tab-btn.active')?.dataset.tab === 'info') {
-        loadAccountInfo();
-    }
-});
 
-// Close modals on overlay click
-document.querySelectorAll('.modal-overlay').forEach(overlay => {
-    overlay.addEventListener('click', function(e) {
-        if (e.target === this) {
-            this.classList.remove('open');
-        }
-    });
-});
-
-// Close modals on Escape key
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-        document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open'));
+    function escapeHtml(str) {
+        return String(str == null ? "" : str).replace(/[&<>"']/g, s => ({
+            "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+        })[s]);
     }
+
+    // =========================================================
+    // INIT
+    // =========================================================
+    loadOverview();
 });

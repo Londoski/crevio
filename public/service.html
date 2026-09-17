@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Service</title>
+    <meta name="description" id="metaDescription" content="">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        :root {
+            --primary: #2563EB;
+            --bg: #0F172A;
+            --card: #1E293B;
+            --text: #F1F5F9;
+            --text-muted: #94A3B8;
+            --border: rgba(255,255,255,0.1);
+            --success: #22C55E;
+            --font: 'Inter', sans-serif;
+        }
+        body {
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+        a { color: inherit; text-decoration: none; }
+        img { max-width:100%; display:block; }
+        .container { max-width: 1000px; margin: 0 auto; padding: 0 24px; }
+
+        /* Header */
+        .page-header {
+            padding: 40px 0 32px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 40px;
+        }
+        .back-link {
+            display: inline-flex; align-items: center; gap: 8px;
+            color: var(--text-muted); font-size: 14px;
+            margin-bottom: 20px; transition: color 0.15s;
+        }
+        .back-link:hover { color: var(--primary); }
+        .back-link svg { width: 16px; height: 16px; }
+
+        .category-badge {
+            display: inline-block;
+            background: rgba(37,99,235,0.15);
+            color: var(--primary);
+            padding: 4px 14px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 12px;
+        }
+
+        h1 {
+            font-size: clamp(28px, 4vw, 42px);
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            margin-bottom: 12px;
+            line-height: 1.15;
+        }
+
+        .service-lead {
+            font-size: 18px;
+            color: var(--text-muted);
+            max-width: 700px;
+            margin-bottom: 24px;
+        }
+
+        .hero-actions {
+            display: flex; gap: 12px; flex-wrap: wrap;
+        }
+        .btn {
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+            border: none;
+            display: inline-flex; align-items: center; gap: 8px;
+            text-decoration: none;
+            font-family: inherit;
+        }
+        .btn-primary { background: var(--primary); color: #fff; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(37,99,235,0.3); }
+        .btn-outline { background: transparent; color: var(--text); border: 1.5px solid var(--border); }
+        .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
+
+        /* Sections */
+        section {
+            padding: 40px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        section:last-child { border-bottom: none; }
+
+        h2 {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            letter-spacing: -0.01em;
+            display: flex; align-items: center; gap: 10px;
+        }
+        h2::before {
+            content: "";
+            width: 4px; height: 20px;
+            background: var(--primary);
+            border-radius: 2px;
+        }
+
+        /* Two-column problem/outcome */
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 32px;
+        }
+        @media (max-width: 700px) { .two-col { grid-template-columns: 1fr; gap: 24px; } }
+
+        .info-block {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 24px;
+        }
+        .info-block h3 {
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--primary);
+            margin-bottom: 12px;
+        }
+        .info-block p {
+            font-size: 15px;
+            color: var(--text-muted);
+            line-height: 1.7;
+        }
+
+        /* Deliverables */
+        .deliverables-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 12px;
+        }
+        .deliverable {
+            display: flex; align-items: flex-start; gap: 12px;
+            padding: 14px 16px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            font-size: 14px;
+        }
+        .deliverable .check {
+            color: var(--success);
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        /* Process steps */
+        .process-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .process-step {
+            display: flex;
+            gap: 20px;
+            padding: 20px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            position: relative;
+        }
+        .process-num {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--primary);
+            opacity: 0.5;
+            font-variant-numeric: tabular-nums;
+            flex-shrink: 0;
+            min-width: 40px;
+        }
+        .process-body h4 {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .process-body p {
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        /* Related work grid */
+        .work-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        .work-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            overflow: hidden;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .work-card:hover { transform: translateY(-4px); border-color: var(--primary); }
+        .work-thumb {
+            aspect-ratio: 16/10;
+            background: linear-gradient(135deg, var(--primary), rgba(0,0,0,0.3));
+            display: flex; align-items: center; justify-content: center;
+            color: rgba(255,255,255,0.5);
+            font-size: 32px; font-weight: 700;
+            overflow: hidden;
+        }
+        .work-thumb img { width: 100%; height: 100%; object-fit: cover; }
+        .work-body { padding: 16px; }
+        .work-body h4 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+        .work-body span { font-size: 13px; color: var(--text-muted); }
+
+        /* Skills chips */
+        .skills-wrap {
+            display: flex; gap: 10px; flex-wrap: wrap;
+        }
+        .skill-chip {
+            padding: 8px 16px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            font-size: 14px;
+            color: var(--text-muted);
+            display: flex; align-items: center; gap: 8px;
+        }
+        .skill-chip .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--primary); }
+
+        /* Pricing */
+        .price-display {
+            background: linear-gradient(135deg, rgba(37,99,235,0.15), rgba(37,99,235,0.05));
+            border: 1px solid rgba(37,99,235,0.3);
+            border-radius: 14px;
+            padding: 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .price-display .label {
+            font-size: 13px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+        .price-display .value {
+            font-size: 32px;
+            font-weight: 800;
+            color: var(--primary);
+        }
+        .price-display .value small {
+            font-size: 14px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        /* CTA */
+        .final-cta {
+            text-align: center;
+            padding: 60px 20px;
+            background: linear-gradient(135deg, rgba(37,99,235,0.1), transparent);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            margin: 40px 0;
+        }
+        .final-cta h2 { justify-content: center; display: flex; }
+        .final-cta h2::before { display: none; }
+        .final-cta p {
+            font-size: 16px;
+            color: var(--text-muted);
+            margin-bottom: 24px;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Footer */
+        footer {
+            padding: 30px 0;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 13px;
+            border-top: 1px solid var(--border);
+            margin-top: 40px;
+        }
+        footer a { color: var(--primary); }
+        footer a:hover { text-decoration: underline; }
+
+        /* 404 */
+        .page-state {
+            min-height: 100vh;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            text-align: center; padding: 40px 24px;
+        }
+        .page-state h1 { font-size: 42px; margin-bottom: 12px; }
+        .page-state p { color: var(--text-muted); margin-bottom: 24px; }
+
+        /* Loader */
+        .loader {
+            width: 32px; height: 32px;
+            border: 3px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <div id="app">
+        <div class="page-state">
+            <div class="loader"></div>
+            <p style="margin-top:20px;">Loading service…</p>
+        </div>
+    </div>
+
+    <script>
+        // =========================================================
+        // PUBLIC SERVICE RENDERER
+        // =========================================================
+
+        (async function () {
+            const app = document.getElementById("app");
+
+            // Parse URL: /p/{username}/services/{serviceId}
+            const parts = window.location.pathname.split("/").filter(Boolean);
+            // parts = ["p", "username", "services", "serviceId"]
+            const username  = parts[1];
+            const serviceId = parts[3];
+
+            if (!username || !serviceId) return show404("Invalid service URL");
+
+            try {
+                const res = await fetch(`/api/services/public/${encodeURIComponent(username)}/${encodeURIComponent(serviceId)}`);
+                const data = await res.json();
+                if (!data.success || !data.service) return show404(data.message || "Service not found");
+                render(data.service, username);
+            } catch (err) {
+                console.error("Load error:", err);
+                show404("Could not load this service");
+            }
+
+            // ---------- RENDER ----------
+            function render(s, username) {
+                document.title = (s.title || "Service") + " — Portfolio";
+
+                // Currency symbol
+                const sym = { USD: "$", EUR: "€", GBP: "£", NGN: "₦" }[s.currency || "USD"] || "$";
+
+                // Pricing HTML
+                let pricingHTML = "";
+                const pt = s.pricing_type || "fixed";
+                if (pt === "fixed" && s.price) {
+                    pricingHTML = `<div class="price-display">
+                        <div>
+                            <div class="label">Fixed Price</div>
+                            <div class="value">${sym}${Number(s.price).toLocaleString()}</div>
+                        </div>
+                    </div>`;
+                } else if (pt === "starting_from" && s.price) {
+                    pricingHTML = `<div class="price-display">
+                        <div>
+                            <div class="label">Starting From</div>
+                            <div class="value">${sym}${Number(s.price).toLocaleString()}</div>
+                        </div>
+                    </div>`;
+                } else if (pt === "range" && s.min_price && s.max_price) {
+                    pricingHTML = `<div class="price-display">
+                        <div>
+                            <div class="label">Price Range</div>
+                            <div class="value">${sym}${Number(s.min_price).toLocaleString()} — ${sym}${Number(s.max_price).toLocaleString()}</div>
+                        </div>
+                    </div>`;
+                } else if (pt === "custom_quote") {
+                    pricingHTML = `<div class="price-display">
+                        <div>
+                            <div class="label">Pricing</div>
+                            <div class="value">Custom Quote</div>
+                        </div>
+                    </div>`;
+                } else if (pt === "contact") {
+                    pricingHTML = `<div class="price-display">
+                        <div>
+                            <div class="label">Pricing</div>
+                            <div class="value">Contact for Pricing</div>
+                        </div>
+                    </div>`;
+                }
+
+                // Problem / Outcome
+                const hasProblem  = s.problem && s.problem.trim();
+                const hasOutcome  = s.outcome && s.outcome.trim();
+                let problemOutcomeHTML = "";
+                if (hasProblem || hasOutcome) {
+                    problemOutcomeHTML = `
+                        <section>
+                            <h2>How I Can Help</h2>
+                            <div class="two-col">
+                                ${hasProblem ? `
+                                    <div class="info-block">
+                                        <h3>The Challenge</h3>
+                                        <p>${escapeHtml(s.problem)}</p>
+                                    </div>` : ""}
+                                ${hasOutcome ? `
+                                    <div class="info-block">
+                                        <h3>What You Get</h3>
+                                        <p>${escapeHtml(s.outcome)}</p>
+                                    </div>` : ""}
+                            </div>
+                        </section>`;
+                }
+
+                // Deliverables
+                let deliverablesHTML = "";
+                if (s.included_items && s.included_items.length) {
+                    deliverablesHTML = `
+                        <section>
+                            <h2>What's Included</h2>
+                            <div class="deliverables-list">
+                                ${s.included_items.map(d => `
+                                    <div class="deliverable">
+                                        <span class="check">✓</span>
+                                        <span>${escapeHtml(d.item)}</span>
+                                    </div>
+                                `).join("")}
+                            </div>
+                        </section>`;
+                }
+
+                // Process
+                let processHTML = "";
+                if (s.process && s.process.length) {
+                    processHTML = `
+                        <section>
+                            <h2>How It Works</h2>
+                            <div class="process-list">
+                                ${s.process.map((p, i) => `
+                                    <div class="process-step">
+                                        <div class="process-num">${String(i + 1).padStart(2, "0")}</div>
+                                        <div class="process-body">
+                                            <h4>${escapeHtml(p.step_title)}</h4>
+                                            ${p.step_description ? `<p>${escapeHtml(p.step_description)}</p>` : ""}
+                                        </div>
+                                    </div>
+                                `).join("")}
+                            </div>
+                        </section>`;
+                }
+
+                // Related work
+                let workHTML = "";
+                if (s.projects && s.projects.length) {
+                    workHTML = `
+                        <section>
+                            <h2>Related Work</h2>
+                            <div class="work-grid">
+                                ${s.projects.map(p => `
+                                    <div class="work-card" onclick="window.location.href='/p/${encodeURIComponent(username)}/projects/${p.id}'">
+                                        <div class="work-thumb">
+                                            ${p.thumbnail_url
+                                                ? `<img src="${escapeHtml(p.thumbnail_url)}" alt="">`
+                                                : (p.title || "P").charAt(0).toUpperCase()}
+                                        </div>
+                                        <div class="work-body">
+                                            <h4>${escapeHtml(p.title || "Untitled")}</h4>
+                                            <span>${escapeHtml(p.category || "")}${p.project_year ? " · " + p.project_year : ""}</span>
+                                        </div>
+                                    </div>
+                                `).join("")}
+                            </div>
+                        </section>`;
+                }
+
+                // Skills
+                let skillsHTML = "";
+                if (s.skills && s.skills.length) {
+                    skillsHTML = `
+                        <section>
+                            <h2>Skills Behind This Service</h2>
+                            <div class="skills-wrap">
+                                ${s.skills.map(sk => `<div class="skill-chip"><span class="dot"></span>${escapeHtml(sk.name)}</div>`).join("")}
+                            </div>
+                        </section>`;
+                }
+
+                // Delivery time hint
+                const deliveryBadge = s.delivery_time
+                    ? `<span style="display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--text-muted);margin-top:12px;">
+                        ⏱ Typical delivery: ${escapeHtml(s.delivery_time)}
+                       </span>`
+                    : "";
+
+                app.innerHTML = `
+                    <div class="container">
+                        <header class="page-header">
+                            <a href="/p/${encodeURIComponent(username)}" class="back-link">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>
+                                </svg>
+                                Back to Portfolio
+                            </a>
+
+                            ${s.category ? `<div class="category-badge">${escapeHtml(s.category)}</div>` : ""}
+                            <h1>${escapeHtml(s.title || "Service")}</h1>
+                            ${s.description ? `<p class="service-lead">${escapeHtml(s.description)}</p>` : ""}
+
+                            <div class="hero-actions">
+                                <a href="/p/${encodeURIComponent(username)}#contact" class="btn btn-primary">
+                                    Start a Project →
+                                </a>
+                                <a href="/p/${encodeURIComponent(username)}" class="btn btn-outline">
+                                    View Full Portfolio
+                                </a>
+                            </div>
+                            ${deliveryBadge}
+                        </header>
+
+                        ${pricingHTML ? `<section>${pricingHTML}</section>` : ""}
+                        ${problemOutcomeHTML}
+                        ${deliverablesHTML}
+                        ${processHTML}
+                        ${workHTML}
+                        ${skillsHTML}
+
+                        <div class="final-cta">
+                            <h2>Need this service?</h2>
+                            <p>Let's discuss how I can help with your project.</p>
+                            <a href="/p/${encodeURIComponent(username)}#contact" class="btn btn-primary">
+                                Start a Project →
+                            </a>
+                        </div>
+                    </div>
+
+                    <footer>
+                        <div class="container">
+                            Built with <a href="/">Crevio</a>
+                        </div>
+                    </footer>
+                `;
+            }
+
+            // ---------- 404 ----------
+            function show404(message) {
+                app.innerHTML = `
+                    <div class="page-state">
+                        <h1>404</h1>
+                        <p>${escapeHtml(message || "Service not found")}</p>
+                        <a href="/" class="btn btn-primary">Go Home</a>
+                    </div>
+                `;
+            }
+
+            // ---------- HELPERS ----------
+            function escapeHtml(str) {
+                return String(str == null ? "" : str).replace(/[&<>"']/g, s => ({
+                    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+                })[s]);
+            }
+        })();
+    </script>
+</body>
+</html>

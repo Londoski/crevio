@@ -1,12 +1,99 @@
 ﻿// =========================================================
-// CREVIO PROJECT CREATE JS
+// CREVIO — CREATE PROJECT PAGE
+// File: dashboard/js/project-create.js
 // =========================================================
-const form=document.getElementById('projectForm');const submitBtn=document.getElementById('submitBtn');const messageEl=document.getElementById('formMessage');
-function getToken(){const t=localStorage.getItem('crevio_token');if(!t){window.location.href='/admin/pages/login.html';return null}return t}
-document.getElementById('logoutButton')?.addEventListener('click',()=>{localStorage.removeItem('crevio_token');localStorage.removeItem('crevio_user');window.location.href='/admin/pages/login.html'});
-const themeToggle=document.getElementById('themeToggle');if(themeToggle){const saved=localStorage.getItem('crevio_theme')||'dark';document.documentElement.setAttribute('data-theme',saved);themeToggle.addEventListener('click',()=>{const c=document.documentElement.getAttribute('data-theme');const n=c==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',n);localStorage.setItem('crevio_theme',n);if(typeof lucide!=='undefined')lucide.createIcons()})}
-const mobileToggle=document.getElementById('mobileToggle');const sidebar=document.getElementById('sidebar');const overlay=document.getElementById('sidebarOverlay');if(mobileToggle&&sidebar&&overlay){mobileToggle.addEventListener('click',()=>{sidebar.classList.toggle('open');overlay.classList.toggle('open')});overlay.addEventListener('click',()=>{sidebar.classList.remove('open');overlay.classList.remove('open')})}
-const userData=localStorage.getItem('crevio_user');if(userData){try{const u=JSON.parse(userData);const a=document.getElementById('userAvatar');const nd=document.getElementById('userNameDisplay');if(a&&u.display_name)a.textContent=u.display_name.charAt(0).toUpperCase();if(nd&&u.display_name)nd.textContent=u.display_name}catch(e){console.error(e)}}
-function showMessage(t,type='success'){messageEl.style.display='block';messageEl.textContent=t;messageEl.className='form-message '+type}
-function hideMessage(){messageEl.style.display='none'}
-form.addEventListener('submit',async(e)=>{e.preventDefault();const token=getToken();if(!token)return;const data={title:document.getElementById('title').value.trim(),description:document.getElementById('description').value.trim(),category:document.getElementById('category').value.trim(),thumbnail_url:document.getElementById('thumbnail_url').value.trim(),project_url:document.getElementById('project_url').value.trim(),client_name:document.getElementById('client_name').value.trim(),year:parseInt(document.getElementById('year').value)||null};if(!data.title){showMessage('Project title is required.','error');return}submitBtn.disabled=true;submitBtn.textContent='Creating...';hideMessage();try{const res=await fetch('/api/projects',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify(data)});const result=await res.json();if(!res.ok||!result.success)throw new Error(result.message||'Create failed.');showMessage('Project created successfully!','success');setTimeout(()=>{window.location.href='/dashboard/pages/projects.html'},1000)}catch(err){console.error('Create error:',err);showMessage(err.message||'Unable to create project.','error');submitBtn.disabled=false;submitBtn.textContent='Create Project'}});
+
+document.addEventListener("DOMContentLoaded", function () {
+    const form       = document.getElementById("projectForm");
+    const saveBtn    = document.getElementById("saveBtn");
+    const publishBtn = document.getElementById("publishBtn");
+    const toast      = document.getElementById("toast");
+
+    // ---------- SAVE ----------
+    async function saveProject(status) {
+        const title = document.getElementById("title");
+        const description = document.getElementById("description");
+        const url = document.getElementById("url");
+        const category = document.getElementById("category");
+        const thumbnail = document.getElementById("thumbnail");
+
+        const payload = {
+            title:       (title?.value || "").trim(),
+            description: (description?.value || "").trim(),
+            url:         (url?.value || "").trim(),
+            category:    (category?.value || "web"),
+            thumbnail:   (thumbnail?.value || "").trim(),
+            status:      status
+        };
+
+        if (!payload.title) {
+            showToast("Project title is required", true);
+            title?.focus();
+            return;
+        }
+
+        const btn = status === "published" ? publishBtn : saveBtn;
+        const originalText = btn?.innerHTML;
+
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = `<i data-lucide="loader" class="icon" style="width:14px;height:14px;"></i> Saving...`;
+            if (typeof lucide !== "undefined") lucide.createIcons();
+        }
+
+        try {
+            const res  = await window.apiFetch("/api/projects", {
+                method: "POST",
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+
+            if (data.success && data.project) {
+                showToast(`Project ${status === "published" ? "published" : "saved"}`);
+                setTimeout(() => {
+                    window.location.href = `/dashboard/pages/project-edit.html?id=${data.project.id}`;
+                }, 800);
+            } else {
+                showToast(data.message || "Failed to save", true);
+            }
+        } catch (err) {
+            console.error("Save error:", err);
+            showToast("Failed: " + err.message, true);
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+                if (typeof lucide !== "undefined") lucide.createIcons();
+            }
+        }
+    }
+
+    form?.addEventListener("submit", (e) => {
+        e.preventDefault();
+        saveProject("draft");
+    });
+
+    saveBtn?.addEventListener("click", (e) => {
+        e.preventDefault();
+        saveProject("draft");
+    });
+
+    publishBtn?.addEventListener("click", (e) => {
+        e.preventDefault();
+        saveProject("published");
+    });
+
+    // ---------- TOAST ----------
+    let toastTimer;
+    function showToast(msg, isError = false) {
+        if (!toast) return;
+        clearTimeout(toastTimer);
+        toast.textContent = msg;
+        toast.classList.toggle("error", isError);
+        toast.classList.add("show");
+        toastTimer = setTimeout(() => toast.classList.remove("show"), 3000);
+    }
+
+    // ---------- INIT ----------
+    if (typeof lucide !== "undefined") lucide.createIcons();
+});

@@ -1,341 +1,246 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit Service — Crevio</title>
+    <title>Service Editor — Crevio</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="/dashboard/js/auth.js?v=639252484686517300"></script>
 
     <style>
         * { margin:0; padding:0; box-sizing:border-box; }
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            transition: background 0.3s, color 0.3s;
-            display: flex;
-            min-height: 100vh;
-        }
-        a { text-decoration: none; color: inherit; }
+        body { font-family:'Inter',sans-serif; background:var(--bg-primary); color:var(--text-primary); display:flex; min-height:100vh; }
 
-        [data-theme="dark"] {
-            --bg-primary: #0F172A;
-            --bg-secondary: #1E293B;
-            --bg-card: #1E293B;
-            --bg-input: #0F172A;
-            --border-color: #334155;
-            --text-primary: #F1F5F9;
-            --text-secondary: #94A3B8;
-            --text-muted: #64748B;
-            --accent: #2563EB;
-            --accent-hover: #1D4ED8;
-            --accent-dim: rgba(37,99,235,0.15);
-            --danger: #EF4444;
-            --danger-hover: #DC2626;
-            --success: #22C55E;
-            --warning: #F59E0B;
-            --shadow: 0 4px 24px rgba(0,0,0,0.4);
-        }
-        [data-theme="light"] {
-            --bg-primary: #F1F5F9;
-            --bg-secondary: #FFFFFF;
-            --bg-card: #FFFFFF;
-            --bg-input: #F8FAFC;
-            --border-color: #E2E8F0;
-            --text-primary: #0F172A;
-            --text-secondary: #475569;
-            --text-muted: #94A3B8;
-            --accent: #2563EB;
-            --accent-hover: #1D4ED8;
-            --accent-dim: rgba(37,99,235,0.1);
-            --danger: #EF4444;
-            --danger-hover: #DC2626;
-            --success: #22C55E;
-            --warning: #F59E0B;
-            --shadow: 0 4px 24px rgba(0,0,0,0.06);
-        }
+        [data-theme="dark"] { --bg-primary:#0F172A; --bg-secondary:#1E293B; --bg-card:#1E293B; --bg-input:#0F172A; --border-color:#334155; --text-primary:#F1F5F9; --text-secondary:#94A3B8; --text-muted:#64748B; --accent:#2563EB; --accent-hover:#1D4ED8; --accent-dim:rgba(37,99,235,0.15); --danger:#EF4444; --success:#22C55E; --warning:#F59E0B; }
+        [data-theme="light"] { --bg-primary:#F1F5F9; --bg-secondary:#FFFFFF; --bg-card:#FFFFFF; --bg-input:#F8FAFC; --border-color:#E2E8F0; --text-primary:#0F172A; --text-secondary:#475569; --text-muted:#94A3B8; --accent:#2563EB; --accent-hover:#1D4ED8; --accent-dim:rgba(37,99,235,0.1); --danger:#EF4444; --success:#22C55E; --warning:#F59E0B; }
 
-        .sidebar {
-            width: 240px;
-            background: var(--bg-secondary);
-            border-right: 1px solid var(--border-color);
-            display: flex;
-            flex-direction: column;
-            padding: 24px 16px;
-            height: 100vh;
-            position: sticky;
-            top: 0;
-            flex-shrink: 0;
-            transition: background 0.3s, border-color 0.3s;
-            overflow-y: auto;
-        }
-        .sidebar-brand { padding-bottom: 20px; border-bottom: 1px solid var(--border-color); margin-bottom: 20px; }
-        .sidebar-brand h1 { font-size: 20px; font-weight: 700; color: var(--text-primary); }
-        .sidebar-brand span { font-size: 11px; font-weight: 500; text-transform: uppercase; color: var(--text-muted); }
-        .sidebar-nav { display: flex; flex-direction: column; gap: 2px; flex: 1; }
-        .nav-item {
-            display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px;
-            color: var(--text-secondary); font-size: 14px; font-weight: 500; transition: all 0.15s;
-            text-decoration: none;
-        }
-        .nav-item:hover { background: var(--accent-dim); color: var(--text-primary); }
-        .nav-item.active { background: var(--accent-dim); color: var(--accent); }
-        .nav-item .icon { width: 20px; height: 20px; flex-shrink: 0; }
-        .nav-divider { height: 1px; background: var(--border-color); margin: 8px 12px; }
-        .sidebar-footer { padding-top: 16px; border-top: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 8px; }
-        .logout-button {
-            background: transparent; border: none; color: var(--danger); font-size: 13px; font-weight: 500;
-            padding: 10px 12px; border-radius: 8px; cursor: pointer; font-family: inherit;
-            display: flex; align-items: center; gap: 12px; transition: background 0.15s;
-            width: 100%;
-        }
-        .logout-button:hover { background: rgba(239,68,68,0.1); }
-        .theme-toggle-btn {
-            background: transparent; border: none; color: var(--text-secondary); font-size: 18px;
-            cursor: pointer; padding: 6px 10px; border-radius: 8px; transition: background 0.15s;
-            display: inline-flex; align-items: center; gap: 6px; width: fit-content;
-        }
-        .theme-toggle-btn:hover { background: var(--accent-dim); color: var(--text-primary); }
-        .theme-toggle-btn .icon { width: 18px; height: 18px; }
-        .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 199; }
-        .sidebar-overlay.open { display: block; }
+        /* SIDEBAR */
+        .sidebar { width:240px; background:var(--bg-secondary); border-right:1px solid var(--border-color); display:flex; flex-direction:column; padding:20px 14px; height:100vh; position:sticky; top:0; flex-shrink:0; overflow-y:auto; }
+        .sidebar-brand { padding-bottom:16px; border-bottom:1px solid var(--border-color); margin-bottom:14px; }
+        .sidebar-brand h1 { font-size:19px; font-weight:700; }
+        .sidebar-brand span { font-size:10px; font-weight:500; text-transform:uppercase; color:var(--text-muted); }
+        .sidebar-nav { display:flex; flex-direction:column; gap:1px; flex:1; }
+        .nav-item { display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:7px; color:var(--text-secondary); font-size:13px; font-weight:500; transition:all 0.15s; text-decoration:none; }
+        .nav-item:hover { background:var(--accent-dim); color:var(--text-primary); }
+        .nav-item.active { background:var(--accent-dim); color:var(--accent); }
+        .nav-item .icon { width:18px; height:18px; flex-shrink:0; }
+        .nav-divider { height:1px; background:var(--border-color); margin:6px 10px; }
+        .sidebar-footer { padding-top:12px; border-top:1px solid var(--border-color); }
+        .logout-button { background:transparent; border:none; color:var(--danger); font-size:13px; font-weight:500; padding:8px 10px; border-radius:7px; cursor:pointer; display:flex; align-items:center; gap:10px; width:100%; font-family:inherit; }
+        .logout-button:hover { background:rgba(239,68,68,0.1); }
 
-        .dashboard-main {
-            flex: 1; padding: 28px 36px; background: var(--bg-primary);
-            min-height: 100vh; transition: background 0.3s;
-        }
+        /* MAIN */
+        .main { flex:1; padding:24px 32px; background:var(--bg-primary); min-height:100vh; width:100%; min-width:0; }
+        .header { display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:22px; flex-wrap:wrap; }
+        .header-left { display:flex; align-items:center; gap:14px; }
+        .back-btn { display:inline-flex; align-items:center; justify-content:center; width:36px; height:36px; border-radius:10px; border:1px solid var(--border-color); background:transparent; color:var(--text-secondary); cursor:pointer; text-decoration:none; transition:all 0.15s; }
+        .back-btn:hover { background:var(--accent-dim); color:var(--accent); border-color:var(--accent); }
+        .back-btn .icon { width:16px; height:16px; }
+        .header h1 { font-size:22px; font-weight:700; }
+        .header p { font-size:13px; color:var(--text-secondary); margin-top:2px; }
+        .header-actions { display:flex; gap:8px; flex-wrap:wrap; }
 
-        .dashboard-header {
-            display: flex; align-items: center; justify-content: space-between;
-            margin-bottom: 28px; flex-wrap: wrap; gap: 12px;
-        }
-        .topbar-left { display: flex; align-items: center; gap: 16px; }
-        .mobile-menu-toggle {
-            display: none; background: none; border: none;
-            color: var(--text-secondary); font-size: 24px; cursor: pointer;
-        }
-        .topbar-left h2 { font-size: 24px; font-weight: 700; color: var(--text-primary); }
-        .header-description { font-size: 14px; color: var(--text-secondary); }
-        .topbar-right { display: flex; align-items: center; gap: 16px; }
-        .primary-button {
-            padding: 8px 18px; border-radius: 8px; border: none;
-            background: var(--accent); color: #fff;
-            font-size: 13px; font-weight: 600; cursor: pointer;
-            display: inline-flex; align-items: center; gap: 6px;
-            transition: all 0.15s; text-decoration: none;
-        }
-        .primary-button:hover { background: var(--accent-hover); transform: translateY(-1px); }
-        .secondary-button {
-            padding: 8px 18px; border-radius: 8px; border: 1px solid var(--border-color);
-            background: transparent; color: var(--text-secondary);
-            font-size: 13px; font-weight: 500; cursor: pointer;
-            display: inline-flex; align-items: center; gap: 6px;
-            transition: all 0.15s; text-decoration: none;
-        }
-        .secondary-button:hover { background: var(--bg-card); color: var(--text-primary); }
-        .user-profile { display: flex; align-items: center; gap: 8px; }
-        .user-avatar {
-            width: 32px; height: 32px; border-radius: 50%;
-            background: var(--accent); color: #fff;
-            display: flex; align-items: center; justify-content: center;
-            font-weight: 600; font-size: 13px; flex-shrink: 0;
-            overflow: hidden;
-        }
-        .user-avatar img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
-        .user-name { font-size: 14px; font-weight: 500; color: var(--text-primary); }
+        .btn-primary { padding:10px 20px; border-radius:10px; border:none; background:var(--accent); color:#fff; font-size:13px; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:6px; transition:all 0.15s; font-family:inherit; }
+        .btn-primary:hover { background:var(--accent-hover); }
+        .btn-primary:disabled { opacity:0.6; cursor:not-allowed; }
+        .btn-secondary { padding:10px 16px; border-radius:10px; border:1px solid var(--border-color); background:transparent; color:var(--text-secondary); font-size:13px; font-weight:500; cursor:pointer; transition:all 0.15s; font-family:inherit; display:inline-flex; align-items:center; gap:6px; }
+        .btn-secondary:hover { background:var(--bg-input); color:var(--text-primary); }
+        .btn-danger { padding:10px 16px; border-radius:10px; border:1px solid rgba(239,68,68,0.4); background:transparent; color:var(--danger); font-size:13px; font-weight:500; cursor:pointer; transition:all 0.15s; font-family:inherit; display:inline-flex; align-items:center; gap:6px; }
 
-        .editor-wrapper { max-width: 1300px; margin: 0 auto; }
-        .editor-grid {
+        /* LAYOUT — fills width, right column fixed at 300px */
+        .layout {
             display: grid;
-            grid-template-columns: 1fr 380px;
-            gap: 28px;
+            grid-template-columns: minmax(0, 1fr) 300px;
+            gap: 20px;
             align-items: start;
         }
+        @media (max-width: 1100px) { .layout { grid-template-columns: 1fr; } }
 
-        .editor-form { display: flex; flex-direction: column; gap: 24px; }
+        .form-panel { background:var(--bg-card); border:1px solid var(--border-color); border-radius:14px; padding:22px; margin-bottom:16px; }
+        .form-panel h3 { font-size:15px; font-weight:600; margin-bottom:16px; display:flex; align-items:center; gap:8px; }
+        .form-panel h3 .icon { width:18px; height:18px; color:var(--accent); }
+        .form-panel .subtitle { font-size:12px; color:var(--text-muted); margin-bottom:12px; }
 
-        .form-panel {
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            padding: 24px 28px;
-            transition: background 0.3s, border-color 0.3s;
+        .form-group { margin-bottom:14px; }
+        .form-group:last-child { margin-bottom:0; }
+        .form-group label { display:block; font-size:13px; font-weight:500; color:var(--text-secondary); margin-bottom:6px; }
+        .form-group input, .form-group textarea, .form-group select {
+            width:100%; background:var(--bg-input); border:1px solid var(--border-color);
+            color:var(--text-primary); padding:10px 12px; border-radius:10px;
+            font-size:14px; font-family:inherit;
         }
-        .form-panel h3 {
-            font-size: 16px; font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 16px;
-            display: flex; align-items: center; gap: 8px;
+        .form-group input::placeholder, .form-group textarea::placeholder { color:var(--text-muted); }
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
+            outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-dim);
         }
-        .form-panel h3 .icon { width: 20px; height: 20px; color: var(--text-secondary); }
-        .form-panel .subtitle { font-size: 13px; color: var(--text-secondary); margin-bottom: 14px; }
+        .form-group textarea { resize:vertical; min-height:80px; line-height:1.6; }
+        .form-group .hint { font-size:12px; color:var(--text-muted); margin-top:5px; }
+        .form-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+        @media (max-width:640px) { .form-row { grid-template-columns:1fr; } }
 
-        .form-group { margin-bottom: 16px; }
-        .form-group:last-child { margin-bottom: 0; }
-        .form-group label {
-            display: block; font-size: 13px; font-weight: 500; color: var(--text-secondary); margin-bottom: 4px;
+        /* Chip list */
+        .chip-list { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px; min-height:28px; }
+        .chip-item {
+            display:inline-flex; align-items:center; gap:6px;
+            padding:6px 12px; background:var(--accent-dim); color:var(--accent);
+            border-radius:999px; font-size:13px;
         }
-        .form-group input,
-        .form-group textarea,
-        .form-group select {
-            width: 100%; padding: 10px 14px; border-radius: 10px;
-            border: 1px solid var(--border-color); background: var(--bg-input);
-            color: var(--text-primary); font-size: 14px; font-family: inherit;
-            transition: border 0.2s, box-shadow 0.2s;
-        }
-        .form-group input:focus,
-        .form-group textarea:focus,
-        .form-group select:focus {
-            outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim);
-        }
-        .form-group textarea { resize: vertical; min-height: 80px; }
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-        }
+        .chip-item button { background:transparent; border:none; color:inherit; cursor:pointer; display:flex; align-items:center; padding:0; margin-left:2px; }
+        .chip-item button:hover { color:var(--danger); }
+        .chip-item .x-icon { width:12px; height:12px; }
 
-        .checkbox-group {
-            display: flex; align-items: center; gap: 10px; padding: 4px 0;
-        }
-        .checkbox-group input[type="checkbox"] {
-            width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer; flex-shrink: 0;
-        }
-        .checkbox-group label { font-size: 14px; color: var(--text-secondary); cursor: pointer; margin: 0; }
-
-        .item-list { margin-top: 6px; }
-        .item-row {
-            display: flex; align-items: center; gap: 10px; padding: 6px 0;
-            border-bottom: 1px solid var(--border-color);
-        }
-        .item-row .item-text { flex: 1; font-size: 14px; color: var(--text-primary); }
-        .item-row .btn-icon {
-            background: none; border: none; color: var(--text-muted);
-            cursor: pointer; padding: 2px; border-radius: 4px;
-            display: flex; align-items: center; justify-content: center;
-            transition: color 0.15s;
-        }
-        .item-row .btn-icon:hover { color: var(--danger); }
-
-        .add-row {
-            display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap;
-        }
+        /* Add row */
+        .add-row { display: flex; gap: 8px; align-items: stretch; }
         .add-row input {
-            flex: 1; min-width: 120px; padding: 8px 12px; border-radius: 8px;
-            border: 1px solid var(--border-color); background: var(--bg-input);
-            color: var(--text-primary); font-size: 13px; font-family: inherit;
-        }
-        .add-row input:focus {
-            outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim);
-        }
-        .add-row .btn {
-            padding: 8px 16px; border-radius: 8px; font-weight: 500; font-size: 13px;
-            border: none; cursor: pointer; font-family: inherit; transition: all 0.15s;
-            background: var(--accent); color: #fff; white-space: nowrap;
-        }
-        .add-row .btn:hover { background: var(--accent-hover); }
-
-        .project-checkbox-list {
-            display: flex; flex-direction: column; gap: 4px; max-height: 180px; overflow-y: auto;
-        }
-        .project-checkbox-list .checkbox-group { padding: 4px 0; }
-
-        .form-actions {
-            display: flex; gap: 12px; justify-content: flex-end; flex-wrap: wrap;
-            margin-top: 8px; padding-top: 16px; border-top: 1px solid var(--border-color);
-        }
-        .form-actions .btn {
-            padding: 10px 24px; border-radius: 10px; font-weight: 600; font-size: 14px;
-            cursor: pointer; border: none; font-family: inherit; transition: all 0.15s;
-        }
-        .btn-primary { background: var(--accent); color: #fff; }
-        .btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); }
-        .btn-secondary { background: transparent; border: 1px solid var(--border-color); color: var(--text-secondary); }
-        .btn-secondary:hover { background: var(--bg-card); color: var(--text-primary); }
-
-        .message {
-            padding: 10px 14px; border-radius: 10px; font-size: 14px; margin-top: 8px; display: none;
-        }
-        .message.success {
-            display: block; background: rgba(34,197,94,0.1); color: var(--success);
-            border: 1px solid rgba(34,197,94,0.2);
-        }
-        .message.error {
-            display: block; background: rgba(239,68,68,0.1); color: var(--danger);
-            border: 1px solid rgba(239,68,68,0.2);
-        }
-
-        .preview-panel { position: sticky; top: 28px; }
-        .preview-card {
-            background: var(--bg-card);
+            flex: 1;
+            background: var(--bg-input);
             border: 1px solid var(--border-color);
-            border-radius: 16px;
-            padding: 24px;
+            color: var(--text-primary);
+            padding: 10px 12px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-family: inherit;
         }
-        .preview-card .preview-header {
-            font-size: 14px; font-weight: 600; color: var(--text-secondary);
-            margin-bottom: 16px; display: flex; align-items: center; gap: 8px;
-        }
-        .preview-card .preview-header .icon { width: 18px; height: 18px; color: var(--text-muted); }
-        .preview-card .preview-category {
-            font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;
-            color: var(--accent); background: var(--accent-dim);
-            padding: 2px 10px; border-radius: 999px; display: inline-block; margin-bottom: 8px;
-        }
-        .preview-card .preview-title { font-size: 20px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; }
-        .preview-card .preview-desc { font-size: 14px; color: var(--text-secondary); margin-bottom: 10px; line-height: 1.5; }
-        .preview-card .preview-price { font-size: 17px; font-weight: 600; color: var(--text-primary); margin-bottom: 12px; }
-        .preview-card .preview-items { margin: 10px 0 14px; }
-        .preview-card .preview-items .item {
-            display: flex; align-items: center; gap: 8px;
-            font-size: 14px; color: var(--text-secondary); padding: 3px 0;
-        }
-        .preview-card .preview-items .item .check { color: var(--success); font-weight: 700; }
-        .preview-card .preview-cta { margin-top: 16px; }
-        .preview-card .preview-cta .btn {
-            padding: 10px 24px; border-radius: 10px; font-weight: 600; font-size: 14px;
-            border: none; cursor: default; font-family: inherit; background: var(--accent); color: #fff; width: 100%;
-        }
+        .add-row input::placeholder { color: var(--text-muted); }
+        .add-row input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
+        .add-row button { padding: 10px 18px; white-space: nowrap; }
 
-        .loading-state { text-align: center; padding: 40px 0; color: var(--text-muted); }
+        /* SELECT GRID — soft checkboxes */
+        .select-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 8px;
+            max-height: 260px;
+            overflow-y: auto;
+            padding: 4px;
+        }
+        .select-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            transition: all 0.15s ease;
+            user-select: none;
+            position: relative;
+            min-width: 0;
+        }
+        .select-item:hover { border-color: var(--accent); background: var(--accent-dim); color: var(--text-primary); }
+        .select-item:has(input:checked) {
+            background: var(--accent-dim);
+            border-color: var(--accent);
+            color: var(--text-primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+        }
+        .select-item input { position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none; }
+        .select-item::before {
+            content: ""; width: 18px; height: 18px; border-radius: 6px;
+            border: 1.5px solid var(--border-color); background: var(--bg-primary);
+            flex-shrink: 0; transition: all 0.15s ease;
+            background-position: center; background-repeat: no-repeat; background-size: 12px;
+        }
+        .select-item:hover::before { border-color: var(--accent); }
+        .select-item:has(input:checked)::before {
+            background-color: var(--accent);
+            border-color: var(--accent);
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3e%3cpath d='M20 6 9 17l-5-5'/%3e%3c/svg%3e");
+        }
+        .select-item span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .select-grid::-webkit-scrollbar { width: 8px; }
+        .select-grid::-webkit-scrollbar-track { background: transparent; }
+        .select-grid::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
+        .select-grid::-webkit-scrollbar-thumb:hover { background: var(--accent); }
 
-        @media (max-width: 1024px) {
-            .editor-grid { grid-template-columns: 1fr; }
-            .preview-panel { position: static; }
+        /* Process steps — fully themed */
+        .process-row {
+            display: grid;
+            grid-template-columns: 28px 1fr 40px;
+            gap: 10px;
+            align-items: start;
+            padding: 10px;
+            background: var(--bg-input);
+            border-radius: 10px;
+            margin-bottom: 8px;
         }
-        @media (max-width: 768px) {
-            .form-row { grid-template-columns: 1fr; }
-            .form-panel { padding: 18px; }
-            .form-actions { flex-direction: column; align-items: stretch; }
-            .form-actions .btn { justify-content: center; }
-            .add-row { flex-direction: column; }
-            .add-row input { min-width: unset; }
-            .sidebar { display: none; }
-            .dashboard-main { padding: 16px 20px; }
-            .mobile-menu-toggle { display: block; }
-            .topbar-right { width: 100%; justify-content: space-between; }
-            .user-name { display: none; }
+        .process-num { font-size: 12px; font-weight: 700; color: var(--accent); padding-top: 10px; }
+        .process-fields { display: flex; flex-direction: column; gap: 6px; }
+        .process-fields input,
+        .process-fields textarea {
+            width: 100%;
+            padding: 8px 10px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 13px;
+            font-family: inherit;
+            transition: border-color 0.15s, box-shadow 0.15s;
         }
-        @media (max-width: 480px) {
-            .form-panel { padding: 14px; }
-            .preview-card { padding: 16px; }
-            .preview-card .preview-title { font-size: 18px; }
+        .process-fields input::placeholder,
+        .process-fields textarea::placeholder { color: var(--text-muted); }
+        .process-fields input:focus,
+        .process-fields textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-dim);
+        }
+        .process-remove {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 8px;
+            cursor: pointer;
+            border-radius: 6px;
+            align-self: flex-start;
+            margin-top: 4px;
+            transition: all 0.15s;
+        }
+        .process-remove:hover { color: var(--danger); background: rgba(239,68,68,0.1); }
+
+        /* Side panel */
+        .side-panel { background:var(--bg-card); border:1px solid var(--border-color); border-radius:14px; padding:20px; }
+        .side-panel h4 { font-size:13px; font-weight:600; margin-bottom:12px; }
+        .status-display { display:flex; align-items:center; gap:10px; padding:12px; background:var(--bg-input); border-radius:10px; border:1px solid var(--border-color); margin-bottom:16px; }
+        .status-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+        .status-dot.published { background:var(--success); box-shadow:0 0 0 4px rgba(34,197,94,0.15); }
+        .status-dot.draft { background:var(--warning); box-shadow:0 0 0 4px rgba(245,158,11,0.15); }
+        .status-info .label { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-muted); }
+        .status-info .value { font-size:14px; font-weight:600; }
+        .action-stack { display:flex; flex-direction:column; gap:8px; }
+        .action-stack button, .action-stack a { width:100%; justify-content:center; }
+
+        .toast { position:fixed; bottom:24px; right:24px; background:var(--bg-card); border:1px solid var(--border-color); border-left:4px solid var(--success); padding:14px 20px; border-radius:10px; font-size:14px; font-weight:500; box-shadow:0 8px 32px rgba(0,0,0,0.3); transform:translateY(calc(100% + 40px)); opacity:0; visibility:hidden; transition:transform 0.3s, opacity 0.3s, visibility 0.3s; z-index:1000; max-width:340px; pointer-events:none; }
+        .toast.show { transform:translateY(0); opacity:1; visibility:visible; pointer-events:auto; }
+        .toast.error { border-left-color:var(--danger); }
+
+        @media (max-width:768px) {
+            .sidebar { display:none; }
+            .main { padding:16px 20px; }
+            .header { flex-direction:column; align-items:flex-start; }
+            .header-actions { width:100%; }
+            .select-grid { grid-template-columns: 1fr; }
         }
     </style>
+    <link rel="stylesheet" href="/dashboard/css/mobile.css?v=639252484686517300">
 </head>
 <body>
 
-    <!-- SIDEBAR -->
-    <aside class="sidebar" id="sidebar">
+    <aside class="sidebar">
         <div class="sidebar-brand"><h1>Crevio</h1><span>Creator Dashboard</span></div>
         <nav class="sidebar-nav">
             <a href="/dashboard/" class="nav-item"><i data-lucide="layout-dashboard" class="icon"></i> Overview</a>
             <a href="/dashboard/pages/projects.html" class="nav-item"><i data-lucide="folder-open" class="icon"></i> Projects</a>
             <a href="/dashboard/pages/media.html" class="nav-item"><i data-lucide="image" class="icon"></i> Media</a>
-            <a href="/dashboard/pages/services.html" class="nav-item"><i data-lucide="briefcase" class="icon"></i> Services</a>
+            <a href="/dashboard/pages/services.html" class="nav-item active"><i data-lucide="briefcase" class="icon"></i> Services</a>
             <a href="/dashboard/pages/skills.html" class="nav-item"><i data-lucide="star" class="icon"></i> Skills</a>
             <a href="/dashboard/pages/social-links.html" class="nav-item"><i data-lucide="share-2" class="icon"></i> My Socials</a>
             <div class="nav-divider"></div>
@@ -355,717 +260,205 @@
             <a href="/" target="_blank" class="nav-item"><i data-lucide="globe" class="icon"></i> View Portfolio</a>
         </nav>
         <div class="sidebar-footer">
-            <span id="themeToggleBtn" class="theme-toggle-btn" onclick="toggleTheme()" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:8px;color:var(--text-secondary);font-size:18px;">
-                <i data-lucide="moon" class="icon"></i>
-            </span>
             <button id="logoutButton" class="logout-button"><i data-lucide="log-out" class="icon"></i> Logout</button>
         </div>
     </aside>
 
-    <div id="sidebarOverlay" class="sidebar-overlay"></div>
-
-    <!-- MAIN -->
-    <main class="dashboard-main">
-
-        <header class="dashboard-header">
-            <div class="topbar-left">
-                <button id="mobileToggle" class="mobile-menu-toggle"><i data-lucide="menu"></i></button>
+    <main class="main">
+        <div class="header">
+            <div class="header-left">
+                <a href="/dashboard/pages/services.html" class="back-btn" title="Back to Services">
+                    <i data-lucide="arrow-left" class="icon"></i>
+                </a>
                 <div>
-                    <h2 id="pageTitle">Create Service</h2>
-                    <p class="header-description">Create or edit a service to showcase what you offer.</p>
+                    <h1 id="pageTitle">New Service</h1>
+                    <p id="pageSubtitle">Define what you offer</p>
                 </div>
             </div>
-            <div class="topbar-right">
-                <div class="user-profile">
-                    <span class="user-avatar" id="userAvatar">C</span>
-                    <span class="user-name" id="userNameDisplay">Creator</span>
-                </div>
+            <div class="header-actions">
+                <button class="btn-secondary" id="saveDraftBtn">
+                    <i data-lucide="save" class="icon" style="width:14px;height:14px;"></i> Save Draft
+                </button>
+                <button class="btn-primary" id="publishBtn">
+                    <i data-lucide="upload-cloud" class="icon" style="width:14px;height:14px;"></i> Publish
+                </button>
             </div>
-        </header>
-
-        <div class="editor-wrapper">
-
-            <div id="statusMessage" class="message"></div>
-
-            <div class="editor-grid">
-
-                <!-- LEFT: Form panels -->
-                <div class="editor-form">
-
-                    <!-- 1. Basic Information -->
-                    <div class="form-panel">
-                        <h3><i data-lucide="file-text" class="icon"></i> Basic Information</h3>
-                        <div class="form-group">
-                            <label for="serviceTitle">Service Name <span style="color:var(--danger);">*</span></label>
-                            <input type="text" id="serviceTitle" placeholder="e.g. Commercial Video Production">
-                        </div>
-                        <div class="form-group">
-                            <label for="serviceDescription">Description <span style="color:var(--danger);">*</span></label>
-                            <textarea id="serviceDescription" rows="3" placeholder="Describe what this service includes..."></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label for="serviceCategory">Category</label>
-                            <select id="serviceCategory">
-                                <option value="">Select category</option>
-                                <option value="Video Production">Video Production</option>
-                                <option value="Photography">Photography</option>
-                                <option value="Graphic Design">Graphic Design</option>
-                                <option value="Web Development">Web Development</option>
-                                <option value="Branding">Branding</option>
-                                <option value="Consulting">Consulting</option>
-                                <option value="Writing">Writing</option>
-                                <option value="Other">Other</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- 2. Pricing & Availability -->
-                    <div class="form-panel">
-                        <h3><i data-lucide="dollar-sign" class="icon"></i> Pricing & Availability</h3>
-                        <div class="form-group">
-                            <label for="pricingType">Pricing Model</label>
-                            <select id="pricingType">
-                                <option value="fixed">Fixed Price</option>
-                                <option value="starting_from">Starting From</option>
-                                <option value="range">Price Range</option>
-                                <option value="custom_quote">Custom Quote</option>
-                                <option value="contact">Contact for Pricing</option>
-                            </select>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="price">Price</label>
-                                <input type="number" id="price" placeholder="0">
-                            </div>
-                            <div class="form-group">
-                                <label for="currency">Currency</label>
-                                <select id="currency">
-                                    <option value="USD">USD ($)</option>
-                                    <option value="EUR">EUR (€)</option>
-                                    <option value="GBP">GBP (£)</option>
-                                    <option value="NGN">NGN (₦)</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="form-row" id="rangeFields" style="display:none;">
-                            <div class="form-group">
-                                <label for="minPrice">Min Price</label>
-                                <input type="number" id="minPrice" placeholder="0">
-                            </div>
-                            <div class="form-group">
-                                <label for="maxPrice">Max Price</label>
-                                <input type="number" id="maxPrice" placeholder="0">
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="deliveryTime">Typical Delivery</label>
-                                <input type="text" id="deliveryTime" placeholder="e.g. 7–14 days">
-                            </div>
-                            <div class="form-group">
-                                <label for="revisions">Revisions</label>
-                                <input type="number" id="revisions" placeholder="e.g. 2">
-                            </div>
-                        </div>
-                        <div class="checkbox-group">
-                            <input type="checkbox" id="availability" checked>
-                            <label for="availability">Available for bookings</label>
-                        </div>
-                    </div>
-
-                    <!-- 3. What's Included -->
-                    <div class="form-panel">
-                        <h3><i data-lucide="list-check" class="icon"></i> What's Included</h3>
-                        <p class="subtitle">Add deliverables or services included in this offering.</p>
-                        <div id="includedItemsContainer">
-                            <div id="includedItemsList">
-                                <div style="color:var(--text-muted);font-size:14px;padding:6px 0;">No items added yet.</div>
-                            </div>
-                            <div class="add-row">
-                                <input type="text" id="newItemInput" placeholder="Add an item...">
-                                <button class="btn" id="addItemBtn">Add</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 4. Related Projects -->
-                    <div class="form-panel">
-                        <h3><i data-lucide="folder-open" class="icon"></i> Related Projects</h3>
-                        <p class="subtitle">Select projects that demonstrate this service.</p>
-                        <div id="projectsSelector">
-                            <div class="loading-state">Loading projects...</div>
-                        </div>
-                    </div>
-
-                    <!-- 5. FAQs -->
-                    <div class="form-panel">
-                        <h3><i data-lucide="help-circle" class="icon"></i> FAQs</h3>
-                        <p class="subtitle">Add frequently asked questions about this service.</p>
-                        <div id="faqsContainer">
-                            <div id="faqsList">
-                                <div style="color:var(--text-muted);font-size:14px;padding:6px 0;">No FAQs added yet.</div>
-                            </div>
-                            <div class="add-row">
-                                <input type="text" id="faqQuestion" placeholder="Question...">
-                                <input type="text" id="faqAnswer" placeholder="Answer...">
-                                <button class="btn" id="addFaqBtn">Add FAQ</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 6. CTA & Visibility -->
-                    <div class="form-panel">
-                        <h3><i data-lucide="megaphone" class="icon"></i> CTA & Visibility</h3>
-                        <div class="form-group">
-                            <label for="ctaType">Primary Action</label>
-                            <select id="ctaType">
-                                <option value="quote">Request a Quote</option>
-                                <option value="contact">Contact Me</option>
-                                <option value="start">Start a Project</option>
-                                <option value="book">Book a Consultation</option>
-                                <option value="custom">Custom Link</option>
-                            </select>
-                        </div>
-                        <div class="form-group" id="customCtaGroup" style="display:none;">
-                            <label for="ctaUrl">Custom URL</label>
-                            <input type="url" id="ctaUrl" placeholder="https://...">
-                        </div>
-                        <div class="form-group">
-                            <label for="ctaLabel">CTA Label (optional)</label>
-                            <input type="text" id="ctaLabel" placeholder="e.g. Let's work together">
-                        </div>
-                        <div class="form-row">
-                            <div class="checkbox-group">
-                                <input type="checkbox" id="showOnPortfolio" checked>
-                                <label for="showOnPortfolio">Show on my portfolio</label>
-                            </div>
-                            <div class="checkbox-group">
-                                <input type="checkbox" id="featuredService">
-                                <label for="featuredService">Feature this service</label>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label for="serviceStatus">Status</label>
-                            <select id="serviceStatus">
-                                <option value="draft">Draft</option>
-                                <option value="published">Published</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- Actions -->
-                    <div class="form-actions">
-                        <a href="/dashboard/pages/services.html" class="btn btn-secondary">Cancel</a>
-                        <button class="btn btn-secondary" id="saveDraftBtn">Save Draft</button>
-                        <button class="btn btn-primary" id="publishBtn">Publish</button>
-                    </div>
-
-                </div>
-
-                <!-- RIGHT: Live Preview -->
-                <div class="preview-panel">
-                    <div class="preview-card">
-                        <div class="preview-header">
-                            <i data-lucide="eye" class="icon"></i> Live Preview
-                        </div>
-                        <div id="previewContent">
-                            <div class="preview-category" id="previewCategory">Category</div>
-                            <div class="preview-title" id="previewTitle">Service Name</div>
-                            <div class="preview-desc" id="previewDesc">Description goes here.</div>
-                            <div class="preview-price" id="previewPrice">Pricing not set</div>
-                            <div class="preview-items" id="previewItems">
-                                <div class="item"><span class="check">✓</span> Pre-production planning</div>
-                                <div class="item"><span class="check">✓</span> Creative direction</div>
-                            </div>
-                            <div class="preview-cta">
-                                <button class="btn" id="previewCtaBtn">Request a Quote</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-
         </div>
 
+        <div class="layout">
+            <div>
+                <!-- BASIC INFORMATION -->
+                <div class="form-panel">
+                    <h3><i data-lucide="file-text" class="icon"></i> Basic Information</h3>
+
+                    <div class="form-group">
+                        <label>Service Name *</label>
+                        <input type="text" id="title" placeholder="e.g., Commercial Video Production" maxlength="100">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Category</label>
+                            <input type="text" id="category" placeholder="e.g., Video Production" list="categorySuggestions">
+                            <datalist id="categorySuggestions">
+                                <option value="Design">
+                                <option value="Development">
+                                <option value="Marketing">
+                                <option value="Photography">
+                                <option value="Video">
+                                <option value="Consulting">
+                                <option value="Writing">
+                                <option value="Education">
+                                <option value="Other">
+                            </datalist>
+                        </div>
+                        <div class="form-group">
+                            <label>Delivery Time</label>
+                            <input type="text" id="delivery_time" placeholder="e.g., 2-3 weeks">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Short Description *</label>
+                        <textarea id="description" placeholder="A concise explanation of what this service is..." maxlength="300" style="min-height:70px;"></textarea>
+                        <div class="hint"><span id="descCount">0</span>/300 characters</div>
+                    </div>
+                </div>
+
+                <!-- PROBLEM / OUTCOME -->
+                <div class="form-panel">
+                    <h3><i data-lucide="target" class="icon"></i> Problem &amp; Outcome</h3>
+                    <p class="subtitle">Help clients understand the value of this service.</p>
+
+                    <div class="form-group">
+                        <label>What problem does this solve?</label>
+                        <textarea id="problem" placeholder="e.g., Brands often struggle to consistently produce professional visual content..." maxlength="1000" style="min-height:80px;"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>What outcome do you provide?</label>
+                        <textarea id="outcome" placeholder="e.g., I create professional visual content that helps brands communicate more effectively..." maxlength="1000" style="min-height:80px;"></textarea>
+                    </div>
+                </div>
+
+                <!-- DELIVERABLES -->
+                <div class="form-panel">
+                    <h3><i data-lucide="list-check" class="icon"></i> What's Included</h3>
+                    <p class="subtitle">List deliverables the client will receive.</p>
+                    <div class="chip-list" id="deliverablesList"></div>
+                    <div class="add-row">
+                        <input type="text" id="newDeliverable" placeholder="Add a deliverable..." maxlength="150">
+                        <button type="button" class="btn-secondary" id="addDeliverableBtn">
+                            <i data-lucide="plus" class="icon" style="width:14px;height:14px;"></i> Add
+                        </button>
+                    </div>
+                </div>
+
+                <!-- PROCESS -->
+                <div class="form-panel">
+                    <h3><i data-lucide="workflow" class="icon"></i> Your Process</h3>
+                    <p class="subtitle">Optional — show how you work with clients.</p>
+                    <div id="processList"></div>
+                    <button type="button" class="btn-secondary" id="addProcessBtn" style="width:100%; justify-content:center;">
+                        <i data-lucide="plus" class="icon" style="width:14px;height:14px;"></i> Add Step
+                    </button>
+                </div>
+
+                <!-- RELATED SKILLS -->
+                <div class="form-panel">
+                    <h3><i data-lucide="star" class="icon"></i> Related Skills</h3>
+                    <p class="subtitle">Select skills that support this service.</p>
+                    <div class="select-grid" id="skillsSelector">
+                        <p style="color:var(--text-muted); font-size:13px; padding:8px;">Loading skills…</p>
+                    </div>
+                </div>
+
+                <!-- RELATED PROJECTS -->
+                <div class="form-panel">
+                    <h3><i data-lucide="folder-open" class="icon"></i> Related Projects</h3>
+                    <p class="subtitle">Show proof of this service with real work.</p>
+                    <div class="select-grid" id="projectsSelector">
+                        <p style="color:var(--text-muted); font-size:13px; padding:8px;">Loading projects…</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SIDEBAR PANEL -->
+            <div>
+                <div class="side-panel" style="margin-bottom:16px;">
+                    <h4>Pricing</h4>
+                    <div class="form-group">
+                        <label>Pricing Model</label>
+                        <select id="pricing_type">
+                            <option value="fixed">Fixed Price</option>
+                            <option value="starting_from">Starting At</option>
+                            <option value="range">Price Range</option>
+                            <option value="custom_quote">Custom Quote</option>
+                            <option value="contact">Contact for Pricing</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="priceGroup">
+                        <label>Price</label>
+                        <input type="number" id="price" min="0" step="0.01" placeholder="0.00">
+                    </div>
+                    <div class="form-row" id="rangeGroup" style="display:none;">
+                        <div class="form-group">
+                            <label>Min</label>
+                            <input type="number" id="min_price" min="0" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label>Max</label>
+                            <input type="number" id="max_price" min="0" step="0.01">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Currency</label>
+                        <select id="currency">
+                            <option value="USD">USD ($)</option>
+                            <option value="EUR">EUR (€)</option>
+                            <option value="GBP">GBP (£)</option>
+                            <option value="NGN">NGN (₦)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="side-panel">
+                    <h4>Status</h4>
+                    <div class="status-display">
+                        <div class="status-dot draft" id="statusDot"></div>
+                        <div class="status-info">
+                            <div class="label">Current</div>
+                            <div class="value" id="statusValue">Draft</div>
+                        </div>
+                    </div>
+
+                    <div class="action-stack">
+                        <button class="btn-secondary" id="previewBtn" type="button">
+                            <i data-lucide="eye" class="icon" style="width:14px;height:14px;"></i> Preview
+                        </button>
+                        <button class="btn-secondary" id="duplicateBtn" type="button" style="display:none;">
+                            <i data-lucide="copy" class="icon" style="width:14px;height:14px;"></i> Duplicate
+                        </button>
+                        <button class="btn-danger" id="deleteBtn" type="button" style="display:none;">
+                            <i data-lucide="trash-2" class="icon" style="width:14px;height:14px;"></i> Delete
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </main>
 
+    <div class="toast" id="toast"></div>
+
+    <script src="/dashboard/js/service-edit.js"></script>
     <script>
-        // =========================================================
-        // ALL JAVASCRIPT INLINE (no external file needed)
-        // =========================================================
-
-        console.log('✅ Service Editor loaded (inline)');
-
-        // ---- DOM refs ----
-        const title = document.getElementById('serviceTitle');
-        const description = document.getElementById('serviceDescription');
-        const category = document.getElementById('serviceCategory');
-        const pricingType = document.getElementById('pricingType');
-        const price = document.getElementById('price');
-        const currency = document.getElementById('currency');
-        const minPrice = document.getElementById('minPrice');
-        const maxPrice = document.getElementById('maxPrice');
-        const deliveryTime = document.getElementById('deliveryTime');
-        const revisions = document.getElementById('revisions');
-        const availability = document.getElementById('availability');
-        const status = document.getElementById('serviceStatus');
-        const featured = document.getElementById('featuredService');
-        const showOnPortfolio = document.getElementById('showOnPortfolio');
-        const ctaType = document.getElementById('ctaType');
-        const ctaLabel = document.getElementById('ctaLabel');
-        const ctaUrl = document.getElementById('ctaUrl');
-
-        const previewCategory = document.getElementById('previewCategory');
-        const previewTitle = document.getElementById('previewTitle');
-        const previewDesc = document.getElementById('previewDesc');
-        const previewPrice = document.getElementById('previewPrice');
-        const previewItems = document.getElementById('previewItems');
-        const previewCtaBtn = document.getElementById('previewCtaBtn');
-
-        const saveDraftBtn = document.getElementById('saveDraftBtn');
-        const publishBtn = document.getElementById('publishBtn');
-        const statusMsg = document.getElementById('statusMessage');
-
-        const itemsList = document.getElementById('includedItemsList');
-        const newItemInput = document.getElementById('newItemInput');
-        const addItemBtn = document.getElementById('addItemBtn');
-
-        const faqsList = document.getElementById('faqsList');
-        const faqQuestion = document.getElementById('faqQuestion');
-        const faqAnswer = document.getElementById('faqAnswer');
-        const addFaqBtn = document.getElementById('addFaqBtn');
-
-        const projectsSelector = document.getElementById('projectsSelector');
-
-        let serviceId = null;
-        let includedItems = [];
-        let faqs = [];
-        let selectedProjects = [];
-        let allProjects = [];
-
-        function getToken() {
-            const token = localStorage.getItem('crevio_token');
-            if (!token) {
-                window.location.href = '/admin/pages/login.html';
-                return null;
-            }
-            return token;
-        }
-
-        async function apiFetch(endpoint, options = {}) {
-            const token = getToken();
-            if (!token) return null;
-            const res = await fetch(endpoint, {
-                ...options,
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + token,
-                    ...options.headers
-                }
-            });
-            if (res.status === 401) {
-                localStorage.removeItem('crevio_token');
-                window.location.href = '/admin/pages/login.html';
-                return null;
-            }
-            return res;
-        }
-
-        function getServiceIdFromURL() {
-            const params = new URLSearchParams(window.location.search);
-            return params.get('id') ? parseInt(params.get('id')) : null;
-        }
-
-        // ---- LOAD SERVICE (if editing) ----
-        async function loadService(id) {
-            try {
-                const res = await apiFetch(`/api/services/${id}`);
-                const data = await res.json();
-                if (!data.success) throw new Error('Failed to load service');
-                const service = data.service;
-                serviceId = service.id;
-                fillForm(service);
-                document.getElementById('pageTitle').textContent = 'Edit Service';
-            } catch (err) {
-                console.error(err);
-                showMessage('Unable to load service.', 'error');
-            }
-        }
-
-        function fillForm(service) {
-            title.value = service.title || '';
-            description.value = service.description || '';
-            category.value = service.category || '';
-            pricingType.value = service.pricing_type || 'fixed';
-            price.value = service.price || '';
-            currency.value = service.currency || 'USD';
-            minPrice.value = service.min_price || '';
-            maxPrice.value = service.max_price || '';
-            deliveryTime.value = service.delivery_time || '';
-            revisions.value = service.revisions || '';
-            availability.checked = service.availability === 1;
-            status.value = service.status || 'draft';
-            featured.checked = service.featured === 1;
-            showOnPortfolio.checked = service.show_on_portfolio !== 0;
-            ctaType.value = service.cta_type || 'quote';
-            ctaLabel.value = service.cta_label || '';
-            ctaUrl.value = service.cta_url || '';
-
-            if (service.included_items) {
-                includedItems = service.included_items.map(i => i.item);
-                renderIncludedItems();
-            }
-            if (service.faqs) {
-                faqs = service.faqs.map(f => ({ question: f.question, answer: f.answer }));
-                renderFaqs();
-            }
-            if (service.projects) {
-                selectedProjects = service.projects.map(p => p.id);
-            }
-
-            updatePreview();
-            loadProjectsForSelector();
-        }
-
-        // ---- UPDATE PREVIEW (real data) ----
-        function updatePreview() {
-            // Category
-            previewCategory.textContent = category.value || 'Category';
-
-            // Title
-            previewTitle.textContent = title.value || 'Service Name';
-
-            // Description
-            previewDesc.textContent = description.value || 'Description goes here.';
-
-            // Pricing
-            const pType = pricingType.value;
-            const curr = currency.value || 'USD';
-            const symbol = curr === 'USD' ? '$' : curr === 'EUR' ? '€' : curr === 'GBP' ? '£' : '₦';
-            let priceText = '';
-            if (pType === 'fixed' && price.value) {
-                priceText = `${symbol}${parseInt(price.value).toLocaleString()}`;
-            } else if (pType === 'starting_from' && price.value) {
-                priceText = `Starting from ${symbol}${parseInt(price.value).toLocaleString()}`;
-            } else if (pType === 'range' && minPrice.value && maxPrice.value) {
-                priceText = `${symbol}${parseInt(minPrice.value).toLocaleString()} — ${symbol}${parseInt(maxPrice.value).toLocaleString()}`;
-            } else if (pType === 'custom_quote') {
-                priceText = 'Custom Quote';
-            } else if (pType === 'contact') {
-                priceText = 'Contact for pricing';
-            }
-            previewPrice.textContent = priceText || 'Pricing not set';
-
-            // Included items
-            let itemsHtml = '';
-            if (includedItems.length) {
-                includedItems.forEach(item => {
-                    itemsHtml += `<div class="item"><span class="check">✓</span> ${item}</div>`;
-                });
-            } else {
-                itemsHtml = '<div class="item" style="color:var(--text-muted);">No items added yet.</div>';
-            }
-            previewItems.innerHTML = itemsHtml;
-
-            // CTA label
-            const ctaLabelText = ctaLabel.value || getDefaultCtaLabel(ctaType.value);
-            previewCtaBtn.textContent = ctaLabelText;
-        }
-
-        function getDefaultCtaLabel(type) {
-            const map = {
-                'quote': 'Request a Quote',
-                'contact': 'Contact Me',
-                'start': 'Start a Project',
-                'book': 'Book a Consultation',
-                'custom': 'Learn More'
-            };
-            return map[type] || 'Request a Quote';
-        }
-
-        // ---- INCLUDED ITEMS ----
-        function renderIncludedItems() {
-            if (!includedItems.length) {
-                itemsList.innerHTML = '<div style="color:var(--text-muted);font-size:14px;padding:6px 0;">No items added yet.</div>';
-                return;
-            }
-            let html = '';
-            includedItems.forEach((item, idx) => {
-                html += `
-                    <div class="item-row">
-                        <span class="item-text">${item}</span>
-                        <button class="btn-icon" data-index="${idx}" title="Remove"><i data-lucide="x" style="width:16px;height:16px;"></i></button>
-                    </div>
-                `;
-            });
-            itemsList.innerHTML = html;
-            itemsList.querySelectorAll('.btn-icon').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const idx = parseInt(this.dataset.index);
-                    includedItems.splice(idx, 1);
-                    renderIncludedItems();
-                    updatePreview();
-                });
-            });
-            refreshIcons();
-        }
-
-        addItemBtn.addEventListener('click', function() {
-            const val = newItemInput.value.trim();
-            if (!val) return;
-            includedItems.push(val);
-            newItemInput.value = '';
-            renderIncludedItems();
-            updatePreview();
+        document.getElementById('logoutButton')?.addEventListener('click', () => {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '/admin/pages/login.html';
         });
-        newItemInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') addItemBtn.click();
-        });
-
-        // ---- FAQS ----
-        function renderFaqs() {
-            if (!faqs.length) {
-                faqsList.innerHTML = '<div style="color:var(--text-muted);font-size:14px;padding:6px 0;">No FAQs added yet.</div>';
-                return;
-            }
-            let html = '';
-            faqs.forEach((faq, idx) => {
-                html += `
-                    <div class="item-row">
-                        <span class="item-text"><strong>Q:</strong> ${faq.question}<br><span style="font-size:13px;color:var(--text-secondary);"><strong>A:</strong> ${faq.answer}</span></span>
-                        <button class="btn-icon" data-index="${idx}" title="Remove"><i data-lucide="x" style="width:16px;height:16px;"></i></button>
-                    </div>
-                `;
-            });
-            faqsList.innerHTML = html;
-            faqsList.querySelectorAll('.btn-icon').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const idx = parseInt(this.dataset.index);
-                    faqs.splice(idx, 1);
-                    renderFaqs();
-                });
-            });
-            refreshIcons();
-        }
-
-        addFaqBtn.addEventListener('click', function() {
-            const q = faqQuestion.value.trim();
-            const a = faqAnswer.value.trim();
-            if (!q || !a) return;
-            faqs.push({ question: q, answer: a });
-            faqQuestion.value = '';
-            faqAnswer.value = '';
-            renderFaqs();
-        });
-
-        // ---- PROJECTS ----
-        async function loadProjectsForSelector() {
-            try {
-                const res = await apiFetch('/api/projects');
-                const data = await res.json();
-                if (!data.success) throw new Error('Failed to load projects');
-                allProjects = data.projects || [];
-                renderProjectsSelector();
-            } catch (err) {
-                console.error(err);
-                projectsSelector.innerHTML = '<div style="color:var(--danger);">Unable to load projects.</div>';
-            }
-        }
-
-        function renderProjectsSelector() {
-            if (!allProjects.length) {
-                projectsSelector.innerHTML = '<div style="color:var(--text-muted);">No projects found. <a href="/dashboard/pages/project-create.html" style="color:var(--accent);">Create a project first</a></div>';
-                return;
-            }
-            let html = '';
-            allProjects.forEach(proj => {
-                const checked = selectedProjects.includes(proj.id) ? 'checked' : '';
-                html += `
-                    <div class="checkbox-group" style="padding:4px 0;">
-                        <input type="checkbox" id="proj_${proj.id}" value="${proj.id}" ${checked}>
-                        <label for="proj_${proj.id}">${proj.name}</label>
-                    </div>
-                `;
-            });
-            projectsSelector.innerHTML = html;
-            projectsSelector.querySelectorAll('input[type="checkbox"]').forEach(cb => {
-                cb.addEventListener('change', function() {
-                    const id = parseInt(this.value);
-                    if (this.checked) {
-                        if (!selectedProjects.includes(id)) selectedProjects.push(id);
-                    } else {
-                        selectedProjects = selectedProjects.filter(p => p !== id);
-                    }
-                });
-            });
-            refreshIcons();
-        }
-
-        // ---- SAVE ----
-        async function saveService(statusToSet) {
-            const data = {
-                title: title.value.trim(),
-                description: description.value.trim(),
-                category: category.value,
-                pricing_type: pricingType.value,
-                price: price.value ? parseFloat(price.value) : null,
-                currency: currency.value,
-                min_price: minPrice.value ? parseFloat(minPrice.value) : null,
-                max_price: maxPrice.value ? parseFloat(maxPrice.value) : null,
-                delivery_time: deliveryTime.value.trim(),
-                revisions: revisions.value ? parseInt(revisions.value) : null,
-                availability: availability.checked ? 1 : 0,
-                featured: featured.checked ? 1 : 0,
-                show_on_portfolio: showOnPortfolio.checked ? 1 : 0,
-                cta_type: ctaType.value,
-                cta_label: ctaLabel.value.trim(),
-                cta_url: ctaUrl.value.trim(),
-                status: statusToSet
-            };
-
-            if (!data.title) { showMessage('Service name is required.', 'error'); return; }
-            if (!data.description) { showMessage('Description is required.', 'error'); return; }
-
-            try {
-                const method = serviceId ? 'PUT' : 'POST';
-                const endpoint = serviceId ? `/api/services/${serviceId}` : '/api/services';
-                const res = await apiFetch(endpoint, { method, body: JSON.stringify(data) });
-                const result = await res.json();
-                if (!res.ok || !result.success) throw new Error(result.message || 'Save failed.');
-                serviceId = result.service.id;
-
-                await Promise.all([
-                    apiFetch(`/api/services/${serviceId}/included-items`, {
-                        method: 'PUT', body: JSON.stringify({ items: includedItems })
-                    }),
-                    apiFetch(`/api/services/${serviceId}/faqs`, {
-                        method: 'PUT', body: JSON.stringify({ faqs })
-                    }),
-                    apiFetch(`/api/services/${serviceId}/projects`, {
-                        method: 'PUT', body: JSON.stringify({ projectIds: selectedProjects })
-                    })
-                ]);
-
-                showMessage(`Service ${statusToSet === 'published' ? 'published' : 'saved as draft'} successfully!`, 'success');
-                if (!window.location.search.includes('id=')) {
-                    const url = new URL(window.location);
-                    url.searchParams.set('id', serviceId);
-                    window.history.replaceState({}, '', url);
-                }
-                setTimeout(() => loadService(serviceId), 800);
-            } catch (err) {
-                console.error(err);
-                showMessage(err.message, 'error');
-            }
-        }
-
-        // ---- EVENT LISTENERS ----
-        // Update preview on any change
-        title.addEventListener('input', updatePreview);
-        description.addEventListener('input', updatePreview);
-        category.addEventListener('input', updatePreview);
-        pricingType.addEventListener('change', function() {
-            document.getElementById('rangeFields').style.display = this.value === 'range' ? 'grid' : 'none';
-            updatePreview();
-        });
-        price.addEventListener('input', updatePreview);
-        minPrice.addEventListener('input', updatePreview);
-        maxPrice.addEventListener('input', updatePreview);
-        currency.addEventListener('change', updatePreview);
-        ctaType.addEventListener('change', function() {
-            document.getElementById('customCtaGroup').style.display = this.value === 'custom' ? 'block' : 'none';
-            updatePreview();
-        });
-        ctaLabel.addEventListener('input', updatePreview);
-
-        saveDraftBtn.addEventListener('click', () => saveService('draft'));
-        publishBtn.addEventListener('click', () => saveService('published'));
-
-        // ---- HELPERS ----
-        function showMessage(text, type = 'success') {
-            statusMsg.textContent = text;
-            statusMsg.className = 'message ' + type;
-            setTimeout(() => {
-                statusMsg.className = 'message';
-                statusMsg.textContent = '';
-            }, 5000);
-        }
-
-        function refreshIcons() {
-            if (typeof lucide !== 'undefined') lucide.createIcons();
-        }
-
-        // ---- THEME TOGGLE ----
-        function toggleTheme() {
-            var current = document.documentElement.getAttribute('data-theme');
-            var next = current === 'dark' ? 'light' : 'dark';
-            document.documentElement.setAttribute('data-theme', next);
-            localStorage.setItem('crevio_theme', next);
-            var icon = document.querySelector('#themeToggleBtn .icon');
-            if (icon) {
-                icon.setAttribute('data-lucide', next === 'dark' ? 'moon' : 'sun');
-                refreshIcons();
-            }
-        }
-        window.toggleTheme = toggleTheme;
-
-        // ---- INIT ----
-        document.addEventListener('DOMContentLoaded', function() {
-            var saved = localStorage.getItem('crevio_theme') || 'dark';
-            document.documentElement.setAttribute('data-theme', saved);
-            var icon = document.querySelector('#themeToggleBtn .icon');
-            if (icon) icon.setAttribute('data-lucide', saved === 'dark' ? 'moon' : 'sun');
-            refreshIcons();
-
-            // Avatar
-            var userData = localStorage.getItem('crevio_user');
-            if (userData) {
-                try {
-                    var user = JSON.parse(userData);
-                    var avatar = document.getElementById('userAvatar');
-                    var nameDisplay = document.getElementById('userNameDisplay');
-                    if (avatar) {
-                        if (user.profile_image) {
-                            avatar.innerHTML = '<img src="' + user.profile_image + '" alt="Profile">';
-                        } else if (user.display_name) {
-                            avatar.textContent = user.display_name.charAt(0).toUpperCase();
-                        } else {
-                            avatar.textContent = 'C';
-                        }
-                    }
-                    if (nameDisplay && user.display_name) nameDisplay.textContent = user.display_name;
-                } catch (e) {}
-            }
-
-            // Mobile toggle
-            document.getElementById('mobileToggle').addEventListener('click', function() {
-                document.getElementById('sidebar').classList.toggle('open');
-                document.getElementById('sidebarOverlay').classList.toggle('open');
-            });
-            document.getElementById('sidebarOverlay').addEventListener('click', function() {
-                document.getElementById('sidebar').classList.remove('open');
-                this.classList.remove('open');
-            });
-            document.getElementById('logoutButton').addEventListener('click', function() {
-                localStorage.removeItem('crevio_token');
-                localStorage.removeItem('crevio_user');
-                window.location.href = '/admin/pages/login.html';
-            });
-
-            // Load data
-            const id = getServiceIdFromURL();
-            if (id) {
-                loadService(id);
-            } else {
-                document.getElementById('pageTitle').textContent = 'Create Service';
-                loadProjectsForSelector();
-                updatePreview();
-                if (pricingType.value === 'range') {
-                    document.getElementById('rangeFields').style.display = 'grid';
-                }
-            }
-        });
+        if (typeof lucide !== 'undefined') lucide.createIcons();
     </script>
+    <script src="/dashboard/js/mobile-menu.js?v=639252484686517300"></script>
 </body>
 </html>

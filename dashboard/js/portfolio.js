@@ -1,183 +1,286 @@
 // =========================================================
-// CREVIO — PORTFOLIO JS
+// CREVIO — PORTFOLIO CONFIG PAGE
+// File: dashboard/js/portfolio.js
 // =========================================================
 
-const container = document.getElementById('portfolioContainer');
+document.addEventListener("DOMContentLoaded", function () {
+    const $ = (id) => document.getElementById(id);
 
-function getToken() {
-    const token = localStorage.getItem('crevio_token');
-    if (!token) {
-        window.location.href = '/admin/pages/login.html';
-        return null;
+    const toast    = $("toast");
+    const metaInput = $("meta_description");
+    const metaCount = $("metaCount");
+
+    let config = {};
+    let templates = [];
+
+    // =========================================================
+    // LOAD CONFIG + TEMPLATES
+    // =========================================================
+    async function loadAll() {
+        try {
+            const [configRes, templatesRes] = await Promise.all([
+                window.apiFetch("/api/portfolio/config"),
+                window.apiFetch("/api/portfolio/templates")
+            ]);
+
+            const configData    = await configRes.json();
+            const templatesData = await templatesRes.json();
+
+            config    = (configData.success && configData.config) ? configData.config : {};
+            templates = (templatesData.success && templatesData.templates) ? templatesData.templates : [];
+
+            applyToUI();
+            renderTemplates();
+            updateStatusBanner();
+        } catch (err) {
+            console.error("Load error:", err);
+            showToast("Could not load portfolio config", true);
+        }
     }
-    return token;
-}
 
-// ---- LOAD PORTFOLIO ----
-async function loadPortfolio() {
-    const token = getToken();
-    if (!token) return;
+    // =========================================================
+    // APPLY CONFIG TO UI
+    // =========================================================
+    function applyToUI() {
+        const user = window.getCurrentUser ? window.getCurrentUser() : {};
+        const slug = config.slug || user.username || "user";
 
-    try {
-        const res = await fetch('/api/portfolio/config', {
-            headers: { 'Authorization': 'Bearer ' + token }
+        $("title").value            = config.title || "";
+        $("tagline").value          = config.tagline || "";
+        $("meta_description").value = config.meta_description || "";
+        $("primary_color").value    = config.primary_color || "#2563EB";
+        $("background_color").value = config.background_color || "#0F172A";
+        $("font_family").value      = config.font_family || "Inter";
+
+        // Sections
+        let sections = {};
+        try { sections = JSON.parse(config.sections || "{}"); } catch (e) {}
+        document.querySelectorAll("[data-section]").forEach(el => {
+            el.checked = sections[el.dataset.section] !== false;
         });
-        if (res.status === 401) {
-            localStorage.removeItem('crevio_token');
-            window.location.href = '/admin/pages/login.html';
+
+        // Preview button — link to public portfolio
+        const previewBtn = $("previewBtn");
+        if (previewBtn) previewBtn.href = `/p/${slug}`;
+
+        updateMetaCount();
+    }
+
+    function updateStatusBanner() {
+        const user = window.getCurrentUser ? window.getCurrentUser() : {};
+        const slug = config.slug || user.username || "user";
+        const status = (config.status || "draft").toLowerCase();
+
+        const banner = $("statusBanner");
+        const badge  = $("statusBadge");
+        const pubBtn = $("publishBtn");
+
+        $("bannerTitle").textContent = config.title || user.display_name || user.username || "Your Portfolio";
+        $("bannerUrl").textContent   = `${window.location.origin}/p/${slug}`;
+
+        banner.classList.remove("published", "draft");
+        badge.classList.remove("published", "draft");
+        banner.classList.add(status);
+        badge.classList.add(status);
+        badge.textContent = status === "published" ? "Published" : "Draft";
+
+        if (status === "published") {
+            pubBtn.className = "btn-danger";
+            pubBtn.innerHTML = `<i data-lucide="eye-off" class="icon" style="width:16px;height:16px;"></i> Unpublish`;
+        } else {
+            pubBtn.className = "btn-success";
+            pubBtn.innerHTML = `<i data-lucide="upload-cloud" class="icon" style="width:16px;height:16px;"></i> Publish Portfolio`;
+        }
+
+        if (typeof lucide !== "undefined") lucide.createIcons();
+    }
+
+    // =========================================================
+    // RENDER TEMPLATES
+    // =========================================================
+    function renderTemplates() {
+        const grid = $("templateGrid");
+        const activeTemplate = config.template || "minimal";
+
+        if (!templates.length) {
+            grid.innerHTML = `<div class="loading">No templates available</div>`;
             return;
         }
-        if (!res.ok) throw new Error('HTTP ' + res.status);
 
-        const data = await res.json();
-        if (!data.success) throw new Error('Failed to load portfolio');
-
-        renderPortfolio(data.config);
-
-    } catch (err) {
-        console.error('Portfolio load error:', err);
-        container.innerHTML = '<div class="loading-state" style="color:var(--danger);">Unable to load portfolio.</div>';
-    }
-}
-
-// ---- RENDER ----
-function renderPortfolio(config) {
-    const isPublished = config.published === 1;
-    const statusClass = isPublished ? 'published' : 'draft';
-    const statusText = isPublished ? 'Published' : 'Draft';
-    const username = localStorage.getItem('crevio_user') ? JSON.parse(localStorage.getItem('crevio_user')).username : 'creator';
-
-    const templateName = config.template_name || 'No template selected';
-    const templateDesc = config.template_description || 'Choose a template to get started';
-    const templateInitial = templateName.charAt(0).toUpperCase();
-
-    const html = `
-        <div class="portfolio-card">
-
-            <!-- HEADER -->
-            <div class="portfolio-header">
-                <div>
-                    <h2>My Portfolio</h2>
-                    <div class="status-row">
-                        <span class="status-badge ${statusClass}">
-                            <i data-lucide="${isPublished ? 'check-circle' : 'edit-3'}" style="width:14px;height:14px;"></i>
-                            ${statusText}
-                        </span>
-                        <span class="portfolio-link" onclick="copyPortfolioLink()">
-                            <i data-lucide="link" style="width:14px;height:14px;"></i>
-                            /u/${username}
-                        </span>
-                    </div>
+        grid.innerHTML = templates.map(t => `
+            <div class="template-card ${t.slug === activeTemplate ? "active" : ""}" data-template="${t.slug}">
+                <div class="template-preview">
+                    ${t.preview_image
+                        ? `<img src="${escapeHtml(t.preview_image)}" alt="${escapeHtml(t.name)}">`
+                        : `<i data-lucide="layout" class="icon"></i>`}
                 </div>
-                <a href="/dashboard/pages/portfolio-edit.html" class="btn btn-primary">
-                    <i data-lucide="edit-3" style="width:16px;height:16px;"></i> Edit Portfolio
-                </a>
+                <h3>${escapeHtml(t.name)}</h3>
+                <p>${escapeHtml(t.description || "")}</p>
             </div>
+        `).join("");
 
-            <!-- TEMPLATE PREVIEW -->
-            <div class="template-preview">
-                <div class="icon-box">${templateInitial}</div>
-                <div class="info">
-                    <div class="name">${templateName}</div>
-                    <div class="desc">${templateDesc}</div>
-                </div>
-                <div class="meta">
-                    <i data-lucide="check" style="width:14px;height:14px;color:var(--success);"></i>
-                    Updated ${new Date(config.updated_at).toLocaleDateString()}
-                </div>
-            </div>
+        if (typeof lucide !== "undefined") lucide.createIcons();
 
-            <!-- ACTIONS -->
-            <div class="actions-row">
-                <a href="/u/${username}" target="_blank" class="btn btn-secondary">
-                    <i data-lucide="eye" style="width:16px;height:16px;"></i> View Public Portfolio
-                </a>
-                <button class="btn btn-secondary" onclick="copyPortfolioLink()">
-                    <i data-lucide="copy" style="width:16px;height:16px;"></i> Copy Link
-                </button>
-                <button class="btn ${isPublished ? 'btn-warning' : 'btn-primary'}" onclick="togglePublish()">
-                    <i data-lucide="${isPublished ? 'eye-off' : 'globe'}" style="width:16px;height:16px;"></i>
-                    ${isPublished ? 'Unpublish' : 'Publish'}
-                </button>
-            </div>
-
-        </div>
-    `;
-
-    container.innerHTML = html;
-    refreshIcons();
-}
-
-// ---- TOGGLE PUBLISH ----
-async function togglePublish() {
-    const token = getToken();
-    if (!token) return;
-
-    const currentPublished = document.querySelector('.status-badge.published') !== null;
-    const newStatus = !currentPublished;
-    const action = newStatus ? 'publish' : 'unpublish';
-
-    if (!confirm(`Are you sure you want to ${action} your portfolio?`)) return;
-
-    try {
-        const res = await fetch('/api/portfolio/publish', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + token
-            },
-            body: JSON.stringify({ published: newStatus })
+        grid.querySelectorAll("[data-template]").forEach(card => {
+            card.addEventListener("click", () => {
+                grid.querySelectorAll("[data-template]").forEach(c => c.classList.remove("active"));
+                card.classList.add("active");
+                config.template = card.dataset.template;
+                saveConfig(true);
+            });
         });
-        const data = await res.json();
-        if (!res.ok || !data.success) throw new Error(data.message || 'Failed to update publish status.');
-
-        loadPortfolio();
-
-    } catch (err) {
-        console.error('Publish toggle error:', err);
-        alert('❌ ' + err.message);
     }
-}
 
-// ---- COPY PORTFOLIO LINK ----
-function copyPortfolioLink() {
-    const username = localStorage.getItem('crevio_user') ? JSON.parse(localStorage.getItem('crevio_user')).username : 'creator';
-    const url = window.location.origin + '/u/' + username;
-    navigator.clipboard.writeText(url).then(() => {
-        alert('✅ Portfolio link copied!');
-    }).catch(() => {
-        const textArea = document.createElement('textarea');
-        textArea.value = url;
-        document.body.appendChild(textArea);
-        textArea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textArea);
-        alert('✅ Portfolio link copied!');
-    });
-}
+    // =========================================================
+    // SAVE
+    // =========================================================
+    async function saveConfig(silent = false) {
+        // Build sections object
+        const sections = {};
+        document.querySelectorAll("[data-section]").forEach(el => {
+            sections[el.dataset.section] = el.checked;
+        });
 
-// ---- HELPERS ----
-function refreshIcons() {
-    if (typeof lucide !== 'undefined') {
-        lucide.createIcons();
-    }
-}
+        const activeTemplate = document.querySelector("[data-template].active")?.dataset.template
+                              || config.template || "minimal";
 
-// ---- INIT ----
-document.addEventListener('DOMContentLoaded', function() {
-    loadPortfolio();
-    const userData = localStorage.getItem('crevio_user');
-    if (userData) {
+        const payload = {
+            title:            $("title").value.trim(),
+            tagline:          $("tagline").value.trim(),
+            meta_description: $("meta_description").value.trim(),
+            template:         activeTemplate,
+            sections:         JSON.stringify(sections),
+            primary_color:    $("primary_color").value,
+            background_color: $("background_color").value,
+            font_family:      $("font_family").value
+        };
+
+        const saveBtn = $("saveBtn");
+        const original = saveBtn.innerHTML;
+
+        if (!silent) {
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = "Saving...";
+        }
+
         try {
-            const user = JSON.parse(userData);
-            const avatar = document.getElementById('userAvatar');
-            const nameDisplay = document.getElementById('userNameDisplay');
-            if (avatar && user.display_name) {
-                avatar.textContent = user.display_name.charAt(0).toUpperCase();
+            const res  = await window.apiFetch("/api/portfolio/config", {
+                method: "PUT",
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                if (!silent) showToast("Portfolio settings saved");
+                // Reload config to get fresh state
+                const refreshed = await window.apiFetch("/api/portfolio/config");
+                const refreshedData = await refreshed.json();
+                if (refreshedData.success) config = refreshedData.config;
+                updateStatusBanner();
+            } else {
+                showToast(data.message || "Failed to save", true);
             }
-            if (nameDisplay && user.display_name) {
-                nameDisplay.textContent = user.display_name;
+        } catch (err) {
+            showToast("Failed: " + err.message, true);
+        } finally {
+            if (!silent) {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = original;
+                if (typeof lucide !== "undefined") lucide.createIcons();
             }
-        } catch (e) { console.error(e); }
+        }
     }
+
+    $("saveBtn")?.addEventListener("click", () => saveConfig(false));
+
+    // =========================================================
+    // PUBLISH / UNPUBLISH
+    // =========================================================
+    $("publishBtn")?.addEventListener("click", async () => {
+        const badge = $("statusBadge");
+        const isPublished = badge.classList.contains("published");
+        const action = isPublished ? "unpublish" : "publish";
+
+        const confirmMsg = isPublished
+            ? "Unpublish your portfolio? Visitors won't see it."
+            : "Publish your portfolio? It will be visible to everyone.";
+
+        if (!confirm(confirmMsg)) return;
+
+        try {
+            const res  = await window.apiFetch("/api/portfolio/publish", {
+                method: "POST",
+                body: JSON.stringify({ publish: !isPublished })
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                showToast(`Portfolio ${data.published ? "published" : "unpublished"}`);
+                // Reload config
+                const refreshed = await window.apiFetch("/api/portfolio/config");
+                const refreshedData = await refreshed.json();
+                if (refreshedData.success) config = refreshedData.config;
+                updateStatusBanner();
+            } else {
+                showToast(data.message || "Failed", true);
+            }
+        } catch (err) {
+            showToast("Failed: " + err.message, true);
+        }
+    });
+
+    // =========================================================
+    // RESET
+    // =========================================================
+    $("resetBtn")?.addEventListener("click", () => {
+        if (!confirm("Reset all portfolio settings to defaults?")) return;
+
+        $("title").value = "";
+        $("tagline").value = "";
+        $("meta_description").value = "";
+        $("primary_color").value = "#2563EB";
+        $("background_color").value = "#0F172A";
+        $("font_family").value = "Inter";
+
+        document.querySelectorAll("[data-template]").forEach(t => t.classList.remove("active"));
+        const firstTpl = document.querySelector("[data-template]");
+        if (firstTpl) firstTpl.classList.add("active");
+
+        document.querySelectorAll("[data-section]").forEach(el => el.checked = true);
+
+        updateMetaCount();
+        showToast("Reset locally — click Save to apply");
+    });
+
+    // =========================================================
+    // META CHARACTER COUNT
+    // =========================================================
+    function updateMetaCount() {
+        if (metaCount && metaInput) metaCount.textContent = metaInput.value.length;
+    }
+    metaInput?.addEventListener("input", updateMetaCount);
+
+    // =========================================================
+    // HELPERS
+    // =========================================================
+    let toastTimer;
+    function showToast(msg, isError = false) {
+        if (!toast) return;
+        clearTimeout(toastTimer);
+        toast.textContent = msg;
+        toast.classList.toggle("error", isError);
+        toast.classList.add("show");
+        toastTimer = setTimeout(() => toast.classList.remove("show"), 3000);
+    }
+
+    function escapeHtml(str) {
+        return String(str == null ? "" : str).replace(/[&<>"']/g, s => ({
+            "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+        })[s]);
+    }
+
+    // =========================================================
+    // INIT
+    // =========================================================
+    loadAll();
 });
