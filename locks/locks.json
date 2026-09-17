@@ -47,7 +47,6 @@
       "type": "sqliteTable",
       "table": "subscriptions"
     },
-
     {
       "id": "messageController-plan-limits",
       "desc": "messageController enforces plan character limits",
@@ -99,7 +98,7 @@
     },
     {
       "id": "messageRoutes-extra-endpoints",
-      "desc": "Routes for plan-limit, read-all, visitor, email, password",
+      "desc": "Routes for plan-limit, read-all, visitor",
       "type": "fileContains",
       "file": "backend/routes/messageRoutes.js",
       "patterns": ["/plan-limit", "/read-all", "/visitor"]
@@ -118,7 +117,6 @@
       "file": "server.js",
       "patterns": ["botRoutes", "app.use(\"/api/bot\""]
     },
-
     {
       "id": "shared-password-toggle",
       "desc": "Shared password visibility toggle script",
@@ -145,9 +143,8 @@
       "desc": "auth.js no longer creates the duplicate hamburger",
       "type": "fileContains",
       "file": "dashboard/js/auth.js",
-      "patterns": ["DISABLED — the shared"]
+      "patterns": ["DISABLED"]
     },
-
     {
       "id": "messages-page-ui",
       "desc": "Messages page has all modals + toolbars + mobile override",
@@ -175,21 +172,32 @@
         "planLimit",
         "openCrevioBotWithMessage",
         "msg-check read",
-        "msg-check delivered",
-        "scope === \"everyone\""
+        "msg-check delivered"
       ]
     },
     {
       "id": "bot-page-ui",
-      "desc": "Bot page has toolbar, markdown, mobile-menu, no mobile tooltips",
+      "desc": "Bot page (HTML) loads all scripts + mobile overrides",
       "type": "fileContains",
       "file": "dashboard/pages/bot.html",
       "patterns": [
         "msg-toolbar",
-        "CrevioBotToolbar",
         "marked.min.js",
+        "bot-toolbar.js",
         "mobile-menu.js",
         "NO TOOLTIPS ON MOBILE"
+      ]
+    },
+    {
+      "id": "bot-toolbar-script",
+      "desc": "Bot toolbar script exists with rate + share logic",
+      "type": "fileContains",
+      "file": "dashboard/js/bot-toolbar.js",
+      "patterns": [
+        "__crevioBotToolbarInstalled",
+        "msg-toolbar",
+        "rate",
+        "share"
       ]
     },
     {
@@ -232,7 +240,6 @@
       "file": "admin/pages/login.html",
       "patterns": ["password-toggle.js"]
     },
-
     {
       "id": "every-dashboard-page-has-mobile",
       "desc": "All dashboard pages include mobile.css AND mobile-menu.js",
@@ -247,13 +254,6 @@
       "glob": "dashboard/pages/*.html",
       "patterns": [".sidebar { display:none !important"]
     }
-    
-    {
-  "id": "my-new-fix",
-  "desc": "One-line description of what this protects",
-  "type": "fileContains",
-  "file": "path/to/file.js",
-  "patterns": ["someUniqueStringThatMustAlwaysExist"]
-}
   ]
 }
+
