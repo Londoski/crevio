@@ -1,5 +1,5 @@
 ﻿// =========================================================
-// CREVIO â€” AUTH + CUSTOM SELECT + THEME + MOBILE SIDEBAR
+// CREVIO — AUTH + CUSTOM SELECT + THEME + MOBILE SIDEBAR
 // File: dashboard/js/auth.js
 // =========================================================
 
@@ -7,13 +7,13 @@
     "use strict";
 
     // =========================================================
-    // PART 1 â€” AUTH
+    // PART 1 — AUTH
     // =========================================================
     const token = localStorage.getItem("token");
     const user  = localStorage.getItem("user");
 
     if (!token) {
-        console.warn("âš ï¸ No token found â€“ redirecting to login");
+        console.warn("âš ï¸ No token found – redirecting to login");
         window.location.href = "/admin/pages/login.html";
         return;
     }
@@ -28,7 +28,7 @@
         const response = await fetch(url, { ...options, headers });
 
         if (response.status === 401) {
-            console.warn("âš ï¸ 401 Unauthorized â€“ clearing token");
+            console.warn("âš ï¸ 401 Unauthorized – clearing token");
             localStorage.removeItem("token");
             localStorage.removeItem("user");
             window.location.href = "/admin/pages/login.html";
@@ -44,7 +44,7 @@
     };
 
     // =========================================================
-    // PART 2 â€” INJECT GLOBAL STYLES
+    // PART 2 — INJECT GLOBAL STYLES
     // =========================================================
     function injectStyles() {
         if (document.getElementById("crevio-global-styles")) return;
@@ -150,10 +150,10 @@
                 /* Make body the positioning context so the button stays at the top of the page */
                 body { position: relative; }
 
-                /* Hamburger â€” positioned absolutely, scrolls with the page */
+                /* Hamburger — positioned absolutely, scrolls with the page */
                 #crevioMobileToggle {
                     display: flex; align-items: center; justify-content: center;
-                    position: absolute;     /* NOT fixed â€” scrolls with content */
+                    position: absolute;     /* NOT fixed — scrolls with content */
                     top: 16px;
                     left: 16px;
                     width: 42px; height: 42px;
@@ -211,7 +211,7 @@
     }
 
     // =========================================================
-    // PART 3 â€” CUSTOM SELECT
+    // PART 3 — CUSTOM SELECT
     // =========================================================
     const chevronSVG = `
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
@@ -341,7 +341,7 @@
     }
 
     // =========================================================
-    // PART 4 â€” THEME TOGGLE
+    // PART 4 — THEME TOGGLE
     // =========================================================
     function iconSvgFor(theme) {
         const icon = theme === "light" ? "sun" : theme === "system" ? "monitor" : "moon";
@@ -412,7 +412,7 @@
     }
 
     // =========================================================
-    // PART 5 â€” MOBILE SIDEBAR (stays at top, scrolls with page)
+    // PART 5 — MOBILE SIDEBAR (stays at top, scrolls with page)
     // =========================================================
     function initMobileSidebar() {
         // DISABLED — the shared /dashboard/js/mobile-menu.js handles the mobile drawer.
@@ -488,7 +488,7 @@
     }
 
     // =========================================================
-    // PART 6 â€” BOOTSTRAP
+    // PART 6 — BOOTSTRAP
     // =========================================================
     function bootstrap() {
         injectStyles();
@@ -543,5 +543,5 @@
         bootstrap();
     }
 
-    console.log("âœ… auth.js loaded â€” custom selects + theme + mobile sidebar active");
+    console.log("âœ… auth.js loaded — custom selects + theme + mobile sidebar active");
 })();

@@ -1,14 +1,14 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Messages — Crevio</title>
+<title>Messages ÃƒÆ’Ã†ï¿½Ãƒâ€ Ã¢ï¿½â„¢ÃƒÆ’Ã¢ï¿½Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†ï¿½Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢ï¿½Å¡Ã‚Â¬Ãƒï¿½Ã‚Â¡ÃƒÆ’Ã¢ï¿½Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†ï¿½Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢ï¿½Å¡Ãƒâ€šÃ‚Â Crevio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/lucide@latest"></script>
-<script src="/dashboard/js/auth.js?v=639252484686517300"></script>
+<script src="/dashboard/js/auth.js?v=639252892257462073"></script>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 html, body { height:100vh; overflow:hidden; }
@@ -194,7 +194,7 @@ $1100dvh; overflow:hidden; min-width:0; }
 .cm-has-submenu.flip-left:hover > .cm-submenu, .cm-has-submenu.flip-left.submenu-open > .cm-submenu { transform:translateX(0); }
 
 /* =========================================================
-   REACTION BAR — detached floating pill (separate from menu)
+   REACTION BAR ÃƒÆ’Ã†ï¿½Ãƒâ€ Ã¢ï¿½â„¢ÃƒÆ’Ã¢ï¿½Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†ï¿½Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢ï¿½Å¡Ã‚Â¬Ãƒï¿½Ã‚Â¡ÃƒÆ’Ã¢ï¿½Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†ï¿½Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢ï¿½Å¡Ãƒâ€šÃ‚Â detached floating pill (separate from menu)
    ========================================================= */
 .reaction-bar { position:fixed; top:0; left:0; display:flex; gap:2px; padding:4px 6px; background:var(--bg-card); border:1px solid var(--border-color); border-radius:999px; box-shadow:0 14px 36px rgba(0,0,0,0.55); z-index:2601; opacity:0; visibility:hidden; }
 .reaction-bar.open { opacity:1; visibility:visible; }
@@ -206,7 +206,7 @@ $1100dvh; overflow:hidden; min-width:0; }
 .reaction-bar .reaction-more .icon { width:13px; height:13px; }
 
 /* =========================================================
-   MESSAGE MENU — compact, thin padding
+   MESSAGE MENU ÃƒÆ’Ã†ï¿½Ãƒâ€ Ã¢ï¿½â„¢ÃƒÆ’Ã¢ï¿½Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†ï¿½Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢ï¿½Å¡Ã‚Â¬Ãƒï¿½Ã‚Â¡ÃƒÆ’Ã¢ï¿½Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†ï¿½Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢ï¿½Å¡Ãƒâ€šÃ‚Â compact, thin padding
    ========================================================= */
 .msg-context-menu { position:fixed; top:0; left:0; min-width:11rem; max-width:min(15rem, 88vw); background:var(--bg-card); border:1px solid var(--border-color); border-radius:12px; box-shadow:0 18px 44px rgba(0,0,0,0.55); padding:4px; z-index:2600; opacity:0; visibility:hidden; font-size:13px; }
 .msg-context-menu.open { opacity:1; visibility:visible; }
@@ -674,96 +674,12 @@ $1100dvh; overflow:hidden; min-width:0; }
     .msg { max-width:85%; }
 }
 
-        /* ============================================
-           MESSAGES MOBILE OVERRIDE
-           Forces the chat panel to a full-viewport
-           fixed overlay so its width can never collapse.
-           ============================================ */
-        @media (max-width: 900px) {
-            .chat-panel {
-                display: none !important;
-                position: fixed !important;
-                top: 0 !important;
-                left: 0 !important;
-                width: 100vw !important;
-                height: 100dvh !important;
-                height: 100vh;
-                max-width: none !important;
-                min-width: 0 !important;
-                flex: 0 0 auto !important;
-                flex-direction: column !important;
-                overflow: hidden !important;
-                background: var(--bg-primary) !important;
-                z-index: 100 !important;
-            }
-            .chat-panel.mobile-open {
-                display: flex !important;
-            }
-
-            .chat-panel .chat-header {
-                flex: 0 0 auto !important;
-                padding: 10px 14px !important;
-                gap: 8px !important;
-            }
-            .chat-panel .chat-header-info { gap: 10px !important; min-width: 0 !important; }
-            .chat-panel .chat-header-text { min-width: 0 !important; }
-            .chat-panel .chat-header-text h3 { font-size: 14px !important; }
-            .chat-panel .chat-header-text p  { font-size: 11px !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-            .chat-panel .chat-avatar { width: 38px !important; height: 38px !important; font-size: 15px !important; }
-
-            .chat-panel .chat-messages {
-                flex: 1 1 auto !important;
-                min-height: 0 !important;
-                padding: 12px !important;
-                gap: 6px !important;
-                overflow-y: auto !important;
-                -webkit-overflow-scrolling: touch;
-            }
-
-            .chat-panel .msg {
-                max-width: 85% !important;
-                font-size: 14px !important;
-            }
-            .chat-panel .day-divider { margin: 10px 0 6px !important; }
-            .chat-panel .day-divider span { font-size: 10.5px !important; padding: 4px 10px !important; }
-
-            .chat-panel .reply-preview {
-                margin: 0 10px 6px !important;
-                padding: 6px 10px !important;
-            }
-
-            .chat-panel .chat-input-bar {
-                flex: 0 0 auto !important;
-                padding: 10px 12px calc(10px + env(safe-area-inset-bottom, 0)) !important;
-                gap: 8px !important;
-                border-top: 1px solid var(--border-color);
-            }
-            .chat-panel .chat-input-bar textarea {
-                min-height: 40px !important;
-                max-height: 100px !important;
-                padding: 10px 12px !important;
-                font-size: 14px !important;
-            }
-            .chat-panel .send-btn {
-                width: 40px !important;
-                height: 40px !important;
-            }
-
-            /* Conversation list when not in chat */
-            .conv-panel {
-                width: 100% !important;
-                height: 100dvh !important;
-                height: 100vh;
-                flex: 1 1 auto !important;
-            }
-            .conv-panel.mobile-hidden {
-                display: none !important;
-            }
-        }
-        /* END MESSAGES MOBILE OVERRIDE */
+        
 
 </style>
-    <link rel="stylesheet" href="/dashboard/css/mobile.css?v=639252484686517300">
+    <link rel="stylesheet" href="/dashboard/css/mobile.css?v=639252909337679658">
+    <link rel="stylesheet" href="/dashboard/css/mobile-messages.css?v=639252892257462073">
+    <link rel="stylesheet" href="/dashboard/css/loader.css?v=639252909337679658">
 </head>
 <body>
 
@@ -816,7 +732,7 @@ $1100dvh; overflow:hidden; min-width:0; }
                 <button data-action="clear-filters"><i data-lucide="x-circle" class="icon"></i> Clear filters</button>
             </div>
         </div>
-        <div class="conv-items" id="convItems"><div class="loading">Loading conversations…</div></div>
+        <div class="conv-items" id="convItems"><div class="loading">Loading conversationsÃƒÆ’Ã†ï¿½Ãƒâ€ Ã¢ï¿½â„¢ÃƒÆ’Ã¢ï¿½Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†ï¿½Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢ï¿½Å¡Ã‚Â¬Ãƒï¿½Ã‚Â¡ÃƒÆ’Ã¢ï¿½Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†ï¿½ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢ï¿½Å¡Ãƒâ€šÃ‚Â¦</div></div>
     </div>
 
     <div class="chat-panel" id="chatPanel">
@@ -850,7 +766,7 @@ $1100dvh; overflow:hidden; min-width:0; }
     <div class="cm-item cm-has-submenu" data-cm-action="list">
         <i data-lucide="list" class="cm-icon"></i><span>Add to list</span><i data-lucide="chevron-right" class="cm-arrow"></i>
         <div class="cm-submenu">
-            <button data-cm-action="list-new"><i data-lucide="plus" class="cm-icon"></i><span>Create new list…</span></button>
+            <button data-cm-action="list-new"><i data-lucide="plus" class="cm-icon"></i><span>Create new listÃƒÆ’Ã†ï¿½Ãƒâ€ Ã¢ï¿½â„¢ÃƒÆ’Ã¢ï¿½Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†ï¿½Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢ï¿½Å¡Ã‚Â¬Ãƒï¿½Ã‚Â¡ÃƒÆ’Ã¢ï¿½Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†ï¿½ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢ï¿½Å¡Ãƒâ€šÃ‚Â¦</span></button>
             <button data-cm-action="list-remove"><i data-lucide="minus" class="cm-icon"></i><span>Remove from list</span></button>
         </div>
     </div>
@@ -946,7 +862,7 @@ $1100dvh; overflow:hidden; min-width:0; }
             <input type="text" id="forwardSearch" placeholder="Search name or email">
         </div>
         <div class="forward-list" id="forwardList">
-            <div class="forward-empty">Loading…</div>
+            <div class="forward-empty">LoadingÃƒÆ’Ã†ï¿½Ãƒâ€ Ã¢ï¿½â„¢ÃƒÆ’Ã¢ï¿½Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†ï¿½Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢ï¿½Å¡Ã‚Â¬Ãƒï¿½Ã‚Â¡ÃƒÆ’Ã¢ï¿½Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†ï¿½ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢ï¿½Å¡Ãƒâ€šÃ‚Â¦</div>
         </div>
         <div class="forward-footer">
             <input type="text" id="forwardNote" placeholder="Add a message...">
@@ -993,7 +909,7 @@ $1100dvh; overflow:hidden; min-width:0; }
 
 <div class="toast" id="toast"></div>
 
-<script src="/dashboard/js/messages.js?v=639252484686517300"></script>
+<script src="/dashboard/js/messages.js?v=639252909337679658"></script>
 <script>
     document.getElementById('logoutButton')?.addEventListener('click', () => {
         localStorage.removeItem('token');
@@ -1002,6 +918,7 @@ $1100dvh; overflow:hidden; min-width:0; }
     });
     if (typeof lucide !== 'undefined') lucide.createIcons();
 </script>
-    <script src="/dashboard/js/mobile-menu.js?v=639252484686517300"></script>
+    <script src="/dashboard/js/mobile-menu.js?v=639252892257462073"></script>
+    <script src="/dashboard/js/loader.js?v=639252909337679658"></script>
 </body>
 </html>

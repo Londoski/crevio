@@ -1,5 +1,5 @@
 ﻿// =========================================================
-// CREVIO â€” AUTH CONTROLLER
+// CREVIO — AUTH CONTROLLER
 // File: backend/controllers/authController.js
 // =========================================================
 
@@ -100,7 +100,7 @@ exports.logout = (req, res) => {
     res.json({ success: true, message: "Logged out" });
 };
 
-// POST /api/auth/set-password â€” helper for users without a password
+// POST /api/auth/set-password — helper for users without a password
 exports.setPassword = async (req, res) => {
     try {
         const { email, password } = req.body;

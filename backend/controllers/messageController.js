@@ -1,5 +1,5 @@
 ﻿// =========================================================
-// CREVIO â€” MESSAGE CONTROLLER
+// CREVIO — MESSAGE CONTROLLER
 // File: backend/controllers/messageController.js
 // =========================================================
 
@@ -277,7 +277,7 @@ exports.updateMessage = (req, res) => {
 };
 
 // =========================================================
-// TOGGLE REACTION â€” single reaction per user per message
+// TOGGLE REACTION — single reaction per user per message
 // Picking a new emoji replaces the old one. Clicking the same one removes it.
 // =========================================================
 exports.toggleReaction = (req, res) => {
@@ -374,7 +374,7 @@ exports.clearMessages = (req, res) => {
 };
 
 // =========================================================
-// CLIENT PIN (public â€” for the visitor's side)
+// CLIENT PIN (public — for the visitor's side)
 // =========================================================
 exports.clientPinConversation = (req, res) => {
     try {
@@ -404,7 +404,7 @@ exports.markAllRead = (req, res) => {
 };
 
 // =========================================================
-// PUBLIC â€” START CONVERSATION
+// PUBLIC — START CONVERSATION
 // =========================================================
 exports.startConversation = (req, res) => {
     try {

@@ -1,14 +1,14 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Overview — Crevio</title>
+    <title>Overview ï¿½ Crevio</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="/dashboard/js/auth.js?v=639252484686517300"></script>
+    <script src="/dashboard/js/auth.js?v=639252892257462073"></script>
 
     <style>
         * { margin:0; padding:0; box-sizing:border-box; }
@@ -32,7 +32,7 @@
         .logout-button { background:transparent; border:none; color:var(--danger); font-size:13px; font-weight:500; padding:10px 12px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:12px; width:100%; font-family:inherit; }
         .logout-button:hover { background:rgba(239,68,68,0.1); }
 
-        /* CONTENT AREA — full width */
+        /* CONTENT AREA ï¿½ full width */
         .main {
             flex: 1;
             padding: 28px 36px;
@@ -155,7 +155,8 @@
             .user-name { display:none; }
         }
     </style>
-    <link rel="stylesheet" href="/dashboard/css/mobile.css?v=639252484686517300">
+    <link rel="stylesheet" href="/dashboard/css/mobile.css?v=639252909337679658">
+    <link rel="stylesheet" href="/dashboard/css/loader.css?v=639252909337679658">
 </head>
 <body>
 
@@ -195,7 +196,7 @@
         <div class="topbar">
             <div>
                 <h2>Overview</h2>
-                <p>Welcome back, <span id="userName">…</span> 👋</p>
+                <p>Welcome back, <span id="userName">ï¿½</span> ðŸ‘‹</p>
             </div>
             <div class="topbar-right">
                 <a href="/dashboard/pages/project-create.html" class="primary-button">
@@ -203,7 +204,7 @@
                 </a>
                 <div style="display:flex; align-items:center; gap:8px;">
                     <span class="user-avatar" id="userAvatar">?</span>
-                    <span class="user-name" id="userNameDisplay">…</span>
+                    <span class="user-name" id="userNameDisplay">ï¿½</span>
                 </div>
             </div>
         </div>
@@ -212,8 +213,8 @@
         <div class="identity-card">
             <div class="identity-avatar" id="identityAvatar">?</div>
             <div class="identity-info">
-                <h3 id="identityName">Loading…</h3>
-                <div class="prof" id="identityProf">—</div>
+                <h3 id="identityName">Loadingï¿½</h3>
+                <div class="prof" id="identityProf">ï¿½</div>
                 <div class="specs" id="identitySpecs"></div>
                 <div class="bio" id="identityBio"></div>
             </div>
@@ -235,7 +236,7 @@
                         <span class="status-text">Draft</span>
                     </span>
                 </h3>
-                <div class="url" id="portfolioUrl">Loading…</div>
+                <div class="url" id="portfolioUrl">Loadingï¿½</div>
             </div>
             <div class="portfolio-actions">
                 <a href="#" target="_blank" class="secondary-button" id="previewBtn">
@@ -301,10 +302,10 @@
             <div class="panel">
                 <div class="panel-header">
                     <h3>Recent Projects</h3>
-                    <a href="/dashboard/pages/projects.html" class="view-all">View all →</a>
+                    <a href="/dashboard/pages/projects.html" class="view-all">View all â†’</a>
                 </div>
                 <div id="projectsContainer" class="project-list">
-                    <div class="empty-state" style="padding:24px; text-align:center; color:var(--text-muted); font-size:14px;">Loading…</div>
+                    <div class="empty-state" style="padding:24px; text-align:center; color:var(--text-muted); font-size:14px;">Loadingï¿½</div>
                 </div>
             </div>
             <div class="panel">
@@ -312,7 +313,7 @@
                     <h3>Recent Activity</h3>
                 </div>
                 <div id="activityContainer">
-                    <div class="empty-state" style="padding:24px; text-align:center; color:var(--text-muted); font-size:14px;">Loading…</div>
+                    <div class="empty-state" style="padding:24px; text-align:center; color:var(--text-muted); font-size:14px;">Loadingï¿½</div>
                 </div>
             </div>
         </div>
@@ -328,6 +329,7 @@
         });
         if (typeof lucide !== 'undefined') lucide.createIcons();
     </script>
-    <script src="/dashboard/js/mobile-menu.js?v=639252484686517300"></script>
+    <script src="/dashboard/js/mobile-menu.js?v=639252892257462073"></script>
+    <script src="/dashboard/js/loader.js?v=639252909337679658"></script>
 </body>
 </html>

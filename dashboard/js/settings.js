@@ -1,5 +1,5 @@
 ﻿// =========================================================
-// CREVIO â€” SETTINGS PAGE
+// CREVIO — SETTINGS PAGE
 // File: dashboard/js/settings.js
 // =========================================================
 
@@ -33,7 +33,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         const settings = { ...DEFAULTS, ...saved };
 
-        // Theme â€” check multiple sources
+        // Theme — check multiple sources
         const themeFromLocal = localStorage.getItem("crevio_theme");
         const theme = themeFromLocal || settings.theme || "dark";
 

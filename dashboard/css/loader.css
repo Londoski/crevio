@@ -1,0 +1,177 @@
+/* ============================================================
+   CREVIO — BRANDED LOADER (v6 — pixel-accurate "i")
+   File: dashboard/css/loader.css
+
+   The "i" is drawn as an inline SVG (see loader.js) so we can
+   match the brand mark exactly: a rectangular bar with a soft
+   curved top-left corner + blue pulsing dot above it.
+   ============================================================ */
+
+.crevio-loader {
+    display: inline-flex;
+    align-items: baseline;
+    justify-content: center;
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    font-size: 1.5rem;
+    letter-spacing: -0.02em;
+    color: var(--text-muted);
+    line-height: 1;
+    user-select: none;
+    pointer-events: none;
+    -webkit-font-smoothing: antialiased;
+}
+
+.crevio-loader.sm { font-size: 1rem; }
+.crevio-loader.lg { font-size: 2.25rem; }
+.crevio-loader.xl { font-size: 3rem; }      /* 48px — big page loaders */
+.crevio-loader.xxl { font-size: 4rem; }     /* 64px — full-screen loaders */
+
+.crevio-loader-word {
+    display: inline-flex;
+    align-items: baseline;
+    line-height: 1;
+}
+
+.crevio-loader-word > span {
+    display: inline-block;
+    line-height: 1;
+}
+
+/* ============================================================
+   THE "i" — inline SVG
+   The SVG contains two circles (dot + glow ring) and a path
+   (the bar). All sized in em so it scales with font-size.
+   ============================================================ */
+.crevio-i-wrap {
+    display: inline-block;
+    /* width : height ratio ~ 0.34 : 1
+       the SVG viewBox is 24 wide × 84 tall */
+    width: 0.24em;
+    height: 0.84em;
+    vertical-align: baseline;
+    position: relative;
+    /* Bottom of the SVG sits on the baseline */
+    transform: translateY(0.02em);
+}
+
+.crevio-i-svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    fill: currentColor;
+}
+
+/* The bar (rectangular, rounded top-left corner) */
+.crevio-i-bar {
+    fill: currentColor;
+}
+
+/* The pulsing dot + its expanding glow ring */
+.crevio-dot,
+.crevio-dot-ring {
+    transform-box: fill-box;
+    transform-origin: center;
+}
+
+.crevio-dot {
+    fill: var(--accent);
+    animation: crev-dot-grow 1.6s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.crevio-dot-ring {
+    fill: var(--accent);
+    opacity: 0;
+    animation: crev-dot-ring-grow 1.6s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes crev-dot-grow {
+    0%   { transform: scale(0.88); }
+    45%  { transform: scale(1.15); }
+    100% { transform: scale(0.88); }
+}
+
+@keyframes crev-dot-ring-grow {
+    0%   { transform: scale(1);   opacity: 0.55; }
+    100% { transform: scale(2.4); opacity: 0;    }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    .crevio-dot {
+        animation: crev-dot-fade 1.6s ease-in-out infinite;
+        transform: scale(1);
+    }
+    .crevio-dot-ring {
+        animation: none;
+        opacity: 0.15;
+    }
+    @keyframes crev-dot-fade {
+        0%, 100% { opacity: 0.55; }
+        50%      { opacity: 1; }
+    }
+}
+
+/* Wrapper for block-level centering */
+.crevio-loader-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+    min-height: 4rem;
+}
+.crevio-loader-wrap.fullscreen {
+    position: fixed;
+    inset: 0;
+    background: var(--bg-primary);
+    z-index: 4000;
+    min-height: 0;
+}
+
+/* Inline dot inside buttons */
+.crevio-inline-loader {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    position: relative;
+    vertical-align: -0.1em;
+    margin-right: 0.375em;
+}
+.crevio-inline-loader::before,
+.crevio-inline-loader::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: crev-inline-ping 1.2s ease-out infinite;
+}
+.crevio-inline-loader::after { animation-delay: 0.6s; }
+@keyframes crev-inline-ping {
+    0%   { transform: scale(0.35); opacity: 0.9; }
+    100% { transform: scale(1);    opacity: 0; }
+}
+
+/* Skeleton */
+.crevio-skeleton {
+    background: linear-gradient(90deg, var(--bg-input) 0%, var(--bg-card) 50%, var(--bg-input) 100%);
+    background-size: 200% 100%;
+    border-radius: 6px;
+    animation: crev-skel-shimmer 1.4s ease-in-out infinite;
+}
+@keyframes crev-skel-shimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+.crevio-skeleton.line {
+    height: 0.875rem;
+    margin-bottom: 0.5rem;
+}
+.crevio-skeleton.line.short  { width: 40%; }
+.crevio-skeleton.line.medium { width: 70%; }
+.crevio-skeleton.line.long   { width: 100%; }
+
+@media (prefers-reduced-motion: reduce) {
+    .crevio-skeleton { animation: none; opacity: 0.6; }
+}

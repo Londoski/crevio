@@ -1,5 +1,5 @@
 // =========================================================
-// CREVIO â€” MESSAGES
+// CREVIO — MESSAGES
 // File: dashboard/js/messages.js
 // =========================================================
 console.log("[Messages] loaded");
@@ -21,6 +21,16 @@ document.addEventListener("DOMContentLoaded", function () {
     const reactionBarEl     = $("reactionBar");
     const msgContextMenuEl  = $("msgContextMenu");
     const toast             = $("toast");
+
+        function __msgTiming() { window.__msgTiming = true; }
+    function __timedFetch(url, opts) {
+        const t0 = performance.now();
+        return window.apiFetch(url, opts).then(res => {
+            const dt = (performance.now() - t0).toFixed(0);
+            console.log("[messages] " + dt + "ms  " + url);
+            return res;
+        });
+    }
 
     let conversations   = [];
     let activeConvId    = null;
@@ -107,7 +117,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     async function loadStats() {
         try {
-            const res = await window.apiFetch("/api/messages/stats");
+            const res = await __timedFetch("/api/messages/stats");
             const d = await res.json();
             if (d.success) { lastStats = d.stats; applyCounts(); }
         } catch (e) { console.error(e); }
@@ -117,10 +127,10 @@ document.addEventListener("DOMContentLoaded", function () {
     // LOAD CONVERSATIONS
     // =========================================================
     async function loadConversations() {
-        convItemsEl.innerHTML = '<div class="loading">Loading conversationsâ€¦</div>';
+        convItemsEl.innerHTML = (window.CrevioLoader ? CrevioLoader.wrap(CrevioLoader.html("sm")) : '<div class="loading">Loading…</div>');
         try {
             const url = "/api/messages/conversations?filter=" + filter + "&search=" + encodeURIComponent(search);
-            const res = await window.apiFetch(url);
+            const res = await __timedFetch(url);
             const data = await res.json();
             conversations = data.conversations || [];
             renderConversations();
@@ -212,17 +222,24 @@ document.addEventListener("DOMContentLoaded", function () {
         convItemsEl.querySelectorAll(".conv-item").forEach(el => el.classList.toggle("active", parseInt(el.dataset.id, 10) === id));
         convPanelEl.classList.add("mobile-hidden");
         chatPanelEl.classList.add("mobile-open");
-        chatPanelEl.innerHTML = '<div class="loading" style="margin:auto;">Loading messagesâ€¦</div>';
+        chatPanelEl.innerHTML = (window.CrevioLoader ? CrevioLoader.wrap(CrevioLoader.html("xxl"), { minHeight: "70vh" }) : '<div class="loading" style="margin:auto;">Loading…</div>');
         try {
-            const res = await window.apiFetch("/api/messages/conversations/" + id);
+            const res = await __timedFetch("/api/messages/conversations/" + id);
             const data = await res.json();
             if (!data.success) throw new Error(data.message || "Not found");
             const conv = data.conversation || {};
             activeMessages = data.messages || [];
             const c = conversations.find(x => x.id === id);
+            const hadUnread = c && (c.unread_count > 0 || c.manually_unread === 1);
             if (c) { c.unread_count = 0; c.manually_unread = 0; }
-            renderConversations();
-            loadStats();
+
+            // Toggle active class only (no full re-render)
+            convItemsEl.querySelectorAll(".conv-item").forEach(el => {
+                el.classList.toggle("active", parseInt(el.dataset.id, 10) === id);
+            });
+
+            // Only refresh stats if unread count changed
+            if (hadUnread) loadStats();
             renderChatPanel(conv, activeMessages);
             setupChatHandlers(id);
             wireSelectionBar();
@@ -248,7 +265,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     <div class="chat-avatar">${initial}</div>
                     <div class="chat-header-text">
                         <h3>${escapeHtml(name)}</h3>
-                        <p>${escapeHtml(email)}${email ? " Â· " : ""}${escapeHtml(status)}</p>
+                        <p>${escapeHtml(email)}${email ? " · " : ""}${escapeHtml(status)}</p>
                     </div>
                 </div>
             </div>
@@ -276,7 +293,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 <button id="replyCancel"><i data-lucide="x" class="icon"></i></button>
             </div>
             <div class="chat-input-bar">
-                <textarea id="msgInput" placeholder="Type your replyâ€¦" rows="1"></textarea>
+                <textarea id="msgInput" placeholder="Type your reply…" rows="1"></textarea>
                 <button class="send-btn" id="sendBtn" title="Send"><i data-lucide="send" class="icon"></i></button>
             </div>
             <div class="char-counter" id="charCounter"></div>`;
@@ -375,15 +392,16 @@ document.addEventListener("DOMContentLoaded", function () {
             const text = input.value.trim();
             if (!text) return;
             if (!planUnlimited && text.length > planLimit) {
-                showToast("Message too long â€” your plan allows " + planLimit + " characters", true);
+                showToast("Message too long — your plan allows " + planLimit + " characters", true);
                 return;
             }
             sendBtn.disabled = true;
             input.disabled = true;
+            if (window.CrevioLoader) sendBtn.innerHTML = CrevioLoader.inline() + '<i data-lucide="send" class="icon" style="display:none;"></i>';
             try {
                 const payload = { body: text };
                 if (replyToId) payload.reply_to_id = replyToId;
-                const res = await window.apiFetch("/api/messages/conversations/" + convId, {
+                const res = await __timedFetch("/api/messages/conversations/" + convId, {
                     method: "POST",
                     body: JSON.stringify(payload)
                 });
@@ -413,6 +431,8 @@ document.addEventListener("DOMContentLoaded", function () {
                 sendBtn.disabled = false;
                 input.disabled = false;
                 input.focus();
+                if (window.CrevioLoader) sendBtn.innerHTML = '<i data-lucide="send" class="icon"></i>';
+                if (typeof lucide !== "undefined") { try { lucide.createIcons(); } catch (e) {} }
             }
         }
     }
@@ -545,7 +565,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     async function toggleMessageReaction(msgId, emoji) {
         try {
-            const res = await window.apiFetch("/api/messages/conversations/" + activeConvId + "/messages/" + msgId + "/reactions", {
+            const res = await __timedFetch("/api/messages/conversations/" + activeConvId + "/messages/" + msgId + "/reactions", {
                 method: "POST",
                 body: JSON.stringify({ emoji: emoji, side: "creator" })
             });
@@ -619,7 +639,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     // Already pinned â†’ offer unpin
                     if (!await confirmDialog("Unpin this message?", { title: "Unpin", confirmText: "Unpin", danger: true })) return;
                     try {
-                        await window.apiFetch("/api/messages/conversations/" + activeConvId + "/messages/" + msgId + "/pin", { method: "DELETE" });
+                        await __timedFetch("/api/messages/conversations/" + activeConvId + "/messages/" + msgId + "/pin", { method: "DELETE" });
                         const m = activeMessages.find(x => x.id === msgId);
                         if (m) { m.pinned = 0; m.pinned_until = null; }
                         const container = $("chatMessages");
@@ -661,7 +681,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 const scope = await deleteDialog(!!msg.is_mine);
                 if (!scope) return;
                 try {
-                    await window.apiFetch("/api/messages/conversations/" + activeConvId + "/messages/" + msgId + "?scope=" + scope, { method: "DELETE" });
+                    await __timedFetch("/api/messages/conversations/" + activeConvId + "/messages/" + msgId + "?scope=" + scope, { method: "DELETE" });
                     if (scope === "everyone") {
                         const m = activeMessages.find(x => x.id === msgId);
                         if (m) { m.deleted = 1; m.content = ""; }
@@ -683,7 +703,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     async function updateMessageField(msgId, body) {
         try {
-            const res = await window.apiFetch("/api/messages/conversations/" + activeConvId + "/messages/" + msgId, {
+            const res = await __timedFetch("/api/messages/conversations/" + activeConvId + "/messages/" + msgId, {
                 method: "PATCH",
                 body: JSON.stringify(body)
             });
@@ -838,7 +858,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 case "clear": {
                     const ok = await confirmDialog("Clear all messages? The conversation will stay in your inbox.", { title: "Clear chat", confirmText: "Clear", danger: true });
                     if (!ok) return;
-                    await window.apiFetch("/api/messages/conversations/" + convId + "/messages", { method: "DELETE" });
+                    await __timedFetch("/api/messages/conversations/" + convId + "/messages", { method: "DELETE" });
                     showToast("Chat cleared");
                     if (activeConvId === convId) resetChatPanel("eraser", "Chat cleared", "This conversation has no messages.");
                     refreshAfterAction();
@@ -847,7 +867,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 case "delete": {
                     const ok = await confirmDialog("Permanently delete this conversation? This cannot be undone.", { title: "Delete conversation", confirmText: "Delete", danger: true });
                     if (!ok) return;
-                    await window.apiFetch("/api/messages/conversations/" + convId, { method: "DELETE" });
+                    await __timedFetch("/api/messages/conversations/" + convId, { method: "DELETE" });
                     showToast("Conversation deleted");
                     conversations = conversations.filter(c => c.id !== convId);
                     if (activeConvId === convId) {
@@ -863,7 +883,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     async function patchConv(id, body) {
-        const res = await window.apiFetch("/api/messages/conversations/" + id, { method: "PATCH", body: JSON.stringify(body) });
+        const res = await __timedFetch("/api/messages/conversations/" + id, { method: "PATCH", body: JSON.stringify(body) });
         const data = await res.json();
         if (!data.success) throw new Error(data.message || "Update failed");
         return data;
@@ -927,7 +947,7 @@ document.addEventListener("DOMContentLoaded", function () {
             chipMoreBtn.classList.remove("open");
             if (action === "mark-all-read") {
                 try {
-                    const res = await window.apiFetch("/api/messages/read-all", { method: "PATCH" });
+                    const res = await __timedFetch("/api/messages/read-all", { method: "PATCH" });
                     const data = await res.json();
                     if (data.success) { showToast("All marked as read"); refreshAfterAction(); }
                 } catch (e) { showToast("Failed", true); }
@@ -1041,7 +1061,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         if (planUnlimited) {
             el.className = "char-counter";
-            el.innerHTML = '<span class="plan-tag">Business</span>' + len + ' / âˆž';
+            el.innerHTML = '<span class="plan-tag">Business</span>' + len + ' / ∞';
             return;
         }
 
@@ -1070,7 +1090,7 @@ document.addEventListener("DOMContentLoaded", function () {
     async function loadPinOptions(force) {
         if (pinOptionsCache && !force) return pinOptionsCache;
         try {
-            const res = await window.apiFetch("/api/messages/pin-options");
+            const res = await __timedFetch("/api/messages/pin-options");
             const d = await res.json();
             if (d.success) pinOptionsCache = d;
         } catch (e) { console.error("[Messages] pin-options fetch failed", e); }
@@ -1137,7 +1157,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const onConfirm = async () => {
             close();
             try {
-                const res = await window.apiFetch(
+                const res = await __timedFetch(
                     "/api/messages/conversations/" + activeConvId + "/messages/" + msgId + "/pin",
                     { method: "POST", body: JSON.stringify({ hours: selectedHours }) }
                 );
@@ -1338,7 +1358,7 @@ document.addEventListener("DOMContentLoaded", function () {
         try { if (typeof lucide !== "undefined") lucide.createIcons(); } catch (e) {}
     }
 
-    // Click handler â€” only active in selection mode (delegated)
+    // Click handler — only active in selection mode (delegated)
     document.addEventListener("click", function (e) {
         if (!selectionMode) return;
         var msgEl = e.target.closest("#chatMessages .msg");
@@ -1392,7 +1412,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     var ok = 0;
                     for (var id of ids) {
                         try {
-                            await window.apiFetch("/api/messages/conversations/" + activeConvId + "/messages/" + id, {
+                            await __timedFetch("/api/messages/conversations/" + activeConvId + "/messages/" + id, {
                                 method: "PATCH",
                                 body: JSON.stringify({ starred: newVal })
                             });
@@ -1424,7 +1444,7 @@ document.addEventListener("DOMContentLoaded", function () {
                         var m = activeMessages.find(x => x.id === id);
                         var scope = (m && m.is_mine) ? "everyone" : "me";
                         try {
-                            await window.apiFetch("/api/messages/conversations/" + activeConvId + "/messages/" + id + "?scope=" + scope, { method: "DELETE" });
+                            await __timedFetch("/api/messages/conversations/" + activeConvId + "/messages/" + id + "?scope=" + scope, { method: "DELETE" });
                             if (scope === "everyone") {
                                 if (m) { m.deleted = 1; m.content = ""; }
                             } else {
@@ -1499,10 +1519,10 @@ document.addEventListener("DOMContentLoaded", function () {
         try { if (typeof lucide !== "undefined") lucide.createIcons(); } catch (e) {}
 
         async function loadList(query) {
-            listEl.innerHTML = '<div class="forward-empty">Loadingâ€¦</div>';
+            listEl.innerHTML = '<div class="forward-empty">Loading…</div>';
             try {
                 const url = "/api/messages/conversations" + (query ? "?search=" + encodeURIComponent(query) : "");
-                const res = await window.apiFetch(url);
+                const res = await __timedFetch(url);
                 const data = await res.json();
                 const convs = (data.success && data.conversations) || [];
 
@@ -1585,7 +1605,7 @@ document.addEventListener("DOMContentLoaded", function () {
             try {
                 let sent = 0;
                 if (convIds.length) {
-                    const res = await window.apiFetch("/api/messages/forward", {
+                    const res = await __timedFetch("/api/messages/forward", {
                         method: "POST",
                         body: JSON.stringify({
                             message_ids: forwardMessageIds,
@@ -1655,7 +1675,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
     // =========================================================
-    // EDIT MESSAGE â€” Pro/Business + 10-minute window
+    // EDIT MESSAGE — Pro/Business + 10-minute window
     // =========================================================
     const EDIT_WINDOW_MS = 10 * 60 * 1000;
 
@@ -1691,7 +1711,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const botBtn   = $("editBot");
 
         if (!overlay || !input || !cancel || !saveBtn) {
-            showToast("Edit dialog missing â€” check console", true);
+            showToast("Edit dialog missing — check console", true);
             console.error("[Edit] Missing elements:", { overlay, input, cancel, saveBtn, deleteBtn });
             return;
         }
@@ -1779,7 +1799,7 @@ document.addEventListener("DOMContentLoaded", function () {
             };
             try { localStorage.setItem("crevio_bot_context", JSON.stringify(payload)); } catch (e) {}
             window.open("/dashboard/pages/bot.html?from=edit", "_blank");
-            showToast("CrevioBot opened â€” copy the rewritten text back here");
+            showToast("CrevioBot opened — copy the rewritten text back here");
         };
 
         const onSave = async () => {
@@ -1788,7 +1808,7 @@ document.addEventListener("DOMContentLoaded", function () {
             if (newContent === original) { close(); return; }
             saveBtn.disabled = true;
             try {
-                const res = await window.apiFetch(
+                const res = await __timedFetch(
                     "/api/messages/conversations/" + activeConvId + "/messages/" + msgId,
                     { method: "PATCH", body: JSON.stringify({ content: newContent }) }
                 );
@@ -1808,7 +1828,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const onDelete = async () => {
             if (!await confirmDialog("Delete this message?", { title: "Delete message", confirmText: "Delete", danger: true })) return;
             try {
-                await window.apiFetch(
+                await __timedFetch(
                     "/api/messages/conversations/" + activeConvId + "/messages/" + msgId + "?scope=everyone",
                     { method: "DELETE" }
                 );
@@ -1912,7 +1932,7 @@ document.addEventListener("DOMContentLoaded", function () {
     // =========================================================
     async function loadPlanLimit() {
         try {
-            const res = await window.apiFetch("/api/messages/plan-limit");
+            const res = await __timedFetch("/api/messages/plan-limit");
             const d = await res.json();
             if (d.success) {
                 planUnlimited = !!d.unlimited;

@@ -1,12 +1,12 @@
 /* ============================================================
-   CREVIO â€” MESSAGES MOBILE LAYOUT
+   CREVIO — MESSAGES MOBILE LAYOUT
    File: dashboard/css/mobile-messages.css
    Mobile-first. Uses only DESIGN-STANDARDS.md tokens.
    Loaded AFTER messages.html inline styles so it wins.
    ============================================================ */
 
 /* ============================================================
-   BASE LAYOUT (mobile default â€” smallest first)
+   BASE LAYOUT (mobile default — smallest first)
    ============================================================ */
 
 .inbox {
@@ -20,7 +20,7 @@
     overflow: hidden;
 }
 
-/* Conversation panel â€” full width by default */
+/* Conversation panel — full width by default */
 .conv-panel {
     width: 100%;
     max-width: 100%;
@@ -33,7 +33,7 @@
     flex: 0 0 auto;
 }
 
-/* Chat panel â€” HIDDEN by default; opens as full-viewport overlay */
+/* Chat panel — HIDDEN by default; opens as full-viewport overlay */
 .chat-panel {
     display: none !important;
     position: fixed !important;
@@ -59,7 +59,7 @@
     display: none !important;
 }
 
-/* Context panel â€” hidden on mobile (see strip alternative below) */
+/* Context panel — hidden on mobile (see strip alternative below) */
 .context-panel {
     display: none;
 }
@@ -165,7 +165,7 @@
     margin-bottom: 0.5rem;
 }
 
-/* Message action toolbar (Copy/Rate/Share) â€” mobile stacking */
+/* Message action toolbar (Copy/Rate/Share) — mobile stacking */
 .msg-toolbar {
     margin-left: 0 !important;
     margin-right: 0 !important;
@@ -191,7 +191,7 @@
     height: 14px !important;
 }
 
-/* Rate popover â€” never off-screen */
+/* Rate popover — never off-screen */
 .rate-popover {
     left: 0 !important;
     right: auto !important;
@@ -288,7 +288,7 @@
     max-width: 12ch;
 }
 
-/* Input bar â€” pinned to bottom, safe-area aware */
+/* Input bar — pinned to bottom, safe-area aware */
 .chat-input-bar {
     flex: 0 0 auto;
     padding: 0.625rem 0.875rem calc(0.625rem + env(safe-area-inset-bottom, 0px));
@@ -442,7 +442,7 @@
 }
 
 /* ============================================================
-   TABLET (>= 768px) â€” two columns, static panels
+   TABLET (>= 768px) — two columns, static panels
    ============================================================ */
 
 @media (min-width: 768px) {
@@ -504,7 +504,7 @@
 }
 
 /* ============================================================
-   DESKTOP (>= 1200px) â€” three columns, context panel returns
+   DESKTOP (>= 1200px) — three columns, context panel returns
    ============================================================ */
 
 @media (min-width: 1200px) {
@@ -531,7 +531,7 @@
 }
 
 /* ============================================================
-   TOUCH DEVICES â€” no hover tooltips
+   TOUCH DEVICES — no hover tooltips
    ============================================================ */
 
 @media (hover: none) {

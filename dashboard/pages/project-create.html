@@ -1,9 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create Project — Crevio</title>
+    <title>Create Project ï¿½ Crevio</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
@@ -378,7 +378,8 @@
         }
     </style>
     <link rel="stylesheet" href="/dashboard/css/shared.css">
-    <link rel="stylesheet" href="/dashboard/css/mobile.css?v=639252484686517300">
+    <link rel="stylesheet" href="/dashboard/css/mobile.css?v=639252909337679658">
+    <link rel="stylesheet" href="/dashboard/css/loader.css?v=639252909337679658">
 </head>
 <body>
 
@@ -492,7 +493,7 @@
                                 <div id="thumbnailPlaceholder">
                                     <i data-lucide="upload-cloud" class="icon"></i>
                                     <p><strong>Click to upload</strong> or drag and drop</p>
-                                    <p style="font-size:12px;margin-top:4px;">JPG, PNG, WebP — Max 5MB</p>
+                                    <p style="font-size:12px;margin-top:4px;">JPG, PNG, WebP ï¿½ Max 5MB</p>
                                 </div>
                             </div>
                             <button type="button" class="remove-thumbnail" id="removeThumbnailBtn">Remove</button>
@@ -685,7 +686,7 @@
                     throw new Error(result.message || 'Failed to create project.');
                 }
 
-                showMessage('✅ Project created successfully!', 'success');
+                showMessage('âœ… Project created successfully!', 'success');
                 setTimeout(function() {
                     window.location.href = '/dashboard/pages/projects.html';
                 }, 1200);
@@ -778,6 +779,7 @@
             }
         });
     </script>
-    <script src="/dashboard/js/mobile-menu.js?v=639252484686517300"></script>
+    <script src="/dashboard/js/mobile-menu.js?v=639252892257462073"></script>
+    <script src="/dashboard/js/loader.js?v=639252909337679658"></script>
 </body>
 </html>

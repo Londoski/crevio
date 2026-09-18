@@ -1,14 +1,14 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Service Editor — Crevio</title>
+    <title>Service Editor ï¿½ Crevio</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="/dashboard/js/auth.js?v=639252484686517300"></script>
+    <script src="/dashboard/js/auth.js?v=639252892257462073"></script>
 
     <style>
         * { margin:0; padding:0; box-sizing:border-box; }
@@ -50,7 +50,7 @@
         .btn-secondary:hover { background:var(--bg-input); color:var(--text-primary); }
         .btn-danger { padding:10px 16px; border-radius:10px; border:1px solid rgba(239,68,68,0.4); background:transparent; color:var(--danger); font-size:13px; font-weight:500; cursor:pointer; transition:all 0.15s; font-family:inherit; display:inline-flex; align-items:center; gap:6px; }
 
-        /* LAYOUT — fills width, right column fixed at 300px */
+        /* LAYOUT ï¿½ fills width, right column fixed at 300px */
         .layout {
             display: grid;
             grid-template-columns: minmax(0, 1fr) 300px;
@@ -108,7 +108,7 @@
         .add-row input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
         .add-row button { padding: 10px 18px; white-space: nowrap; }
 
-        /* SELECT GRID — soft checkboxes */
+        /* SELECT GRID ï¿½ soft checkboxes */
         .select-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
@@ -160,7 +160,7 @@
         .select-grid::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
         .select-grid::-webkit-scrollbar-thumb:hover { background: var(--accent); }
 
-        /* Process steps — fully themed */
+        /* Process steps ï¿½ fully themed */
         .process-row {
             display: grid;
             grid-template-columns: 28px 1fr 40px;
@@ -230,7 +230,8 @@
             .select-grid { grid-template-columns: 1fr; }
         }
     </style>
-    <link rel="stylesheet" href="/dashboard/css/mobile.css?v=639252484686517300">
+    <link rel="stylesheet" href="/dashboard/css/mobile.css?v=639252909337679658">
+    <link rel="stylesheet" href="/dashboard/css/loader.css?v=639252909337679658">
 </head>
 <body>
 
@@ -357,7 +358,7 @@
                 <!-- PROCESS -->
                 <div class="form-panel">
                     <h3><i data-lucide="workflow" class="icon"></i> Your Process</h3>
-                    <p class="subtitle">Optional — show how you work with clients.</p>
+                    <p class="subtitle">Optional ï¿½ show how you work with clients.</p>
                     <div id="processList"></div>
                     <button type="button" class="btn-secondary" id="addProcessBtn" style="width:100%; justify-content:center;">
                         <i data-lucide="plus" class="icon" style="width:14px;height:14px;"></i> Add Step
@@ -369,7 +370,7 @@
                     <h3><i data-lucide="star" class="icon"></i> Related Skills</h3>
                     <p class="subtitle">Select skills that support this service.</p>
                     <div class="select-grid" id="skillsSelector">
-                        <p style="color:var(--text-muted); font-size:13px; padding:8px;">Loading skills…</p>
+                        <p style="color:var(--text-muted); font-size:13px; padding:8px;">Loading skillsï¿½</p>
                     </div>
                 </div>
 
@@ -378,7 +379,7 @@
                     <h3><i data-lucide="folder-open" class="icon"></i> Related Projects</h3>
                     <p class="subtitle">Show proof of this service with real work.</p>
                     <div class="select-grid" id="projectsSelector">
-                        <p style="color:var(--text-muted); font-size:13px; padding:8px;">Loading projects…</p>
+                        <p style="color:var(--text-muted); font-size:13px; padding:8px;">Loading projectsï¿½</p>
                     </div>
                 </div>
             </div>
@@ -415,9 +416,9 @@
                         <label>Currency</label>
                         <select id="currency">
                             <option value="USD">USD ($)</option>
-                            <option value="EUR">EUR (€)</option>
-                            <option value="GBP">GBP (£)</option>
-                            <option value="NGN">NGN (₦)</option>
+                            <option value="EUR">EUR (ï¿½)</option>
+                            <option value="GBP">GBP (Â£)</option>
+                            <option value="NGN">NGN (â‚¦)</option>
                         </select>
                     </div>
                 </div>
@@ -459,6 +460,7 @@
         });
         if (typeof lucide !== 'undefined') lucide.createIcons();
     </script>
-    <script src="/dashboard/js/mobile-menu.js?v=639252484686517300"></script>
+    <script src="/dashboard/js/mobile-menu.js?v=639252892257462073"></script>
+    <script src="/dashboard/js/loader.js?v=639252909337679658"></script>
 </body>
 </html>

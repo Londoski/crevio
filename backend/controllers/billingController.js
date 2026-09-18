@@ -1,5 +1,5 @@
 ﻿// =========================================================
-// CREVIO â€” BILLING CONTROLLER
+// CREVIO — BILLING CONTROLLER
 // File: backend/controllers/billingController.js
 // =========================================================
 
@@ -98,7 +98,7 @@ exports.getInvoice = (req, res) => {
         if (!payment) return res.status(404).send("Not found");
 
         const text = `
-CREVIO â€” INVOICE
+CREVIO — INVOICE
 
 Invoice #: ${payment.id}
 Date: ${payment.created_at || "N/A"}

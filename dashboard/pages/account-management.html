@@ -1,14 +1,14 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Account Management — Crevio</title>
+    <title>Account Management ï¿½ Crevio</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="/dashboard/js/auth.js?v=639252484686517300"></script>
+    <script src="/dashboard/js/auth.js?v=639252892257462073"></script>
 
     <style>
         * { margin:0; padding:0; box-sizing:border-box; }
@@ -117,7 +117,8 @@
             .setting-row { flex-direction:column; align-items:flex-start; }
         }
     </style>
-    <link rel="stylesheet" href="/dashboard/css/mobile.css?v=639252484686517300">
+    <link rel="stylesheet" href="/dashboard/css/mobile.css?v=639252909337679658">
+    <link rel="stylesheet" href="/dashboard/css/loader.css?v=639252909337679658">
 </head>
 <body>
 
@@ -206,7 +207,7 @@
         <!-- DANGER ZONE -->
         <div class="card danger-zone">
             <h2><i data-lucide="alert-triangle" class="icon"></i> Danger Zone</h2>
-            <p class="desc">Irreversible actions — proceed with caution</p>
+            <p class="desc">Irreversible actions ï¿½ proceed with caution</p>
 
             <div class="setting-row">
                 <div class="setting-info">
@@ -243,7 +244,7 @@
             <h2><i data-lucide="alert-triangle" class="icon" style="color:var(--danger);"></i> Delete Account?</h2>
 
             <div class="danger-box">
-                <strong>⚠️ This cannot be undone.</strong><br>
+                <strong>âš ï¸ This cannot be undone.</strong><br>
                 All your projects, services, media, messages, and account data will be permanently deleted after a 30-day grace period.
             </div>
 
@@ -251,7 +252,7 @@
             <input type="text" id="deleteConfirmInput" placeholder="Type DELETE here" autocomplete="off">
 
             <label>Reason (optional)</label>
-            <textarea id="deleteReason" placeholder="Help us improve — why are you leaving?"></textarea>
+            <textarea id="deleteReason" placeholder="Help us improve ï¿½ why are you leaving?"></textarea>
 
             <div class="modal-actions">
                 <button type="button" class="btn-secondary" data-close-modal>Cancel</button>
@@ -271,6 +272,7 @@
         });
         if (typeof lucide !== 'undefined') lucide.createIcons();
     </script>
-    <script src="/dashboard/js/mobile-menu.js?v=639252484686517300"></script>
+    <script src="/dashboard/js/mobile-menu.js?v=639252892257462073"></script>
+    <script src="/dashboard/js/loader.js?v=639252909337679658"></script>
 </body>
 </html>

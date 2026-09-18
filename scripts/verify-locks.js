@@ -10,6 +10,13 @@ const path = require("path");
 const ROOT = path.resolve(__dirname, "..");
 const LOCKS_FILE = path.join(ROOT, "locks", "locks.json");
 
+// Strip UTF-8 BOM if present (PowerShell Set-Content adds one)
+function stripBOM(str) {
+    if (str && str.charCodeAt(0) === 0xFEFF) return str.slice(1);
+    return str;
+}
+
+
 // ---------- ANSI colors ----------
 const c = {
     green:  (s) => "\x1b[32m" + s + "\x1b[0m",
@@ -21,7 +28,7 @@ const c = {
 
 // ---------- helpers ----------
 function readFileSafe(p) {
-    try { return fs.readFileSync(p, "utf8"); } catch { return null; }
+    try { return stripBOM(fs.readFileSync(p, "utf8")); } catch { return null; }
 }
 
 function globDir(dir, pattern) {
@@ -109,7 +116,7 @@ function main() {
         console.error(c.red("❌ locks/locks.json not found."));
         process.exit(2);
     }
-    const cfg = JSON.parse(fs.readFileSync(LOCKS_FILE, "utf8"));
+    const cfg = JSON.parse(stripBOM(fs.readFileSync(LOCKS_FILE, "utf8")));
     const locks = cfg.locks || [];
 
     let pass = 0, fail = 0;
