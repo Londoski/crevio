@@ -894,3 +894,260 @@
 [data-theme="light"] *::-webkit-scrollbar-thumb:hover {
     background: var(--accent);
 }
+
+
+/* ============================================================
+   INPUT EMOJI BUTTON + PICKER
+   ============================================================ */
+.input-emoji-btn {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.12s, color 0.12s, border-color 0.12s;
+    flex-shrink: 0;
+}
+.input-emoji-btn:hover {
+    background: var(--accent-dim);
+    color: var(--accent);
+    border-color: var(--accent);
+}
+.input-emoji-btn .icon { width: 18px; height: 18px; }
+
+/* ---- PICKER PANEL ---- */
+.input-emoji-picker {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 360px;
+    height: 420px;
+    max-width: calc(100vw - 24px);
+    max-height: calc(100vh - 100px);
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+    z-index: 2603;
+    opacity: 0;
+    visibility: hidden;
+    transform: scale(0.96);
+    transform-origin: bottom left;
+    transition: opacity 0.14s ease, transform 0.14s ease, visibility 0.14s;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+.input-emoji-picker.open {
+    opacity: 1;
+    visibility: visible;
+    transform: scale(1);
+}
+
+/* ---- TABS ---- */
+.ip-tabs {
+    display: flex;
+    gap: 2px;
+    padding: 6px 6px 0;
+    border-bottom: 1px solid var(--border-color);
+    overflow-x: auto;
+    scrollbar-width: none;
+    flex-shrink: 0;
+}
+.ip-tabs::-webkit-scrollbar { display: none; }
+
+.ip-tab {
+    flex: 0 0 auto;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 18px;
+    padding: 6px 8px;
+    border-radius: 8px 8px 0 0;
+    cursor: pointer;
+    font-family: 'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif;
+    transition: background 0.12s, color 0.12s;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    height: 34px;
+    box-sizing: border-box;
+}
+.ip-tab:hover { background: var(--bg-input); }
+.ip-tab.active {
+    background: var(--accent-dim);
+    color: var(--accent);
+    position: relative;
+}
+.ip-tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 6px;
+    right: 6px;
+    height: 2px;
+    background: var(--accent);
+    border-radius: 2px 2px 0 0;
+}
+
+/* ---- SEARCH ---- */
+.ip-search {
+    position: relative;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
+}
+.ip-search svg {
+    position: absolute;
+    left: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    pointer-events: none;
+}
+.ip-search-input {
+    width: 100%;
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    border-radius: 18px;
+    padding: 7px 12px 7px 34px;
+    font-size: 13px;
+    font-family: inherit;
+    box-sizing: border-box;
+}
+.ip-search-input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-dim);
+}
+
+/* ---- BODY ---- */
+.ip-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    padding: 4px 0 8px;
+    overscroll-behavior: contain;
+}
+
+.ip-panel { display: none; padding: 4px 10px 6px; }
+.ip-panel.active { display: block; }
+
+.ip-section-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    padding: 6px 2px 6px;
+}
+
+.ip-grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 2px;
+}
+
+.ip-emoji {
+    width: 100%;
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+    font-family: 'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif;
+    transition: background 0.12s, transform 0.12s;
+    padding: 0;
+    min-width: 0;
+}
+.ip-emoji:hover {
+    background: var(--accent-dim);
+    transform: scale(1.15);
+}
+.ip-emoji.ip-locked { opacity: 0.35; }
+.ip-emoji.ip-flag { padding: 4px; }
+.ip-emoji.ip-flag img {
+    width: 22px;
+    height: auto;
+    border-radius: 2px;
+    display: block;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+/* ---- BANNER ---- */
+.ip-banner {
+    flex-shrink: 0;
+    padding: 8px 12px;
+    background: var(--accent-dim);
+    border-top: 1px solid var(--border-color);
+    color: var(--text-primary);
+    font-size: 12px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.ip-banner svg { color: var(--accent); flex-shrink: 0; }
+.ip-banner a {
+    margin-left: auto;
+    color: var(--accent);
+    font-weight: 700;
+    text-decoration: none;
+    padding: 4px 10px;
+    border-radius: 6px;
+    background: var(--bg-card);
+}
+.ip-banner a:hover { background: var(--accent); color: #fff; }
+
+/* ---- MOBILE ---- */
+@media (max-width: 900px) {
+    .input-emoji-picker {
+        width: calc(100vw - 16px);
+        max-width: 400px;
+        height: min(400px, calc(100vh - 100px));
+    }
+    .ip-grid { grid-template-columns: repeat(7, 1fr); }
+    .ip-emoji { font-size: 24px; }
+}
+
+
+/* INPUT PICKER — single scroll list */
+.ip-section {
+    padding: 6px 10px 4px;
+}
+.ip-section-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    padding: 6px 2px 8px;
+}
+.ip-grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 2px;
+}
+
+/* Hide any leftover tabs if present */
+.ip-tabs { display: none !important; }
+.ip-panel { display: block !important; padding: 0 !important; }
+
+@media (max-width: 900px) {
+    .ip-grid { grid-template-columns: repeat(7, 1fr); }
+}

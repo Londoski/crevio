@@ -305,6 +305,9 @@ document.addEventListener("DOMContentLoaded", function () {
                 <button id="replyCancel"><i data-lucide="x" class="icon"></i></button>
             </div>
             <div class="chat-input-bar">
+                <button type="button" class="input-emoji-btn" id="inputEmojiBtn" title="Emoji" aria-label="Insert emoji">
+                    <i data-lucide="smile" class="icon"></i>
+                </button>
                 <textarea id="msgInput" placeholder="Type your reply…" rows="1"></textarea>
                 <button class="send-btn" id="sendBtn" title="Send"><i data-lucide="send" class="icon"></i></button>
             </div>
@@ -406,6 +409,25 @@ document.addEventListener("DOMContentLoaded", function () {
             if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
         });
         sendBtn?.addEventListener("click", sendMessage);
+
+        // Input emoji button
+        const inputEmojiBtn = $("inputEmojiBtn");
+        if (inputEmojiBtn && !inputEmojiBtn.dataset.wired) {
+            inputEmojiBtn.dataset.wired = "1";
+            inputEmojiBtn.addEventListener("click", function (e) {
+                e.stopPropagation();
+                const picker = document.getElementById("inputEmojiPicker");
+                if (picker && picker.classList.contains("open")) {
+                    picker.classList.remove("open");
+                } else {
+                    if (typeof openInputEmojiPicker === "function") {
+                        openInputEmojiPicker();
+                    } else {
+                        console.error("[Messages] openInputEmojiPicker not defined");
+                    }
+                }
+            });
+        }
         $("replyCancel")?.addEventListener("click", () => {
             replyToId = null;
             $("replyPreview")?.classList.remove("open");
@@ -689,6 +711,177 @@ document.addEventListener("DOMContentLoaded", function () {
         }, 0);
 
         if (searchInput) setTimeout(function () { try { searchInput.focus(); } catch (e) {} }, 50);
+    }
+
+
+    // =========================================================
+    // INPUT EMOJI PICKER
+    function buildInputEmojiPicker() {
+        const EMO = window.CREVIO_EMOJIS;
+        if (!EMO || !EMO.categories) {
+            return '<div style="padding:20px;color:var(--text-muted);text-align:center;font-size:13px">Emoji catalog not loaded</div>';
+        }
+        const isBusiness = (currentPlanName === "business");
+
+        // Search
+        const search = '<div class="ip-search">' +
+            '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>' +
+            '<input type="text" class="ip-search-input" placeholder="Search emoji" autocomplete="off">' +
+            '</div>';
+
+        // One scrollable body with all sections
+        let body = '<div class="ip-body">';
+
+        // Basic section
+        body += '<div class="ip-section">';
+        body += '<div class="ip-section-title">' + (isBusiness ? "Frequently Used" : "Basic") + '</div>';
+        body += '<div class="ip-grid">';
+        body += EMO.basic.map(function (e) {
+            return '<button type="button" class="ip-emoji" data-emoji="' + e + '">' + e + '</button>';
+        }).join("");
+        body += '</div></div>';
+
+        // All categories as sections
+        EMO.categories.forEach(function (cat) {
+            body += '<div class="ip-section">';
+            body += '<div class="ip-section-title">' + cat.label + (isBusiness ? "" : " · Business") + '</div>';
+            body += '<div class="ip-grid">';
+            if (cat.id === "flags" && cat.flags) {
+                cat.flags.forEach(function (f) {
+                    body += '<button type="button" class="ip-emoji ip-flag' + (!isBusiness ? " ip-locked" : "") + '" data-emoji="flag:' + f.code + '" title="' + f.name + '">' +
+                        '<img src="https://flagcdn.com/w40/' + f.code + '.png" alt="' + f.name + '" loading="lazy"></button>';
+                });
+            } else if (cat.emojis) {
+                body += cat.emojis.map(function (e) {
+                    return '<button type="button" class="ip-emoji' + (!isBusiness ? " ip-locked" : "") + '" data-emoji="' + e + '">' + e + '</button>';
+                }).join("");
+            }
+            body += '</div></div>';
+        });
+
+        body += '</div>';
+
+        // Banner
+        let banner = "";
+        if (!isBusiness) {
+            banner = '<div class="ip-banner"><i data-lucide="lock" style="width:12px;height:12px"></i> Only basic emojis on your plan <a href="/dashboard/pages/billing.html">Upgrade</a></div>';
+        }
+
+        return search + body + banner;
+    }
+
+    function openInputEmojiPicker() {
+        let picker = document.getElementById("inputEmojiPicker");
+        if (!picker) {
+            picker = document.createElement("div");
+            picker.id = "inputEmojiPicker";
+            picker.className = "input-emoji-picker";
+            document.body.appendChild(picker);
+        }
+
+        picker.innerHTML = buildInputEmojiPicker();
+        picker.classList.add("open");
+
+        // Position above the input bar
+        const inputBar = document.querySelector(".chat-input-bar");
+        const vw = window.innerWidth, vh = window.innerHeight, margin = 8;
+
+        picker.style.left = "-9999px";
+        picker.style.top = "-9999px";
+        const pRect = picker.getBoundingClientRect();
+
+        let left = inputBar ? inputBar.getBoundingClientRect().left : 20;
+        let top  = inputBar ? inputBar.getBoundingClientRect().top - pRect.height - 8 : 20;
+
+        if (top < margin) top = margin;
+        if (left + pRect.width > vw - margin) left = vw - pRect.width - margin;
+        if (left < margin) left = margin;
+
+        picker.style.left = left + "px";
+        picker.style.top  = top + "px";
+
+        // Tab switching
+        const panels = picker.querySelectorAll(".ip-panel");
+        picker.querySelectorAll(".ip-tab").forEach(function (tab) {
+            tab.addEventListener("click", function (ev) {
+                ev.stopPropagation();
+                const target = tab.dataset.tab;
+                picker.querySelectorAll(".ip-tab").forEach(function (t) {
+                    t.classList.toggle("active", t.dataset.tab === target);
+                });
+                panels.forEach(function (p) {
+                    p.classList.toggle("active", p.dataset.panel === target);
+                });
+                const bodyEl = picker.querySelector(".ip-body");
+                if (bodyEl) bodyEl.scrollTop = 0;
+                const si = picker.querySelector(".ip-search-input");
+                if (si) { si.value = ""; picker.querySelectorAll(".ip-emoji").forEach(function (b) { b.style.display = ""; }); }
+            });
+        });
+
+        // Search
+        const si = picker.querySelector(".ip-search-input");
+        if (si) {
+            si.addEventListener("input", function (ev) {
+                ev.stopPropagation();
+                const q = si.value.trim().toLowerCase();
+                const activePanel = picker.querySelector(".ip-panel.active");
+                if (!activePanel) return;
+                activePanel.querySelectorAll(".ip-emoji").forEach(function (b) {
+                    const raw = (b.dataset.emoji || "").toLowerCase();
+                    b.style.display = (!q || raw.indexOf(q) >= 0) ? "" : "none";
+                });
+            });
+        }
+
+        // Emoji click → insert into textarea
+        picker.querySelectorAll(".ip-emoji").forEach(function (btn) {
+            btn.addEventListener("click", function (ev) {
+                ev.stopPropagation();
+                if (btn.classList.contains("ip-locked")) {
+                    showToast("Business plan required for this emoji", true);
+                    return;
+                }
+                const emoji = btn.dataset.emoji;
+                insertEmojiIntoInput(emoji);
+            });
+        });
+
+        // Outside click closes
+        setTimeout(function () {
+            document.addEventListener("click", function closeOnce(ev) {
+                if (!picker.contains(ev.target) && ev.target.id !== "inputEmojiBtn" && !ev.target.closest("#inputEmojiBtn")) {
+                    picker.classList.remove("open");
+                    document.removeEventListener("click", closeOnce);
+                }
+            });
+        }, 0);
+
+        if (typeof lucide !== "undefined") { try { lucide.createIcons(); } catch (e) {} }
+    }
+
+    function insertEmojiIntoInput(emoji) {
+        const input = document.getElementById("msgInput");
+        if (!input) return;
+
+        // If a flag, convert to its unicode emoji via code (or keep image notation)
+        let insertion = emoji;
+        if (emoji.indexOf("flag:") === 0) {
+            // Insert as a short flag token; the send handles it
+            insertion = ":" + emoji + ":";
+        }
+
+        const start = input.selectionStart || 0;
+        const end = input.selectionEnd || 0;
+        const val = input.value;
+
+        input.value = val.slice(0, start) + insertion + val.slice(end);
+        const newPos = start + insertion.length;
+        try { input.setSelectionRange(newPos, newPos); } catch (e) {}
+        input.focus();
+
+        // Trigger autosize + counter
+        input.dispatchEvent(new Event("input", { bubbles: true }));
     }
 
 function openMessageMenu(msgId, x, y) {
