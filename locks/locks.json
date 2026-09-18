@@ -422,6 +422,19 @@
         "openCrevioBotWithMessage",
         "crevio_bot_context"
       ]
+    },
+    {
+      "id": "bot-user-toolbar",
+      "desc": "User messages have Copy, Share prompt, Edit toolbar with share panel",
+      "type": "fileContains",
+      "file": "dashboard/js/bot-toolbar.js",
+      "patterns": [
+        "share-prompt",
+        "edit-message",
+        "shareOverlay",
+        "Copy message",
+        "Edit message"
+      ]
     }
   ]
 }
