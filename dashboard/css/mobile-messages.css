@@ -818,83 +818,6 @@
 }
 
 
-/* ============================================================
-   BRAND SCROLLBAR
-   Dark-themed thumb that matches the app, not the OS default.
-   ============================================================ */
-
-/* WebKit (Chrome, Edge, Safari) */
-.reaction-picker ::-webkit-scrollbar,
-.reaction-picker::-webkit-scrollbar,
-.rp-body::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-}
-.reaction-picker ::-webkit-scrollbar-track,
-.reaction-picker::-webkit-scrollbar-track,
-.rp-body::-webkit-scrollbar-track {
-    background: transparent;
-    border-radius: 999px;
-}
-.reaction-picker ::-webkit-scrollbar-thumb,
-.reaction-picker::-webkit-scrollbar-thumb,
-.rp-body::-webkit-scrollbar-thumb {
-    background: var(--border-color);
-    border-radius: 999px;
-    border: 2px solid var(--bg-card);
-}
-.reaction-picker ::-webkit-scrollbar-thumb:hover,
-.reaction-picker::-webkit-scrollbar-thumb:hover,
-.rp-body::-webkit-scrollbar-thumb:hover {
-    background: var(--accent);
-}
-
-/* Firefox */
-.reaction-picker,
-.rp-body {
-    scrollbar-width: thin;
-    scrollbar-color: var(--border-color) transparent;
-}
-.reaction-picker:hover,
-.rp-body:hover {
-    scrollbar-color: var(--accent) transparent;
-}
-
-/* Global — every scrollable element in the app */
-*::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
-}
-*::-webkit-scrollbar-track {
-    background: transparent;
-}
-*::-webkit-scrollbar-thumb {
-    background: var(--border-color);
-    border-radius: 999px;
-    border: 2px solid var(--bg-primary);
-}
-*::-webkit-scrollbar-thumb:hover {
-    background: var(--accent);
-}
-*::-webkit-scrollbar-corner {
-    background: transparent;
-}
-
-/* Firefox global */
-* {
-    scrollbar-width: thin;
-    scrollbar-color: var(--border-color) transparent;
-}
-
-/* Light theme adjustments */
-[data-theme="light"] *::-webkit-scrollbar-thumb {
-    background: rgba(148, 163, 184, 0.5);
-    border-color: var(--bg-primary);
-}
-[data-theme="light"] *::-webkit-scrollbar-thumb:hover {
-    background: var(--accent);
-}
-
 
 /* ============================================================
    INPUT EMOJI BUTTON + PICKER
@@ -1413,4 +1336,119 @@
     display: flex;
     gap: 6px;
     flex-shrink: 0;
+}
+
+
+/* ============================================================
+   BRAND SCROLLBAR (v2) — strong override for every element
+   ============================================================ */
+
+/* Chrome / Edge / Safari — WebKit */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+    background: transparent;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 999px;
+}
+::-webkit-scrollbar-thumb {
+    background: #334155 !important;   /* dark gray — visible on dark bg */
+    border-radius: 999px;
+    border: 2px solid var(--bg-primary, #0F172A);
+    min-height: 40px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: var(--accent, #2563EB) !important;
+}
+::-webkit-scrollbar-corner {
+    background: transparent;
+}
+
+/* Explicitly target the sidebar and every scrollable container */
+.sidebar::-webkit-scrollbar,
+.conv-items::-webkit-scrollbar,
+.chat-messages::-webkit-scrollbar,
+.context-panel::-webkit-scrollbar,
+.rp-body::-webkit-scrollbar,
+.ip-body::-webkit-scrollbar,
+.reaction-picker::-webkit-scrollbar,
+.input-emoji-picker::-webkit-scrollbar,
+.messages::-webkit-scrollbar,
+body::-webkit-scrollbar,
+html::-webkit-scrollbar {
+    width: 10px;
+    background: transparent;
+}
+.sidebar::-webkit-scrollbar-thumb,
+.conv-items::-webkit-scrollbar-thumb,
+.chat-messages::-webkit-scrollbar-thumb,
+.context-panel::-webkit-scrollbar-thumb,
+.rp-body::-webkit-scrollbar-thumb,
+.ip-body::-webkit-scrollbar-thumb,
+.reaction-picker::-webkit-scrollbar-thumb,
+.input-emoji-picker::-webkit-scrollbar-thumb,
+.messages::-webkit-scrollbar-thumb,
+body::-webkit-scrollbar-thumb,
+html::-webkit-scrollbar-thumb {
+    background: #334155 !important;
+    border-radius: 999px;
+    border: 2px solid var(--bg-primary, #0F172A);
+}
+.sidebar::-webkit-scrollbar-thumb:hover,
+.conv-items::-webkit-scrollbar-thumb:hover,
+.chat-messages::-webkit-scrollbar-thumb:hover,
+.context-panel::-webkit-scrollbar-thumb:hover,
+.rp-body::-webkit-scrollbar-thumb:hover,
+.ip-body::-webkit-scrollbar-thumb:hover,
+.messages::-webkit-scrollbar-thumb:hover,
+body::-webkit-scrollbar-thumb:hover,
+html::-webkit-scrollbar-thumb:hover {
+    background: var(--accent, #2563EB) !important;
+}
+.sidebar::-webkit-scrollbar-track,
+.conv-items::-webkit-scrollbar-track,
+.chat-messages::-webkit-scrollbar-track,
+.context-panel::-webkit-scrollbar-track,
+.rp-body::-webkit-scrollbar-track,
+.ip-body::-webkit-scrollbar-track,
+.messages::-webkit-scrollbar-track,
+body::-webkit-scrollbar-track,
+html::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+/* Firefox */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: #334155 transparent;
+}
+.sidebar,
+.conv-items,
+.chat-messages,
+.context-panel,
+.rp-body,
+.ip-body {
+    scrollbar-color: #334155 transparent;
+}
+.sidebar:hover,
+.conv-items:hover,
+.chat-messages:hover,
+.context-panel:hover,
+.rp-body:hover,
+.ip-body:hover {
+    scrollbar-color: var(--accent, #2563EB) transparent;
+}
+
+/* Light theme — visible on light backgrounds */
+[data-theme="light"] ::-webkit-scrollbar-thumb {
+    background: #94A3B8 !important;
+    border-color: #F1F5F9;
+}
+[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
+    background: var(--accent, #2563EB) !important;
+}
+[data-theme="light"] * {
+    scrollbar-color: #94A3B8 transparent;
 }
