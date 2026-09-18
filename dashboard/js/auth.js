@@ -13,7 +13,7 @@
     const user  = localStorage.getItem("user");
 
     if (!token) {
-        console.warn("âš ï¸ No token found – redirecting to login");
+        console.warn(" No token found – redirecting to login");
         window.location.href = "/admin/pages/login.html";
         return;
     }
@@ -28,7 +28,7 @@
         const response = await fetch(url, { ...options, headers });
 
         if (response.status === 401) {
-            console.warn("âš ï¸ 401 Unauthorized – clearing token");
+            console.warn(" 401 Unauthorized – clearing token");
             localStorage.removeItem("token");
             localStorage.removeItem("user");
             window.location.href = "/admin/pages/login.html";
@@ -543,5 +543,5 @@
         bootstrap();
     }
 
-    console.log("âœ… auth.js loaded — custom selects + theme + mobile sidebar active");
+    console.log(" auth.js loaded — custom selects + theme + mobile sidebar active");
 })();

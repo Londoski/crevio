@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Media ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¯ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¿ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â½ Crevio</title>
+    <title>Media  Crevio</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
@@ -169,9 +169,62 @@
             .list-row { grid-template-columns:44px 1fr 40px; padding:10px 12px; }
             .list-row .hide-mobile { display:none; }
         }
-    </style>
-    <link rel="stylesheet" href="/dashboard/css/mobile.css?v=639253227229682712">
-    <link rel="stylesheet" href="/dashboard/css/loader.css?v=639253227229682712">
+    
+        
+
+        /* MEDIA MOBILE FIX v2 */
+        @media (max-width: 900px) {
+            html, body {
+                height: auto !important;
+                min-height: 100dvh !important;
+                max-height: none !important;
+                overflow-y: auto !important;
+                overflow-x: hidden !important;
+                position: static !important;
+            }
+            body {
+                display: block !important;
+            }
+            .sidebar {
+                position: fixed !important;
+                top: 0;
+                left: 0;
+                height: 100dvh !important;
+                z-index: 1000;
+            }
+            .main,
+            main,
+            .content,
+            .page-content,
+            .page {
+                display: block !important;
+                height: auto !important;
+                min-height: 100dvh !important;
+                max-height: none !important;
+                overflow: visible !important;
+                margin-left: 0 !important;
+                padding: 16px 16px calc(120px + env(safe-area-inset-bottom, 0px)) 16px !important;
+                box-sizing: border-box !important;
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+            * {
+                max-height: none;
+            }
+            .stats-grid,
+            [class*="stat"],
+            .media-grid,
+            [class*="media-item"],
+            .upload-zone,
+            .drop-zone,
+            [class*="upload"],
+            [class*="drop"] {
+                margin-bottom: 1.5rem !important;
+            }
+        }
+</style>
+    <link rel="stylesheet" href="/dashboard/css/mobile.css?v=639253230792239530">
+    <link rel="stylesheet" href="/dashboard/css/loader.css?v=639253230792239530">
 </head>
 <body>
 
@@ -221,23 +274,23 @@
         <div class="summary-grid" id="summaryGrid">
             <div class="summary-card">
                 <div class="summary-icon"><i data-lucide="layers" class="icon"></i></div>
-                <div class="summary-info"><div class="label">Total</div><div class="value" id="statTotal">ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¯ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¿ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â½</div></div>
+                <div class="summary-info"><div class="label">Total</div><div class="value" id="statTotal"></div></div>
             </div>
             <div class="summary-card">
                 <div class="summary-icon"><i data-lucide="image" class="icon"></i></div>
-                <div class="summary-info"><div class="label">Images</div><div class="value" id="statImages">ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¯ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¿ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â½</div></div>
+                <div class="summary-info"><div class="label">Images</div><div class="value" id="statImages"></div></div>
             </div>
             <div class="summary-card">
                 <div class="summary-icon"><i data-lucide="video" class="icon"></i></div>
-                <div class="summary-info"><div class="label">Videos</div><div class="value" id="statVideos">ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¯ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¿ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â½</div></div>
+                <div class="summary-info"><div class="label">Videos</div><div class="value" id="statVideos"></div></div>
             </div>
             <div class="summary-card">
                 <div class="summary-icon"><i data-lucide="music" class="icon"></i></div>
-                <div class="summary-info"><div class="label">Audio</div><div class="value" id="statAudio">ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¯ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¿ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â½</div></div>
+                <div class="summary-info"><div class="label">Audio</div><div class="value" id="statAudio"></div></div>
             </div>
             <div class="summary-card">
                 <div class="summary-icon"><i data-lucide="file-text" class="icon"></i></div>
-                <div class="summary-info"><div class="label">Docs</div><div class="value" id="statDocs">ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¯ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¿ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â½</div></div>
+                <div class="summary-info"><div class="label">Docs</div><div class="value" id="statDocs"></div></div>
             </div>
         </div>
 
@@ -245,7 +298,7 @@
         <div class="drop-zone" id="dropZone">
             <i data-lucide="upload-cloud" class="icon-lg"></i>
             <h3>Drag &amp; drop files here</h3>
-            <p>or <span>click to browse</span> ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¯ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¿ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â½ Images, Videos, Audio, Documents (max 100MB)</p>
+            <p>or <span>click to browse</span>  Images, Videos, Audio, Documents (max 100MB)</p>
         </div>
 
         <!-- Upload queue -->
@@ -270,8 +323,8 @@
                 <option value="newest">Newest</option>
                 <option value="oldest">Oldest</option>
                 <option value="updated">Recently Updated</option>
-                <option value="az">Name AÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¯ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¿ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â½Z</option>
-                <option value="za">Name ZÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¯ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¿ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â½A</option>
+                <option value="az">Name AZ</option>
+                <option value="za">Name ZA</option>
                 <option value="largest">Largest</option>
                 <option value="smallest">Smallest</option>
             </select>
@@ -284,7 +337,7 @@
 
         <!-- Library -->
         <div id="mediaContainer">
-            <div class="state-box"><p>Loading mediaÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¯ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¿ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â½</p></div>
+            <div class="state-box"><p>Loading media</p></div>
         </div>
     </main>
 
@@ -295,7 +348,7 @@
 
     <div class="toast" id="toast"></div>
 
-    <script src="/dashboard/js/media.js"></script>
+    <script src="/dashboard/js/media.js?v=639253230792239530"></script>
     <script>
         document.getElementById('logoutButton')?.addEventListener('click', () => {
             localStorage.removeItem('token');
@@ -305,6 +358,6 @@
         if (typeof lucide !== 'undefined') lucide.createIcons();
     </script>
     <script src="/dashboard/js/mobile-menu.js?v=639252892257462073"></script>
-    <script src="/dashboard/js/loader.js?v=639253227229682712"></script>
+    <script src="/dashboard/js/loader.js?v=639253230792239530"></script>
 </body>
 </html>

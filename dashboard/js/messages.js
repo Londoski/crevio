@@ -56,7 +56,7 @@ document.addEventListener("DOMContentLoaded", function () {
         { key: "archived", label: "Archived" }
     ];
 
-    const REACTIONS = ["ðŸ‘", "â¤ï¸", "ðŸ˜‚", "ðŸ˜®", "ðŸ˜¢", "ðŸ™"];
+    const REACTIONS = ["", "", "‚", "®", "¢", ""];
 
     const MSG_MENU = [
         { id: "reply",   icon: "corner-up-left",  label: "Reply" },
@@ -153,7 +153,7 @@ document.addEventListener("DOMContentLoaded", function () {
             const muteIcon = c.muted === 1 ? '<i data-lucide="bell-off" class="mute-icon"></i>' : "";
             const isUnread = (c.unread_count > 0 || c.manually_unread === 1) && c.muted !== 1;
             const unreadBadge = isUnread ? '<span class="conv-badge unread">' + (c.unread_count || 1) + '</span>' : "";
-            const starred = c.starred === 1 ? '<span class="conv-badge starred">â˜…</span>' : "";
+            const starred = c.starred === 1 ? '<span class="conv-badge starred"></span>' : "";
             const statusBadge = c.status && c.status !== "new"
                 ? '<span class="conv-badge">' + escapeHtml(c.status) + '</span>'
                 : (c.status === "new" ? '<span class="conv-badge new">New</span>' : "");
@@ -636,7 +636,7 @@ document.addEventListener("DOMContentLoaded", function () {
             }
             case "pin": {
                 if (msg.pinned === 1) {
-                    // Already pinned â†’ offer unpin
+                    // Already pinned  offer unpin
                     if (!await confirmDialog("Unpin this message?", { title: "Unpin", confirmText: "Unpin", danger: true })) return;
                     try {
                         await __timedFetch("/api/messages/conversations/" + activeConvId + "/messages/" + msgId + "/pin", { method: "DELETE" });
@@ -1198,7 +1198,7 @@ document.addEventListener("DOMContentLoaded", function () {
     // =========================================================
     // PINNED MESSAGE BAR
     // Shows the most recent active pin above the thread.
-    // Click the bar â†’ scroll to that message + flash highlight.
+    // Click the bar  scroll to that message + flash highlight.
     // =========================================================
     let pinBarIndex = 0;
 
@@ -1322,7 +1322,7 @@ document.addEventListener("DOMContentLoaded", function () {
         var cnt = $("selectionCount");
         if (!bar || !cnt) return;
         if (selectedIds.size === 0) {
-            // Nothing selected â†’ auto-exit
+            // Nothing selected  auto-exit
             exitSelectionMode();
             return;
         }
