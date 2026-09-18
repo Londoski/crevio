@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Skills ï¿½ Crevio</title>
+    <title>Skills ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¯ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¿ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â½ Crevio</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
@@ -144,8 +144,8 @@
             .search-box { max-width:none; }
         }
     </style>
-    <link rel="stylesheet" href="/dashboard/css/mobile.css?v=639252909337679658">
-    <link rel="stylesheet" href="/dashboard/css/loader.css?v=639252909337679658">
+    <link rel="stylesheet" href="/dashboard/css/mobile.css?v=639253227229682712">
+    <link rel="stylesheet" href="/dashboard/css/loader.css?v=639253227229682712">
 </head>
 <body>
 
@@ -193,19 +193,19 @@
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-icon"><i data-lucide="star" class="icon"></i></div>
-                <div class="stat-info"><div class="label">Total</div><div class="value" id="statTotal">ï¿½</div></div>
+                <div class="stat-info"><div class="label">Total</div><div class="value" id="statTotal">ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¯ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¿ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â½</div></div>
             </div>
             <div class="stat-card">
                 <div class="stat-icon" style="background:rgba(34,197,94,0.15); color:var(--success);"><i data-lucide="briefcase" class="icon"></i></div>
-                <div class="stat-info"><div class="label">In Services</div><div class="value" id="statServices">ï¿½</div></div>
+                <div class="stat-info"><div class="label">In Services</div><div class="value" id="statServices">ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¯ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¿ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â½</div></div>
             </div>
             <div class="stat-card">
                 <div class="stat-icon" style="background:rgba(139,92,246,0.15); color:#8B5CF6;"><i data-lucide="folder" class="icon"></i></div>
-                <div class="stat-info"><div class="label">In Projects</div><div class="value" id="statProjects">ï¿½</div></div>
+                <div class="stat-info"><div class="label">In Projects</div><div class="value" id="statProjects">ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¯ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¿ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â½</div></div>
             </div>
             <div class="stat-card">
                 <div class="stat-icon" style="background:rgba(245,158,11,0.15); color:var(--warning);"><i data-lucide="circle-dashed" class="icon"></i></div>
-                <div class="stat-info"><div class="label">Unlinked</div><div class="value" id="statUnlinked">ï¿½</div></div>
+                <div class="stat-info"><div class="label">Unlinked</div><div class="value" id="statUnlinked">ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¯ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¿ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â½</div></div>
             </div>
         </div>
 
@@ -221,15 +221,15 @@
                 <button class="chip" data-filter="unlinked">Unlinked</button>
             </div>
             <select id="sortSelect" class="sort-select">
-                <option value="az">Name Aï¿½Z</option>
-                <option value="za">Name Zï¿½A</option>
+                <option value="az">Name AÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¯ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¿ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â½Z</option>
+                <option value="za">Name ZÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¯ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¿ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â½A</option>
                 <option value="newest">Newest</option>
                 <option value="oldest">Oldest</option>
             </select>
         </div>
 
         <div id="skillsContainer">
-            <div class="state-box"><p>Loading skillsï¿½</p></div>
+            <div class="state-box"><p>Loading skillsÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¯ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¿ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â½</p></div>
         </div>
     </main>
 
@@ -268,12 +268,12 @@
                 <div id="connectionsSection" style="display:none;">
                     <div class="section-label">Connected Services</div>
                     <div class="select-grid" id="servicesSelector">
-                        <p style="color:var(--text-muted);font-size:13px;padding:8px;">Loadingï¿½</p>
+                        <p style="color:var(--text-muted);font-size:13px;padding:8px;">LoadingÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¯ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¿ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â½</p>
                     </div>
 
                     <div class="section-label">Connected Projects</div>
                     <div class="select-grid" id="projectsSelector">
-                        <p style="color:var(--text-muted);font-size:13px;padding:8px;">Loadingï¿½</p>
+                        <p style="color:var(--text-muted);font-size:13px;padding:8px;">LoadingÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¯ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¿ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â½</p>
                     </div>
                 </div>
 
@@ -297,6 +297,6 @@
         if (typeof lucide !== 'undefined') lucide.createIcons();
     </script>
     <script src="/dashboard/js/mobile-menu.js?v=639252892257462073"></script>
-    <script src="/dashboard/js/loader.js?v=639252909337679658"></script>
+    <script src="/dashboard/js/loader.js?v=639253227229682712"></script>
 </body>
 </html>

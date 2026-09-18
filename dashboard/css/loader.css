@@ -1,10 +1,11 @@
+
 /* ============================================================
-   CREVIO — BRANDED LOADER (v6 — pixel-accurate "i")
+   CREVIO - BRANDED LOADER (v7 - correct "i")
    File: dashboard/css/loader.css
 
-   The "i" is drawn as an inline SVG (see loader.js) so we can
-   match the brand mark exactly: a rectangular bar with a soft
-   curved top-left corner + blue pulsing dot above it.
+   The "i" is a NARROW rectangular bar with a CONCAVE curve
+   on the top-left corner (scooped inward like a "c").
+   Blue dot above = the animated tittle.
    ============================================================ */
 
 .crevio-loader {
@@ -24,8 +25,8 @@
 
 .crevio-loader.sm { font-size: 1rem; }
 .crevio-loader.lg { font-size: 2.25rem; }
-.crevio-loader.xl { font-size: 3rem; }      /* 48px — big page loaders */
-.crevio-loader.xxl { font-size: 4rem; }     /* 64px — full-screen loaders */
+.crevio-loader.xl { font-size: 3rem; }
+.crevio-loader.xxl { font-size: 4rem; }
 
 .crevio-loader-word {
     display: inline-flex;
@@ -38,20 +39,12 @@
     line-height: 1;
 }
 
-/* ============================================================
-   THE "i" — inline SVG
-   The SVG contains two circles (dot + glow ring) and a path
-   (the bar). All sized in em so it scales with font-size.
-   ============================================================ */
 .crevio-i-wrap {
     display: inline-block;
-    /* width : height ratio ~ 0.34 : 1
-       the SVG viewBox is 24 wide × 84 tall */
-    width: 0.24em;
+    width: 0.16em;
     height: 0.84em;
     vertical-align: baseline;
     position: relative;
-    /* Bottom of the SVG sits on the baseline */
     transform: translateY(0.02em);
 }
 
@@ -63,12 +56,10 @@
     fill: currentColor;
 }
 
-/* The bar (rectangular, rounded top-left corner) */
 .crevio-i-bar {
     fill: currentColor;
 }
 
-/* The pulsing dot + its expanding glow ring */
 .crevio-dot,
 .crevio-dot-ring {
     transform-box: fill-box;
@@ -77,6 +68,8 @@
 
 .crevio-dot {
     fill: var(--accent);
+    filter: drop-shadow(0 0 0.35em rgba(37, 99, 235, 0.9))
+            drop-shadow(0 0 0.7em rgba(37, 99, 235, 0.55));
     animation: crev-dot-grow 1.6s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
@@ -87,17 +80,29 @@
 }
 
 @keyframes crev-dot-grow {
-    0%   { transform: scale(0.88); }
-    45%  { transform: scale(1.15); }
-    100% { transform: scale(0.88); }
+    0% {
+        transform: scale(0.88);
+        filter: drop-shadow(0 0 0.30em rgba(37, 99, 235, 0.85))
+                drop-shadow(0 0 0.60em rgba(37, 99, 235, 0.45));
+    }
+    45% {
+        transform: scale(1.15);
+        filter: drop-shadow(0 0 0.55em rgba(37, 99, 235, 1))
+                drop-shadow(0 0 1.10em rgba(37, 99, 235, 0.65));
+    }
+    100% {
+        transform: scale(0.88);
+        filter: drop-shadow(0 0 0.30em rgba(37, 99, 235, 0.85))
+                drop-shadow(0 0 0.60em rgba(37, 99, 235, 0.45));
+    }
 }
 
 @keyframes crev-dot-ring-grow {
-    0%   { transform: scale(1);   opacity: 0.55; }
-    100% { transform: scale(2.4); opacity: 0;    }
+    0%   { transform: scale(1);   opacity: 0.75; }
+    60%  { transform: scale(1.8); opacity: 0.25; }
+    100% { transform: scale(2.8); opacity: 0;    }
 }
 
-/* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
     .crevio-dot {
         animation: crev-dot-fade 1.6s ease-in-out infinite;
@@ -113,7 +118,6 @@
     }
 }
 
-/* Wrapper for block-level centering */
 .crevio-loader-wrap {
     display: flex;
     align-items: center;
@@ -129,7 +133,6 @@
     min-height: 0;
 }
 
-/* Inline dot inside buttons */
 .crevio-inline-loader {
     display: inline-block;
     width: 1em;
@@ -153,7 +156,6 @@
     100% { transform: scale(1);    opacity: 0; }
 }
 
-/* Skeleton */
 .crevio-skeleton {
     background: linear-gradient(90deg, var(--bg-input) 0%, var(--bg-card) 50%, var(--bg-input) 100%);
     background-size: 200% 100%;

@@ -8,21 +8,12 @@
 
     // ---- HTML builder ----
     function html(size) {
-        const sizeCls = size === "sm" ? " sm" : size === "lg" ? " lg" : "";
-        // The "i" is an inline SVG so we can match the brand mark exactly:
-        //   - a rectangular bar with a curved top-left corner
-        //   - a blue dot above it (the tittle)
-        //   - an expanding glow ring for the pulse animation
+        const sizeCls = size === "sm" ? " sm" : size === "lg" ? " lg" : (size === "xl" ? " xl" : (size === "xxl" ? " xxl" : ""));
         const svg =
-            '<svg class="crevio-i-svg" viewBox="0 0 24 84" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
-                '<circle class="crevio-dot-ring" cx="12" cy="11" r="9"/>' +
-                '<circle class="crevio-dot"      cx="12" cy="11" r="9"/>' +
-                '<path class="crevio-i-bar" d="M 6 24 ' +
-                    'Q 0 24 0 30 ' +      // smooth curve into the top-left
-                    'L 0 84 ' +            // straight down the left side
-                    'L 24 84 ' +           // across the bottom
-                    'L 24 24 ' +           // up the right side
-                    'Z"/>' +
+            '<svg class="crevio-i-svg" viewBox="0 0 16 84" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+                '<circle class="crevio-dot-ring" cx="8" cy="11" r="6"/>' +
+                '<circle class="crevio-dot"      cx="8" cy="11" r="6"/>' +
+                '<path class="crevio-i-bar" d="M 16 24 L 5 24 Q 0 24 0 32 L 0 84 L 16 84 Z"/>' +
             '</svg>';
 
         return '<span class="crevio-loader' + sizeCls + '" role="status" aria-label="Loading">' +

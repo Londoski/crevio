@@ -387,3 +387,18 @@
         padding-bottom: env(safe-area-inset-bottom, 0);
     }
 }
+
+/* MOBILE BOTTOM SAFETY PAD - prevents content from being cut off at bottom */
+@media (max-width: 900px) {
+    .main,
+    .page,
+    .page-content,
+    .content,
+    main {
+        padding-bottom: calc(2rem + env(safe-area-inset-bottom, 0px)) !important;
+    }
+    body {
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+}
