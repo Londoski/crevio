@@ -194,8 +194,8 @@
             }
             .rate-popover.open { opacity:1; visibility:visible; transform:translateY(0); }
             .rate-popover.step-2 {
-                flex-direction:column; gap:10px; padding:14px;
-                min-width:280px; max-width:340px;
+                flex-direction:column; gap:8px; padding:12px;
+                min-width:260px; max-width:300px;
             }
             .rate-popover .rate-buttons { display:flex; gap:2px; }
             .rate-popover.step-2 .rate-buttons { justify-content:center; }
@@ -214,10 +214,12 @@
             .rate-popover .fb-title {
                 font-size:13px; font-weight:600;
                 color:var(--text-primary); text-align:center;
+                line-height:1.3;
             }
             .rate-popover .fb-sub {
                 font-size:11px; color:var(--text-muted);
-                text-align:center; margin-top:-6px;
+                text-align:center; margin-top:0;
+                line-height:1.35;
             }
             .rate-popover textarea {
                 background:var(--bg-input);
@@ -225,7 +227,7 @@
                 color:var(--text-primary);
                 padding:8px 10px; border-radius:8px;
                 font-size:13px; font-family:inherit;
-                resize:none; min-height:60px; max-height:120px;
+                resize:none; min-height:52px; max-height:96px;
                 width:100%;
             }
             .rate-popover textarea:focus {
@@ -239,7 +241,7 @@
                 font-size:12px; font-weight:600; font-family:inherit;
                 padding:7px 14px; border-radius:8px;
                 cursor:pointer; border:none;
-                transition:background 0.12s, opacity 0.12s;
+                transition:background 0.12s, opacity 0.12s, color 0.12s;
             }
             .rate-popover .fb-btn.skip {
                 background:transparent; color:var(--text-secondary);
@@ -248,8 +250,8 @@
             .rate-popover .fb-btn.submit {
                 background:var(--accent); color:#fff;
             }
-            .rate-popover .fb-btn.submit:hover { background:var(--accent-hover); }
-            .rate-popover .fb-btn.submit:disabled { opacity:0.4; cursor:not-allowed; }
+            .rate-popover .fb-btn.submit:hover:not(:disabled) { background:var(--accent-hover); }
+            .rate-popover .fb-btn.submit:disabled { opacity:0.5; cursor:not-allowed; }
 
             /* ---- Conversation picker ---- */
             .conv-picker-overlay {
@@ -325,7 +327,7 @@
                 .share-panel { padding:16px; }
                 .share-action-icon { width:40px; height:40px; }
                 .share-action { font-size:10px; }
-                .rate-popover.step-2 { min-width:260px; max-width:calc(100vw - 40px); }
+                .rate-popover.step-2 { min-width:240px; max-width:calc(100vw - 32px); }
             }
         `;
         document.head.appendChild(style);
@@ -522,7 +524,7 @@
 
     // =========================================================
     // RATE POPOVER — 2-STEP with optional text feedback
-    // Everything is retained for the future Crevio Management System.
+    // Everything retained for the future Crevio Management System.
     // =========================================================
     function ensureRatePopover() {
         let pop = document.getElementById("ratePopover");
@@ -555,7 +557,7 @@
         return pop;
     }
 
-    let _rateContext = null; // { bubble, btn, text, msgId, prompt, convId, plan, rating }
+    let _rateContext = null;
 
     function closeRatePopoverOnce(e) {
         const pop = document.getElementById("ratePopover");
@@ -574,13 +576,13 @@
         const ta = pop.querySelector(".fb-text");
         if (ta) ta.value = "";
         const sub = pop.querySelector(".fb-btn.submit");
-        if (sub) sub.disabled = true;
+        if (sub) { sub.disabled = true; sub.textContent = "Submit"; }
         pop.querySelectorAll(".rate-btn").forEach(b => b.classList.remove("selected", "bad"));
         _rateContext = null;
     }
 
     async function saveRating(rating, feedbackText) {
-        if (!_rateContext) return;
+        if (!_rateContext) return { success: false };
         const body = {
             rating: rating,
             message: _rateContext.text,
@@ -596,23 +598,40 @@
                 headers: authHeaders(),
                 body: JSON.stringify(body)
             });
-            const data = await res.json();
-            return data;
+            return await res.json();
         } catch (e) { return { success: false }; }
+    }
+
+    function positionRatePopover(pop, btn) {
+        const rect = btn.getBoundingClientRect();
+        const width = 300;
+        let left = rect.left;
+        if (left + width > window.innerWidth - 12) left = window.innerWidth - width - 12;
+        if (left < 12) left = 12;
+        pop.style.left = left + "px";
+
+        pop.classList.add("open");
+
+        const popRect = pop.getBoundingClientRect();
+        const popHeight = popRect.height || 260;
+
+        const spaceBelow = window.innerHeight - rect.bottom - 12;
+        const spaceAbove = rect.top - 12;
+
+        let top;
+        if (spaceBelow >= popHeight + 8 || spaceBelow >= spaceAbove) {
+            top = rect.bottom + 8;
+        } else {
+            top = rect.top - popHeight - 8;
+            if (top < 12) top = 12;
+        }
+        pop.style.top = top + "px";
     }
 
     function showRatePopover(bubble, btn) {
         const pop = ensureRatePopover();
         resetRatePopover();
-
-        const rect = btn.getBoundingClientRect();
-        const width = 240;
-        let left = rect.left;
-        if (left + width > window.innerWidth - 12) left = window.innerWidth - width - 12;
-        if (left < 12) left = 12;
-        pop.style.left = left + "px";
-        pop.style.top  = (rect.top - 46) + "px";
-        pop.classList.add("open");
+        positionRatePopover(pop, btn);
 
         const text = getBubbleText(bubble);
         const msgId = getMessageId(bubble) || hashString(text);
@@ -622,24 +641,21 @@
 
         _rateContext = { bubble, btn, text, msgId, prompt, convId, plan, rating: null };
 
-        // Step-1: 👍 / 👎 clicks
+        // Step-1: 👍 / 👎
         pop.querySelectorAll(".rate-btn").forEach(function (b) {
             const fresh = b.cloneNode(true);
             b.parentNode.replaceChild(fresh, b);
             fresh.addEventListener("click", async function (e) {
                 e.stopPropagation();
-                const rating = fresh.dataset.rate; // "good" | "bad"
+                const rating = fresh.dataset.rate;
                 _rateContext.rating = rating;
 
-                // Mark selected
                 pop.querySelectorAll(".rate-btn").forEach(x => x.classList.remove("selected", "bad"));
                 fresh.classList.add("selected");
                 if (rating === "bad") fresh.classList.add("bad");
 
-                // Button color on toolbar
                 btn.style.color = rating === "good" ? "var(--accent)" : "var(--danger)";
 
-                // Save rating immediately (feedback text comes later if user types)
                 const result = await saveRating(rating, "");
                 if (result.success) {
                     toast(rating === "good" ? "Thanks for the feedback" : "Noted — we'll improve");
@@ -647,7 +663,7 @@
                     toast(result.message || "Failed to save rating", true);
                 }
 
-                // Expand to step-2: feedback card
+                // Expand to step-2
                 pop.classList.add("step-2");
                 const fb = pop.querySelector(".rate-feedback");
                 if (fb) fb.style.display = "block";
@@ -658,48 +674,52 @@
                         : "What could be improved?";
                     setTimeout(() => ta.focus(), 50);
                 }
+
+                // Re-measure and reposition after expansion
+                setTimeout(() => positionRatePopover(pop, btn), 0);
             });
         });
 
-        // Textarea — enable Submit when there's text
+        // Wire textarea input → toggle Submit enabled
+        // IMPORTANT: wire AFTER cloning submit so we touch the live element.
+        // Clone submit + skip first.
+        let liveSubmit = pop.querySelector(".fb-btn.submit");
+        let liveSkip = pop.querySelector(".fb-btn.skip");
+        const cloneSub = liveSubmit.cloneNode(true);
+        liveSubmit.parentNode.replaceChild(cloneSub, liveSubmit);
+        liveSubmit = cloneSub;
+
+        const cloneSkip = liveSkip.cloneNode(true);
+        liveSkip.parentNode.replaceChild(cloneSkip, liveSkip);
+        liveSkip = cloneSkip;
+
         const ta = pop.querySelector(".fb-text");
-        const submitBtn = pop.querySelector(".fb-btn.submit");
-        const skipBtn = pop.querySelector(".fb-btn.skip");
-        if (ta && submitBtn) {
+
+        // Now wire the input listener to the LIVE submit button
+        if (ta && liveSubmit) {
             ta.addEventListener("input", function () {
-                submitBtn.disabled = ta.value.trim().length === 0;
+                liveSubmit.disabled = ta.value.trim().length === 0;
             });
         }
 
-        // Submit feedback text
-        if (submitBtn) {
-            const freshSub = submitBtn.cloneNode(true);
-            submitBtn.parentNode.replaceChild(freshSub, submitBtn);
-            freshSub.addEventListener("click", async function (e) {
-                e.stopPropagation();
-                const fbText = (pop.querySelector(".fb-text").value || "").trim();
-                if (!fbText || !_rateContext) return;
-                freshSub.disabled = true;
-                freshSub.textContent = "Sending…";
-                const result = await saveRating(_rateContext.rating, fbText);
-                if (result.success) {
-                    toast("Feedback received — thank you");
-                } else {
-                    toast("Couldn't save feedback", true);
-                }
-                resetRatePopover();
-            });
-        }
+        // Submit feedback
+        liveSubmit.addEventListener("click", async function (e) {
+            e.stopPropagation();
+            const fbText = (ta && ta.value || "").trim();
+            if (!fbText || !_rateContext) return;
+            liveSubmit.disabled = true;
+            liveSubmit.textContent = "Sending…";
+            const result = await saveRating(_rateContext.rating, fbText);
+            if (result.success) toast("Feedback received — thank you");
+            else toast("Couldn't save feedback", true);
+            resetRatePopover();
+        });
 
-        // Skip — rating is already saved
-        if (skipBtn) {
-            const freshSkip = skipBtn.cloneNode(true);
-            skipBtn.parentNode.replaceChild(freshSkip, skipBtn);
-            freshSkip.addEventListener("click", function (e) {
-                e.stopPropagation();
-                resetRatePopover();
-            });
-        }
+        // Skip
+        liveSkip.addEventListener("click", function (e) {
+            e.stopPropagation();
+            resetRatePopover();
+        });
 
         setTimeout(() => {
             document.addEventListener("click", closeRatePopoverOnce);
