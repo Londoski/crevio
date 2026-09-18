@@ -280,6 +280,11 @@ document.addEventListener("DOMContentLoaded", function () {
                         <p>${escapeHtml(email)}${email ? " · " : ""}${escapeHtml(status)}</p>
                     </div>
                 </div>
+                <div class="chat-actions">
+                    <button class="icon-btn" id="contextToggleBtn" title="Toggle context panel" aria-label="Toggle context">
+                        <i data-lucide="panel-right-close" class="icon"></i>
+                    </button>
+                </div>
             </div>
             <div class="pin-bar" id="pinBar" title="Click to view pinned message">
                 <i data-lucide="pin" class="pin-icon"></i>
@@ -409,6 +414,21 @@ document.addEventListener("DOMContentLoaded", function () {
             if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
         });
         sendBtn?.addEventListener("click", sendMessage);
+
+        // Context panel toggle
+        const ctxBtn = $("contextToggleBtn");
+        if (ctxBtn && !ctxBtn.dataset.wired) {
+            ctxBtn.dataset.wired = "1";
+            ctxBtn.addEventListener("click", function (e) {
+                e.stopPropagation();
+                const panel = document.getElementById("contextPanel");
+                if (!panel) return;
+                const nowHidden = panel.classList.toggle("hidden");
+                try { localStorage.setItem("crevio_context_panel", nowHidden ? "hidden" : "shown"); } catch (err) {}
+                updateContextToggleIcon();
+            });
+        }
+        updateContextToggleIcon();
 
         // Input emoji button
         const inputEmojiBtn = $("inputEmojiBtn");
@@ -884,6 +904,210 @@ document.addEventListener("DOMContentLoaded", function () {
         input.dispatchEvent(new Event("input", { bubbles: true }));
     }
 
+
+    // =========================================================
+    // CONTEXT PANEL — rich client info, stats, notes, related
+    // =========================================================
+    async function renderContext(conv) {
+        renderMobileContextStrip(conv);
+        if (!contextContentEl) return;
+
+        contextContentEl.innerHTML = '<div class="ctx-loading">Loading…</div>';
+
+        try {
+            const res = await window.apiFetch("/api/messages/conversations/" + conv.id + "/context");
+            const data = await res.json();
+            if (!data.success) throw new Error(data.message || "Failed");
+            renderContextPanel(data.context);
+        } catch (e) {
+            console.warn("[Messages] context load failed, using fallback:", e);
+            renderBasicContext(conv);
+        }
+    }
+
+    function renderMobileContextStrip(conv) {
+        const strip = document.getElementById("mobileContextStrip");
+        if (!strip) return;
+        const chips = [];
+        if (conv.context_service_title) chips.push('<span class="ctx-chip"><span class="ctx-key">Service</span><span class="ctx-val">' + escapeHtml(conv.context_service_title) + '</span></span>');
+        if (conv.context_project_title) chips.push('<span class="ctx-chip"><span class="ctx-key">Project</span><span class="ctx-val">' + escapeHtml(conv.context_project_title) + '</span></span>');
+        if (conv.budget)   chips.push('<span class="ctx-chip"><span class="ctx-key">Budget</span><span class="ctx-val">' + escapeHtml(conv.budget) + '</span></span>');
+        if (conv.timeline) chips.push('<span class="ctx-chip"><span class="ctx-key">Timeline</span><span class="ctx-val">' + escapeHtml(conv.timeline) + '</span></span>');
+        if (conv.source)   chips.push('<span class="ctx-chip"><span class="ctx-key">Source</span><span class="ctx-val">' + escapeHtml(conv.source) + '</span></span>');
+        strip.innerHTML = chips.join("");
+        strip.classList.toggle("has-items", chips.length > 0);
+    }
+
+    function renderBasicContext(conv) {
+        if (!contextContentEl) return;
+        const cards = [];
+        if (conv.context_service_title) cards.push('<div class="context-card"><div class="label">Interested In</div><div class="value">' + escapeHtml(conv.context_service_title) + '</div></div>');
+        if (conv.context_project_title) cards.push('<div class="context-card"><div class="label">Related Project</div><div class="value">' + escapeHtml(conv.context_project_title) + '</div></div>');
+        if (conv.source)   cards.push('<div class="context-card"><div class="label">Source</div><div class="value">' + escapeHtml(conv.source) + '</div></div>');
+        if (conv.budget)   cards.push('<div class="context-card"><div class="label">Budget</div><div class="value">' + escapeHtml(conv.budget) + '</div></div>');
+        if (conv.timeline) cards.push('<div class="context-card"><div class="label">Timeline</div><div class="value">' + escapeHtml(conv.timeline) + '</div></div>');
+        contextContentEl.innerHTML = cards.length ? cards.join("") : '<div class="empty-state"><p>No context attached to this conversation.</p></div>';
+    }
+
+    function renderContextPanel(ctx) {
+        if (!contextContentEl) return;
+
+        const c = ctx.client || {};
+        const s = ctx.stats || {};
+        const m = ctx.meta || {};
+        const rel = ctx.related || [];
+        const notes = ctx.notes || "";
+
+        let html = "";
+
+        // --- Client profile ---
+        html += '<div class="ctx-profile">';
+        html += '  <div class="ctx-avatar">' + escapeHtml(c.initial || "?") + '</div>';
+        html += '  <div class="ctx-profile-text">';
+        html += '    <div class="ctx-name">' + escapeHtml(c.name || "Client") + '</div>';
+        if (c.email) html += '    <div class="ctx-email" title="' + escapeHtml(c.email) + '">' + escapeHtml(c.email) + '</div>';
+        html += '    <span class="ctx-badge">' + escapeHtml(c.badge || "Client") + '</span>';
+        html += '  </div>';
+        html += '</div>';
+
+        // --- Quick actions ---
+        if (c.email) {
+            html += '<div class="ctx-actions">';
+            html += '  <button type="button" class="ctx-action" data-ctx-action="copy-email"><i data-lucide="copy" class="icon"></i> Copy</button>';
+            html += '  <a class="ctx-action" href="mailto:' + escapeHtml(c.email) + '"><i data-lucide="mail" class="icon"></i> Mail</a>';
+            html += '</div>';
+        }
+
+        // --- Activity stats ---
+        html += '<div class="ctx-section">';
+        html += '  <div class="ctx-section-title">Activity</div>';
+        html += '  <div class="ctx-stats">';
+        html += '    <div class="ctx-stat"><div class="ctx-stat-num">' + (s.total || 0) + '</div><div class="ctx-stat-label">Total</div></div>';
+        html += '    <div class="ctx-stat"><div class="ctx-stat-num">' + (s.theirs || 0) + '</div><div class="ctx-stat-label">From client</div></div>';
+        html += '    <div class="ctx-stat"><div class="ctx-stat-num">' + (s.age_days || 0) + 'd</div><div class="ctx-stat-label">Age</div></div>';
+        html += '  </div>';
+        html += '</div>';
+
+        // --- Meta info ---
+        const metaCards = [];
+        if (m.service_title) metaCards.push({ label: "Interested In", value: m.service_title });
+        if (m.project_title) metaCards.push({ label: "Related Project", value: m.project_title });
+        if (m.source)        metaCards.push({ label: "Source", value: m.source });
+        if (m.budget)        metaCards.push({ label: "Budget", value: m.budget });
+        if (m.timeline)      metaCards.push({ label: "Timeline", value: m.timeline });
+
+        if (metaCards.length) {
+            html += '<div class="ctx-section">';
+            html += '  <div class="ctx-section-title">Info</div>';
+            metaCards.forEach(function (mc) {
+                html += '    <div class="ctx-card"><div class="ctx-card-label">' + escapeHtml(mc.label) + '</div><div class="ctx-card-value">' + escapeHtml(mc.value) + '</div></div>';
+            });
+            html += '</div>';
+        }
+
+        // --- Private notes ---
+        html += '<div class="ctx-section">';
+        html += '  <div class="ctx-section-title">Private Notes</div>';
+        html += '  <textarea class="ctx-notes-input" placeholder="Add a private reminder about this client…" rows="3"></textarea>';
+        html += '  <div class="ctx-notes-actions">';
+        html += '    <span class="ctx-notes-saved" style="display:none">✓ Saved</span>';
+        html += '    <button type="button" class="ctx-notes-save">Save note</button>';
+        html += '  </div>';
+        html += '</div>';
+
+        // --- Related inquiries ---
+        if (rel.length) {
+            html += '<div class="ctx-section">';
+            html += '  <div class="ctx-section-title">Other Inquiries</div>';
+            rel.forEach(function (r) {
+                html += '  <button type="button" class="ctx-related" data-related-id="' + r.id + '">';
+                html += '    <div class="ctx-related-preview">' + (escapeHtml(r.preview) || "No messages yet") + '</div>';
+                html += '    <div class="ctx-related-meta">' + formatRelativeTime(r.created_at) + ' · ' + escapeHtml(r.status) + '</div>';
+                html += '  </button>';
+            });
+            html += '</div>';
+        }
+
+        contextContentEl.innerHTML = html;
+
+        // --- Wire notes ---
+        const ta = contextContentEl.querySelector(".ctx-notes-input");
+        const saveBtn = contextContentEl.querySelector(".ctx-notes-save");
+        const savedLbl = contextContentEl.querySelector(".ctx-notes-saved");
+        if (ta) ta.value = notes;
+        if (saveBtn && ta) {
+            saveBtn.addEventListener("click", async function () {
+                saveBtn.disabled = true;
+                saveBtn.textContent = "Saving…";
+                try {
+                    await patchConv(activeConvId, { notes: ta.value });
+                    if (savedLbl) {
+                        savedLbl.style.display = "inline";
+                        setTimeout(function () { savedLbl.style.display = "none"; }, 2000);
+                    }
+                } catch (e) {
+                    showToast("Could not save note", true);
+                } finally {
+                    saveBtn.disabled = false;
+                    saveBtn.textContent = "Save note";
+                }
+            });
+        }
+
+        // --- Wire copy email ---
+        const copyBtn = contextContentEl.querySelector('[data-ctx-action="copy-email"]');
+        if (copyBtn && c.email) {
+            copyBtn.addEventListener("click", async function () {
+                try {
+                    await navigator.clipboard.writeText(c.email);
+                    showToast("Email copied");
+                } catch (e) {
+                    const tmp = document.createElement("textarea");
+                    tmp.value = c.email;
+                    document.body.appendChild(tmp);
+                    tmp.select();
+                    try { document.execCommand("copy"); showToast("Email copied"); } catch (e2) { showToast("Copy failed", true); }
+                    document.body.removeChild(tmp);
+                }
+            });
+        }
+
+        // --- Wire related inquiries ---
+        contextContentEl.querySelectorAll(".ctx-related").forEach(function (btn) {
+            btn.addEventListener("click", function () {
+                const id = parseInt(btn.dataset.relatedId, 10);
+                if (!isNaN(id)) openConversation(id);
+            });
+        });
+
+        if (typeof lucide !== "undefined") { try { lucide.createIcons(); } catch (e) {} }
+    }
+
+
+    function updateContextToggleIcon() {
+        const panel = document.getElementById("contextPanel");
+        const btn = document.getElementById("contextToggleBtn");
+        if (!panel || !btn) return;
+        const hidden = panel.classList.contains("hidden");
+        const icon = btn.querySelector("i, svg");
+        if (icon) {
+            icon.outerHTML = '<i data-lucide="' + (hidden ? "panel-right-open" : "panel-right-close") + '" class="icon"></i>';
+        }
+        btn.setAttribute("title", hidden ? "Show context" : "Hide context");
+        if (typeof lucide !== "undefined") { try { lucide.createIcons(); } catch (e) {} }
+    }
+
+
+    function restoreContextPanelState() {
+        const panel = document.getElementById("contextPanel");
+        if (!panel) return;
+        try {
+            const saved = localStorage.getItem("crevio_context_panel");
+            if (saved === "hidden") panel.classList.add("hidden");
+            else if (saved === "shown") panel.classList.remove("hidden");
+        } catch (e) {}
+    }
+
 function openMessageMenu(msgId, x, y) {
 
 
@@ -1304,29 +1528,7 @@ const bar = document.getElementById("reactionBar");
     // =========================================================
     // CONTEXT PANEL
     // =========================================================
-    function renderContext(conv) {
-        if (!contextContentEl) return;
-        const cards = [];
-        if (conv.context_service_title) cards.push('<div class="context-card"><div class="label">Interested In</div><div class="value">' + escapeHtml(conv.context_service_title) + '</div><div class="meta">Service</div></div>');
-        if (conv.context_project_title) cards.push('<div class="context-card"><div class="label">Related Project</div><div class="value">' + escapeHtml(conv.context_project_title) + '</div><div class="meta">Project</div></div>');
-        if (conv.source)   cards.push('<div class="context-card"><div class="label">Source</div><div class="value">' + escapeHtml(conv.source) + '</div></div>');
-        if (conv.budget)   cards.push('<div class="context-card"><div class="label">Budget</div><div class="value">' + escapeHtml(conv.budget) + '</div></div>');
-        if (conv.timeline) cards.push('<div class="context-card"><div class="label">Timeline</div><div class="value">' + escapeHtml(conv.timeline) + '</div></div>');
-        contextContentEl.innerHTML = cards.length ? cards.join("") : '<div class="empty-state"><p>No context attached to this conversation.</p></div>';
-
-        // ---- Mobile context strip (compact alternative on phone) ----
-        const strip = document.getElementById("mobileContextStrip");
-        if (strip) {
-            const chips = [];
-            if (conv.context_service_title) chips.push('<span class="ctx-chip"><span class="ctx-key">Service</span><span class="ctx-val">' + escapeHtml(conv.context_service_title) + '</span></span>');
-            if (conv.context_project_title) chips.push('<span class="ctx-chip"><span class="ctx-key">Project</span><span class="ctx-val">' + escapeHtml(conv.context_project_title) + '</span></span>');
-            if (conv.budget)                chips.push('<span class="ctx-chip"><span class="ctx-key">Budget</span><span class="ctx-val">'  + escapeHtml(conv.budget)  + '</span></span>');
-            if (conv.timeline)              chips.push('<span class="ctx-chip"><span class="ctx-key">Timeline</span><span class="ctx-val">' + escapeHtml(conv.timeline) + '</span></span>');
-            if (conv.source)                chips.push('<span class="ctx-chip"><span class="ctx-key">Source</span><span class="ctx-val">'  + escapeHtml(conv.source)  + '</span></span>');
-            strip.innerHTML = chips.join("");
-            strip.classList.toggle("has-items", chips.length > 0);
-        }
-    }
+    
 
     // =========================================================
     // CHEVRON DROPDOWN

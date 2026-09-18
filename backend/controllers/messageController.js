@@ -727,3 +727,109 @@ exports.forwardMessage = (req, res) => {
         res.status(500).json({ success: false, message: err.message });
     }
 };
+
+
+// =========================================================
+// GET /api/messages/conversations/:id/context
+// Returns rich context for the panel: client stats, related inquiries, notes
+// =========================================================
+exports.getConversationContext = (req, res) => {
+    try {
+        const uid = req.user.id;
+        const conv = safeGet("SELECT * FROM conversations WHERE id = ? AND creator_id = ?", req.params.id, uid);
+        if (!conv) return res.status(404).json({ success: false, message: "Not found" });
+
+        // Message stats
+        const stats = safeGet(`
+            SELECT
+                COUNT(*) AS total,
+                SUM(CASE WHEN sender_type = 'creator' THEN 1 ELSE 0 END) AS mine,
+                SUM(CASE WHEN sender_type = 'client'  THEN 1 ELSE 0 END) AS theirs,
+                MIN(created_at) AS first_at,
+                MAX(created_at) AS last_at
+            FROM messages
+            WHERE conversation_id = ?
+              AND (deleted_for_creator = 0 OR deleted_for_creator IS NULL)
+        `, req.params.id) || {};
+
+        // Other conversations from the same client
+        let related = [];
+        if (conv.client_email) {
+            related = safeAll(`
+                SELECT c.id, c.status, c.created_at,
+                    (SELECT content FROM messages WHERE conversation_id = c.id ORDER BY created_at ASC LIMIT 1) AS first_message
+                FROM conversations c
+                WHERE c.creator_id = ? AND LOWER(c.client_email) = LOWER(?) AND c.id != ?
+                ORDER BY c.created_at DESC LIMIT 5
+            `, uid, conv.client_email, req.params.id);
+        }
+
+        // Related service/project titles
+        let serviceTitle = null, projectTitle = null;
+        if (conv.service_id) {
+            const s = safeGet("SELECT title FROM services WHERE id = ?", conv.service_id);
+            if (s) serviceTitle = s.title;
+        }
+        if (conv.project_id) {
+            const p = safeGet("SELECT name FROM projects WHERE id = ?", conv.project_id);
+            if (p) projectTitle = p.name;
+        }
+
+        const firstAt = stats.first_at ? new Date(stats.first_at.replace(" ", "T") + "Z") : null;
+        const ageDays = firstAt ? Math.max(0, Math.floor((Date.now() - firstAt.getTime()) / 86400000)) : 0;
+
+        // Client label
+        const clientName = conv.client_name || "Client";
+        const initial = clientName.charAt(0).toUpperCase();
+
+        // "New" vs "Returning" — based on total conversations from this email
+        let convCount = 1;
+        if (conv.client_email) {
+            const row = safeGet(
+                "SELECT COUNT(*) AS c FROM conversations WHERE creator_id = ? AND LOWER(client_email) = LOWER(?)",
+                uid, conv.client_email
+            );
+            if (row) convCount = row.c;
+        }
+
+        res.json({
+            success: true,
+            context: {
+                client: {
+                    name: clientName,
+                    email: conv.client_email || "",
+                    initial: initial,
+                    badge: convCount > 1 ? "Returning client" : "New client",
+                    conversation_count: convCount
+                },
+                stats: {
+                    total: stats.total || 0,
+                    mine: stats.mine || 0,
+                    theirs: stats.theirs || 0,
+                    age_days: ageDays,
+                    first_message_at: stats.first_at || null,
+                    last_message_at: stats.last_at || null
+                },
+                meta: {
+                    source: conv.source || "portfolio",
+                    service_title: serviceTitle,
+                    project_title: projectTitle,
+                    budget: conv.budget || null,
+                    timeline: conv.timeline || null
+                },
+                related: related.map(function (r) {
+                    return {
+                        id: r.id,
+                        status: r.status || "new",
+                        created_at: r.created_at,
+                        preview: (r.first_message || "").slice(0, 80)
+                    };
+                }),
+                notes: conv.notes || ""
+            }
+        });
+    } catch (err) {
+        console.error("Context error:", err);
+        res.status(500).json({ success: false, message: "Failed", error: err.message });
+    }
+};

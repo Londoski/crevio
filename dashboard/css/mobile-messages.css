@@ -1151,3 +1151,266 @@
 @media (max-width: 900px) {
     .ip-grid { grid-template-columns: repeat(7, 1fr); }
 }
+
+
+/* ============================================================
+   CTX CONTEXT PANEL V2 — rich client info + collapse support
+   ============================================================ */
+
+/* Collapse state — wins over any width rule */
+.context-panel.hidden {
+    display: none !important;
+}
+
+/* When panel hidden, chat fills the space */
+@media (min-width: 1200px) {
+    .context-panel.hidden ~ * { flex: 1; }
+}
+
+/* Loading state */
+.ctx-loading {
+    padding: 20px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+/* ---- Client profile ---- */
+.ctx-profile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 4px 0 14px;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 12px;
+}
+.ctx-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+.ctx-profile-text {
+    min-width: 0;
+    flex: 1;
+}
+.ctx-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.ctx-email {
+    font-size: 12px;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin: 2px 0 4px;
+}
+.ctx-badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--accent-dim);
+    color: var(--accent);
+}
+
+/* ---- Quick actions ---- */
+.ctx-actions {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 14px;
+}
+.ctx-action {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    text-decoration: none;
+    padding: 8px 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.12s, border-color 0.12s, color 0.12s;
+}
+.ctx-action:hover {
+    background: var(--accent-dim);
+    border-color: var(--accent);
+    color: var(--accent);
+}
+.ctx-action .icon { width: 14px; height: 14px; }
+
+/* ---- Sections ---- */
+.ctx-section {
+    padding: 14px 0 4px;
+    border-top: 1px solid var(--border-color);
+}
+.ctx-section:first-of-type { border-top: none; padding-top: 4px; }
+
+.ctx-section-title {
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+}
+
+/* ---- Stats grid ---- */
+.ctx-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+.ctx-stat {
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 10px 8px;
+    text-align: center;
+}
+.ctx-stat-num {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1;
+    margin-bottom: 4px;
+}
+.ctx-stat-label {
+    font-size: 10px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+/* ---- Info cards ---- */
+.ctx-card {
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+}
+.ctx-card:last-child { margin-bottom: 0; }
+.ctx-card-label {
+    font-size: 10.5px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+.ctx-card-value {
+    font-size: 13px;
+    color: var(--text-primary);
+    font-weight: 600;
+    word-break: break-word;
+}
+
+/* ---- Notes ---- */
+.ctx-notes-input {
+    width: 100%;
+    box-sizing: border-box;
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-primary);
+    padding: 10px 12px;
+    font-size: 13px;
+    font-family: inherit;
+    resize: vertical;
+    min-height: 70px;
+    line-height: 1.5;
+}
+.ctx-notes-input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-dim);
+}
+.ctx-notes-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 8px;
+}
+.ctx-notes-saved {
+    color: var(--success);
+    font-size: 12px;
+    font-weight: 600;
+}
+.ctx-notes-save {
+    background: var(--accent);
+    border: none;
+    color: #fff;
+    padding: 7px 14px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.12s;
+}
+.ctx-notes-save:hover { background: var(--accent-hover); }
+.ctx-notes-save:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* ---- Related inquiries ---- */
+.ctx-related {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    font-family: inherit;
+    color: inherit;
+    transition: background 0.12s, border-color 0.12s;
+}
+.ctx-related:hover {
+    background: var(--accent-dim);
+    border-color: var(--accent);
+}
+.ctx-related:last-child { margin-bottom: 0; }
+.ctx-related-preview {
+    font-size: 12.5px;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 4px;
+}
+.ctx-related-meta {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: capitalize;
+}
+
+/* ---- Chat header actions (holds the toggle) ---- */
+.chat-actions {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+}
