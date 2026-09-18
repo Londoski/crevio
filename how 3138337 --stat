@@ -1,0 +1,22 @@
+[33m8f5347f[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m revert: remove mobile-messages.css link + lock expectation
+[33m995758f[m fix(messages): add mobile-messages.css link (regex-tolerant of ?v=)
+[33m3138337[m fix: kill 300ms mobile tap delay + force pointer-events on every button
+[33mff1e50b[m ui: strong brand scrollbar override (sidebar + all containers)
+[33m4ca2d59[m feat: rich context panel with client profile, stats, notes, related + collapse toggle
+[33mb36176d[m fix: input emoji picker as single scroll list (no tabs to break)
+[33m8ee326d[m ui: brand-styled scrollbars (dark thumb, accent on hover)
+[33m332832f[m feat: full reaction picker (32 emojis) replaces 'coming soon' toast
+[33m0e19332[m fix: emoji reactions now use HTML entities (immune to UTF-8 corruption)
+[33m0f36439[m ui: remove topbar user-avatar + name from Overview
+[33m4cb88e9[m fix: mobile top padding 20px + lock it in
+[33m8222b8b[m fix: high-specificity override for 74px mobile top padding
+[33me85dc2d[m fix: remove 74px mobile padding-top on .main (was killing top gap)
+[33m1b5040e[m fix: nuclear mobile top gap — override inline + shared CSS padding
+[33mbece915[m fix: kill mobile top gap on all dashboard pages
+[33mffa1158[m fix: universal mobile scroll for media page
+[33mdf897aa[m fix: universal mobile scroll for media page
+[33mfde1db2[m fix: expanded mojibake strip range (U+2122) + media mobile scroll v2
+[33m824a733[m fix: clean residual mojibake in media/overview + mobile bottom padding
+[33mdb85032[m fix: CP1252 mojibake recovery — 20 pages + 2 scripts clean
+[33m5f4b6b0[m LOCK: <describe what you fixed>
+[33m398ef99[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Initial commit for debugging
