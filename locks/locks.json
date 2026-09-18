@@ -401,6 +401,28 @@
       "patterns": [
         "getConversationContext"
       ]
+    },
+    {
+      "id": "bot-auto-send",
+      "desc": "Ask CrevioBot auto-fills + auto-sends the prompt on the bot page",
+      "type": "fileContains",
+      "file": "dashboard/pages/bot.html",
+      "patterns": [
+        "AUTO-SEND FROM MESSAGES",
+        "crevio_bot_context",
+        "trySend",
+        "sendBtn.click"
+      ]
+    },
+    {
+      "id": "messages-bot-context-saved",
+      "desc": "messages.js stores context in localStorage before opening bot",
+      "type": "fileContains",
+      "file": "dashboard/js/messages.js",
+      "patterns": [
+        "openCrevioBotWithMessage",
+        "crevio_bot_context"
+      ]
     }
   ]
 }
