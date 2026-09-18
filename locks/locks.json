@@ -368,6 +368,17 @@
         "&#x1F602;",
         "&#x1F64F;"
       ]
+    },
+    {
+      "id": "brand-scrollbar",
+      "desc": "Scrollbars use brand colors (dark thumb, accent on hover) across app",
+      "type": "fileContains",
+      "file": "dashboard/css/mobile-messages.css",
+      "patterns": [
+        "BRAND SCROLLBAR",
+        "scrollbar-color",
+        "::-webkit-scrollbar-thumb"
+      ]
     }
   ]
 }
