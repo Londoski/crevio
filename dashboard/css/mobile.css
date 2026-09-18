@@ -521,3 +521,44 @@
     }
 }
 /* END KILL MOBILE TOP GAP */
+
+/* NUCLEAR TOP GAP FIX */
+@media (max-width: 900px) {
+    html, body {
+        padding-top: 0 !important;
+        margin-top: 0 !important;
+    }
+    .main,
+    main,
+    .content,
+    .page,
+    .page-content,
+    .main-content,
+    .dashboard-content {
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+    }
+    .main > *:first-child,
+    main > *:first-child,
+    .content > *:first-child {
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+    }
+    .topbar,
+    .header,
+    .page-header,
+    .main-header,
+    .top-bar,
+    .main > header,
+    .main > .header {
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+    }
+    .mobile-menu-btn {
+        margin: 0 !important;
+        align-self: flex-start !important;
+    }
+    /* Hamburger gets breathing room only on its right */
+    .mobile-menu-btn { margin-right: 8px !important; }
+}
+/* END NUCLEAR TOP GAP FIX */
