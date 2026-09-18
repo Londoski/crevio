@@ -30,6 +30,23 @@ const M = {
 // =========================================================
 // STATS
 // =========================================================
+
+// =========================================================
+// BUSINESS-ONLY EMOJI GATE
+// Only Business plan users can react with these emojis.
+// Clients (visitor side) always get full access.
+// =========================================================
+const BASIC_EMOJIS = [
+    "\u{1F44D}", "\u2764\uFE0F", "\u{1F602}", "\u{1F62E}",
+    "\u{1F622}", "\u{1F64F}"
+];
+
+function isEmojiAllowedForCreator(plan, emoji) {
+    if (plan === "business") return true;
+    return BASIC_EMOJIS.indexOf(emoji) >= 0;
+}
+
+
 exports.getStats = (req, res) => {
     try {
         const uid = req.user.id;
@@ -286,6 +303,20 @@ exports.toggleReaction = (req, res) => {
         const { emoji, side } = req.body;
         if (!emoji) return res.status(400).json({ success: false, message: "emoji required" });
         const who = side === "client" ? "client" : "creator";
+
+        // Plan gate: only Business plan creators can use premium emojis.
+        // Clients always get full access.
+        if (who === "creator") {
+            const plan = getUserPlan(uid);
+            if (!isEmojiAllowedForCreator(plan, emoji)) {
+                return res.status(403).json({
+                    success: false,
+                    message: "Upgrade to Business plan to use this emoji",
+                    upgrade: true,
+                    plan: plan
+                });
+            }
+        }
 
         const conv = safeGet("SELECT * FROM conversations WHERE id=? AND creator_id=?", req.params.id, uid);
         if (!conv) return res.status(404).json({ success: false, message: "Not found" });

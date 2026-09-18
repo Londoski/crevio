@@ -41,7 +41,8 @@ document.addEventListener("DOMContentLoaded", function () {
     let cmTargetId      = null;
     let mcmTargetId     = null;
     let replyToId       = null;
-    let planLimit       = 5000;   // default; overwritten on load
+    let planLimit       = 5000;
+    let currentPlanName = "free";   // default; overwritten on load
     let planUnlimited   = false;
     let pinOptionsCache = null;   // { durations, maxPerChat, plan }
     let currentPlan     = "free";   // set from /plan-limit
@@ -332,6 +333,17 @@ document.addEventListener("DOMContentLoaded", function () {
         return html;
     }
 
+    
+    // Render a stored reaction key → display string or <img>
+    function renderReactionEmoji(emoji) {
+        if (!emoji) return "";
+        if (emoji.indexOf("flag:") === 0) {
+            const code = emoji.slice(5);
+            return '<img class="msg-reaction-flag" src="https://flagcdn.com/w20/' + code + '.png" alt="' + code + '" loading="lazy">';
+        }
+        return emoji;
+    }
+
     function renderReactionsRow(m) {
         let reactions = {};
         try { reactions = m.reactions ? JSON.parse(m.reactions) : {}; } catch { reactions = {}; }
@@ -340,7 +352,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const isMine = !!m.is_mine;
         return '<div class="msg-reactions-row ' + (isMine ? "align-right" : "align-left") + '">'
             + entries.map(function(kv){
-                return '<span class="msg-reaction-pill" title="' + escapeHtml(kv[1].join(", ")) + '">' + kv[0] + ' <span class="cnt">' + kv[1].length + '</span></span>';
+                return '<span class="msg-reaction-pill" title="' + escapeHtml(kv[1].join(", ")) + '">' + renderReactionEmoji(kv[0]) + ' <span class="cnt">' + kv[1].length + '</span></span>';
             }).join("")
             + '</div>';
     }
@@ -499,14 +511,110 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     
-    function buildFullPickerHTML(msg) {
-        const reactions = parseReactions(msg);
-        return REACTIONS.map(function (emoji) {
-            const active = Array.isArray(reactions[emoji]) && reactions[emoji].indexOf("creator") >= 0;
-            return '<button class="reaction-picker-btn ' + (active ? "active" : "") + '" data-react="' + emoji + '" title="' + emoji + '">' + emoji + '</button>';
-        }).join("");
-    }
+    
 
+
+    
+
+
+    // =========================================================
+    // FULL EMOJI PICKER (tabbed, Business-gated)
+    // =========================================================
+    
+
+    
+
+
+    // =========================================================
+    // FULL EMOJI PICKER (tabbed, searchable, scrollable, gated)
+    // =========================================================
+    
+
+    
+
+
+    // =========================================================
+    // FULL EMOJI PICKER
+    // =========================================================
+    
+
+    
+
+
+    // =========================================================
+    // FULL EMOJI PICKER — SINGLE SCROLL LIST (section headers)
+    // =========================================================
+    function buildReactionPickerHTML(msg) {
+        const EMO = window.CREVIO_EMOJIS;
+        if (!EMO || !EMO.categories) {
+            return '<div style="padding:20px;color:var(--text-muted);text-align:center;font-size:13px">Emoji catalog not loaded</div>';
+        }
+
+        const reactions = parseReactions(msg);
+        const isBusiness = (currentPlanName === "business");
+
+        function renderEmoji(emoji) {
+            const active = Array.isArray(reactions[emoji]) && reactions[emoji].indexOf("creator") >= 0;
+            const locked = !isBusiness;
+            return '<button type="button" class="rp-emoji ' + (active ? "active" : "") + '"' +
+                ' data-react="' + emoji + '"' +
+                (locked ? ' data-locked="1"' : '') +
+                '>' + emoji + '</button>';
+        }
+
+        // Search bar
+        let html = '<div class="rp-search">' +
+            '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="rp-search-icon"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>' +
+            '<input type="text" class="rp-search-input" placeholder="Search emoji" autocomplete="off">' +
+            '</div>';
+
+        // Scrollable body — ONE list with section headers
+        html += '<div class="rp-body">';
+
+        // Basic section
+        html += '<div class="rp-section">';
+        html += '<div class="rp-section-title">' + (isBusiness ? "Frequently Used" : "Basic") + '</div>';
+        html += '<div class="rp-grid">' + EMO.basic.map(renderEmoji).join("") + '</div>';
+        html += '</div>';
+
+        // Each category = a section
+        EMO.categories.forEach(function (cat) {
+            html += '<div class="rp-section">';
+            html += '<div class="rp-section-title">' + cat.label + (isBusiness ? "" : ' <span class="rp-section-lock">🔒 Business</span>') + '</div>';
+            html += '<div class="rp-grid">';
+
+            // Flags: render as images from flagcdn.com
+            if (cat.id === "flags" && cat.flags) {
+                cat.flags.forEach(function (f) {
+                    const active = Array.isArray(reactions["flag:" + f.code]) && reactions["flag:" + f.code].indexOf("creator") >= 0;
+                    const locked = !isBusiness;
+                    html += '<button type="button" class="rp-emoji rp-flag ' + (active ? "active" : "") + '"' +
+                        ' data-react="flag:' + f.code + '"' +
+                        ' title="' + f.name + '"' +
+                        (locked ? ' data-locked="1"' : '') +
+                        '><img src="https://flagcdn.com/w40/' + f.code + '.png" alt="' + f.name + '" loading="lazy"></button>';
+                });
+            } else {
+                html += cat.emojis.map(renderEmoji).join("");
+            }
+
+            html += '</div>';
+            html += '</div>';
+        });
+
+        html += '</div>';
+
+        // Upgrade banner for non-Business
+        if (!isBusiness) {
+            html += '<div class="rp-banner">' +
+                '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>' +
+                '<span>Unlock all emojis with <strong>Business</strong></span>' +
+                '<a href="/dashboard/pages/billing.html">Upgrade</a>' +
+                '</div>';
+        }
+
+        return html;
+    }
 
     function openFullReactionPicker(msgId) {
         const msg = activeMessages.find(function (m) { return m.id === msgId; });
@@ -520,32 +628,47 @@ document.addEventListener("DOMContentLoaded", function () {
             document.body.appendChild(picker);
         }
 
-        picker.innerHTML = buildFullPickerHTML(msg);
+        picker.innerHTML = buildReactionPickerHTML(msg);
         picker.classList.add("open");
 
-        // Position near the reaction bar
-        const bar = document.getElementById("reactionBar");
-        const vw = window.innerWidth, vh = window.innerHeight, margin = 8;
-
+        // Position
         picker.style.left = "-9999px";
         picker.style.top = "-9999px";
         const pRect = picker.getBoundingClientRect();
+        const bar = document.getElementById("reactionBar");
+        const vw = window.innerWidth, vh = window.innerHeight, margin = 8;
 
         let left = bar ? bar.getBoundingClientRect().left : 20;
         let top  = bar ? bar.getBoundingClientRect().top - pRect.height - 8 : 20;
-
         if (top < margin) top = (bar ? bar.getBoundingClientRect().bottom : 100) + 8;
+        if (top + pRect.height > vh - margin) top = Math.max(margin, vh - pRect.height - margin);
         if (left + pRect.width > vw - margin) left = vw - pRect.width - margin;
         if (left < margin) left = margin;
 
         picker.style.left = left + "px";
         picker.style.top  = top + "px";
 
-        if (typeof lucide !== "undefined") { try { lucide.createIcons(); } catch (e) {} }
+        // Search filter
+        const searchInput = picker.querySelector(".rp-search-input");
+        if (searchInput) {
+            searchInput.addEventListener("input", function (e) {
+                e.stopPropagation();
+                const q = searchInput.value.trim().toLowerCase();
+                picker.querySelectorAll(".rp-emoji").forEach(function (b) {
+                    const t = (b.dataset.react || "").toLowerCase();
+                    b.style.display = (!q || t.indexOf(q) >= 0) ? "" : "none";
+                });
+            });
+        }
 
-        picker.querySelectorAll("[data-react]").forEach(function (btn) {
+        // Emoji clicks
+        picker.querySelectorAll(".rp-emoji").forEach(function (btn) {
             btn.addEventListener("click", function (e) {
                 e.stopPropagation();
+                if (btn.dataset.locked === "1") {
+                    showToast("Business plan required for this emoji", true);
+                    return;
+                }
                 const emoji = btn.dataset.react;
                 picker.classList.remove("open");
                 closeMessageMenu();
@@ -555,7 +678,7 @@ document.addEventListener("DOMContentLoaded", function () {
             });
         });
 
-        // Click outside to close
+        // Outside click closes
         setTimeout(function () {
             document.addEventListener("click", function closeOnce(ev) {
                 if (!picker.contains(ev.target)) {
@@ -564,6 +687,8 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
             });
         }, 0);
+
+        if (searchInput) setTimeout(function () { try { searchInput.focus(); } catch (e) {} }, 50);
     }
 
 function openMessageMenu(msgId, x, y) {
@@ -2022,6 +2147,7 @@ const bar = document.getElementById("reactionBar");
             const d = await res.json();
             if (d.success) {
                 planUnlimited = !!d.unlimited;
+                currentPlanName = d.plan || "free";
                 planLimit = d.unlimited ? Infinity : d.limit;
                 currentPlan = d.plan || "free";
             }
