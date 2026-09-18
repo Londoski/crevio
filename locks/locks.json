@@ -379,6 +379,28 @@
         "scrollbar-color",
         "::-webkit-scrollbar-thumb"
       ]
+    },
+    {
+      "id": "context-panel-v2",
+      "desc": "Rich context panel with profile, stats, notes, related + collapse toggle",
+      "type": "fileContains",
+      "file": "dashboard/js/messages.js",
+      "patterns": [
+        "renderContextPanel",
+        "ctx-profile",
+        "ctx-notes-input",
+        "contextToggleBtn",
+        "restoreContextPanelState"
+      ]
+    },
+    {
+      "id": "context-endpoint",
+      "desc": "Backend endpoint returns rich context for a conversation",
+      "type": "fileContains",
+      "file": "backend/controllers/messageController.js",
+      "patterns": [
+        "getConversationContext"
+      ]
     }
   ]
 }
