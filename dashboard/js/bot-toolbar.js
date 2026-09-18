@@ -1,15 +1,21 @@
-﻿// =========================================================
-// CREVIO BOT TOOLBAR
+// ============================================================
+// CREVIO — BOT TOOLBAR
 // File: dashboard/js/bot-toolbar.js
-// =========================================================
+// Adds action buttons under messages:
+//   - Bot messages:  Copy · Rate · Share to conversation
+//   - User messages: Copy · Share prompt · Edit
+// ============================================================
 (function () {
     if (window.__crevioBotToolbarInstalled) return;
     window.__crevioBotToolbarInstalled = true;
-    console.log("[Bot Toolbar] v4 loaded");
 
+    const $ = (id) => document.getElementById(id);
+    const REACTIONS = ["\u{1F44D}", "\u2764\uFE0F", "\u{1F602}", "\u{1F62E}", "\u{1F622}", "\u{1F64F}"];
+
+    // ---------- helpers ----------
     function api(path, opts) {
         if (window.apiFetch) return window.apiFetch(path, opts);
-        var token = localStorage.getItem("token");
+        const token = localStorage.getItem("token");
         return fetch(path, Object.assign({
             headers: {
                 "Content-Type": "application/json",
@@ -17,324 +23,482 @@
             }
         }, opts || {}));
     }
-
+    function escapeHtml(s) {
+        return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+            return { "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c];
+        });
+    }
     function toast(msg, isErr) {
-        var t = document.getElementById("toast");
-        if (!t) { console.log("[Bot Toolbar] toast:", msg); return; }
+        const t = document.getElementById("toast");
+        if (!t) return;
         t.textContent = msg;
         t.classList.toggle("error", !!isErr);
         t.classList.add("show");
         clearTimeout(t.__tm);
         t.__tm = setTimeout(function () { t.classList.remove("show"); }, 2600);
     }
-
     function refreshIcons() {
-        if (typeof lucide !== "undefined") {
-            try { lucide.createIcons(); } catch (e) {}
-        }
+        if (typeof lucide !== "undefined") { try { lucide.createIcons(); } catch (e) {} }
     }
-
     function getBubbleText(bubble) {
-        var body = bubble.querySelector(".msg-body") || bubble;
-        var clone = body.cloneNode(true);
+        const clone = bubble.cloneNode(true);
         clone.querySelectorAll(".msg-time, .msg-toolbar, .msg-check, .msg-expand-btn").forEach(function (el) { el.remove(); });
         return (clone.innerText || clone.textContent || "").trim();
     }
 
-    function buildToolbar() {
-        var el = document.createElement("div");
-        el.className = "msg-toolbar";
-        el.innerHTML =
-            '<button class="msg-tool" data-act="copy" aria-label="Copy"><i data-lucide="copy"></i><span class="tool-tip">Copy</span></button>' +
-            '<button class="msg-tool" data-act="rate" aria-label="Rate"><i data-lucide="thumbs-up"></i><span class="tool-tip">Rate</span></button>' +
-            '<button class="msg-tool" data-act="share" aria-label="Share"><i data-lucide="share-2"></i><span class="tool-tip">Share</span></button>' +
-            '<button class="msg-tool" data-act="regen" aria-label="Regenerate"><i data-lucide="refresh-cw"></i><span class="tool-tip">Regenerate</span></button>' +
-            '<button class="msg-tool" data-act="more" aria-label="More"><i data-lucide="more-horizontal"></i><span class="tool-tip">More</span></button>';
-        return el;
-    }
+    // =========================================================
+    // CSS (injected once)
+    // =========================================================
+    if (!document.getElementById("__botToolbarStyles")) {
+        const style = document.createElement("style");
+        style.id = "__botToolbarStyles";
+        style.textContent = `
+            .msg-toolbar {
+                display: flex;
+                gap: 2px;
+                margin-top: 4px;
+                align-items: center;
+            }
+            .msg-tool {
+                background: transparent;
+                border: none;
+                color: var(--text-muted);
+                width: 30px; height: 30px;
+                border-radius: 8px;
+                cursor: pointer;
+                display: flex; align-items: center; justify-content: center;
+                transition: background 0.1s, color 0.1s;
+                position: relative;
+                padding: 0;
+                touch-action: manipulation;
+            }
+            .msg-tool:hover { background: var(--accent-dim); color: var(--accent); }
+            .msg-tool .icon { width: 15px; height: 15px; pointer-events: none; }
+            .msg-tool .tip {
+                position: absolute;
+                bottom: calc(100% + 6px);
+                left: 50%;
+                transform: translateX(-50%) translateY(4px);
+                background: var(--bg-card);
+                color: var(--text-primary);
+                border: 1px solid var(--border-color);
+                padding: 5px 10px;
+                border-radius: 6px;
+                font-size: 12px;
+                white-space: nowrap;
+                opacity: 0;
+                visibility: hidden;
+                pointer-events: none;
+                transition: opacity 0.12s, transform 0.12s, visibility 0.12s;
+                z-index: 30;
+                box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+            }
+            .msg-tool:hover .tip { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
+            @media (hover: none) { .msg-tool .tip { display: none; } }
 
-       function ensureToolbars() {
-        document.querySelectorAll(".msg-bubble.bot").forEach(function (bubble) {
-            var wrap = bubble.closest(".message");
-            if (!wrap) return;
-            if (wrap.querySelector(".msg-toolbar")) return;
-            var body = bubble.querySelector(".msg-body");
-            if (!body || !body.textContent.trim()) return;
-            if (bubble.querySelector(".typing")) return;
-            wrap.appendChild(buildToolbar());
-        });
-        refreshIcons();
-    }
-    function closeAllPopovers() {
-        document.querySelectorAll(".rate-popover").forEach(function (p) { p.remove(); });
-    }
+            /* ---- Share prompt panel ---- */
+            .share-overlay {
+                position: fixed; inset: 0;
+                background: rgba(0,0,0,0.6);
+                backdrop-filter: blur(3px);
+                display: flex; align-items: center; justify-content: center;
+                padding: 20px;
+                z-index: 3000;
+                opacity: 0; visibility: hidden;
+                transition: opacity 0.15s, visibility 0.15s;
+            }
+            .share-overlay.open { opacity: 1; visibility: visible; }
+            .share-panel {
+                background: var(--bg-card);
+                border: 1px solid var(--border-color);
+                border-radius: 16px;
+                width: 100%;
+                max-width: min(420px, 94vw);
+                max-height: 90vh;
+                padding: 20px;
+                box-shadow: 0 24px 60px rgba(0,0,0,0.6);
+                display: flex;
+                flex-direction: column;
+                gap: 16px;
+            }
+            .share-panel h2 {
+                font-size: 18px;
+                font-weight: 700;
+                color: var(--text-primary);
+                margin: 0;
+                display: flex; align-items: center; justify-content: space-between;
+            }
+            .share-close {
+                background: transparent; border: none; cursor: pointer;
+                color: var(--text-muted);
+                width: 30px; height: 30px; border-radius: 8px;
+                display: flex; align-items: center; justify-content: center;
+            }
+            .share-close:hover { background: var(--bg-input); color: var(--danger); }
+            .share-close .icon { width: 16px; height: 16px; }
 
-    function buildPopover(html) {
-        var pop = document.createElement("div");
-        pop.className = "rate-popover";
-        pop.style.cssText = "position:fixed;background:#1E293B;border:1px solid #334155;border-radius:10px;padding:4px;min-width:200px;box-shadow:0 14px 36px rgba(0,0,0,0.6);z-index:999999;display:flex;flex-direction:column;gap:2px;";
-        pop.innerHTML = html;
-        return pop;
-    }
-
-    function styleOption(b, danger) {
-        b.style.cssText = "display:flex;align-items:center;gap:10px;width:100%;padding:10px 14px;border-radius:7px;border:none;background:transparent;color:#F1F5F9;font-size:13px;font-weight:500;font-family:inherit;cursor:pointer;text-align:left;";
-        b.addEventListener("mouseenter", function () {
-            b.style.background = danger ? "rgba(239,68,68,0.18)" : "rgba(37,99,235,0.18)";
-            b.style.color = danger ? "#EF4444" : "#2563EB";
-        });
-        b.addEventListener("mouseleave", function () {
-            b.style.background = "transparent";
-            b.style.color = "#F1F5F9";
-        });
-    }
-
-    function positionPopover(pop, btn) {
-        var r = btn.getBoundingClientRect();
-        var w = 200;
-        var h = pop.offsetHeight || 90;
-        var left = Math.min(r.left, window.innerWidth - w - 12);
-        if (left < 12) left = 12;
-        var top = (r.top - h - 10 > 10) ? (r.top - h - 10) : (r.bottom + 10);
-        pop.style.left = left + "px";
-        pop.style.top = top + "px";
-    }
-
-       function openRatePopover(btn) {
-        console.log("[Bot Toolbar] openRatePopover firing");
-        closeAllPopovers();
-
-        var pop = document.createElement("div");
-        pop.className = "rate-popover";
-        pop.setAttribute("data-crevio-popover", "1");
-
-        // Hard-set every property with !important via cssText
-        pop.style.cssText =
-            "position:fixed !important;" +
-            "background:#1E293B !important;" +
-            "color:#F1F5F9 !important;" +
-            "border:1px solid #334155 !important;" +
-            "border-radius:10px !important;" +
-            "padding:6px !important;" +
-            "min-width:220px !important;" +
-            "box-shadow:0 20px 48px rgba(0,0,0,0.7) !important;" +
-            "z-index:2147483647 !important;" +
-            "display:flex !important;" +
-            "flex-direction:column !important;" +
-            "gap:2px !important;" +
-            "opacity:1 !important;" +
-            "visibility:visible !important;" +
-            "pointer-events:auto !important;";
-
-        pop.innerHTML =
-            '<button type="button" data-r="good" style="display:flex !important;align-items:center !important;gap:10px !important;width:100% !important;padding:11px 14px !important;border-radius:7px !important;border:none !important;background:transparent !important;color:#F1F5F9 !important;font-size:13.5px !important;font-weight:600 !important;font-family:inherit !important;cursor:pointer !important;text-align:left !important;">' +
-                '<i data-lucide="thumbs-up" style="width:15px !important;height:15px !important;"></i> Good response' +
-            '</button>' +
-            '<button type="button" data-r="bad" style="display:flex !important;align-items:center !important;gap:10px !important;width:100% !important;padding:11px 14px !important;border-radius:7px !important;border:none !important;background:transparent !important;color:#F1F5F9 !important;font-size:13.5px !important;font-weight:600 !important;font-family:inherit !important;cursor:pointer !important;text-align:left !important;">' +
-                '<i data-lucide="thumbs-down" style="width:15px !important;height:15px !important;"></i> Bad response' +
-            '</button>';
-
-        document.body.appendChild(pop);
-        console.log("[Bot Toolbar] appended, body children:", document.body.children.length);
-
-        // Position with fail-safes: if anything goes wrong, place at a safe fallback
-        try {
-            var r = btn.getBoundingClientRect();
-            var ph = pop.getBoundingClientRect().height || 100;
-            var pw = pop.getBoundingClientRect().width || 220;
-
-            var left = r.left;
-            if (left + pw > window.innerWidth - 12) left = window.innerWidth - pw - 12;
-            if (left < 12) left = 12;
-
-            var top;
-            if (r.top - ph - 12 > 12) {
-                top = r.top - ph - 12;
-            } else if (r.bottom + ph + 12 < window.innerHeight - 12) {
-                top = r.bottom + 12;
-            } else {
-                // Fallback: center of viewport
-                top = Math.max(12, (window.innerHeight - ph) / 2);
-                left = Math.max(12, (window.innerWidth - pw) / 2);
+            .share-preview {
+                background: linear-gradient(135deg, #1a4d2e 0%, #2d7a4f 100%);
+                border-radius: 12px;
+                padding: 16px;
+                min-height: 140px;
+                max-height: 200px;
+                overflow-y: auto;
+                font-size: 13px;
+                color: #fff;
+                line-height: 1.5;
+                position: relative;
+            }
+            .share-preview-text { white-space: pre-wrap; word-break: break-word; }
+            .share-preview-brand {
+                position: absolute;
+                bottom: 8px; right: 12px;
+                font-size: 12px;
+                font-weight: 700;
+                color: rgba(255,255,255,0.85);
+                letter-spacing: -0.02em;
             }
 
-            pop.style.setProperty("left", left + "px", "important");
-            pop.style.setProperty("top", top + "px", "important");
-            console.log("[Bot Toolbar] positioned at", left, top, "size", pw, "x", ph);
-        } catch (err) {
-            console.warn("[Bot Toolbar] position error, using fallback:", err);
-            pop.style.setProperty("left", "50%", "important");
-            pop.style.setProperty("top", "50%", "important");
-            pop.style.setProperty("transform", "translate(-50%, -50%)", "important");
+            .share-actions {
+                display: flex;
+                justify-content: space-around;
+                gap: 8px;
+                flex-wrap: wrap;
+            }
+            .share-action {
+                background: transparent; border: none; cursor: pointer;
+                display: flex; flex-direction: column; align-items: center;
+                gap: 6px;
+                color: var(--text-secondary);
+                font-size: 11px;
+                font-family: inherit;
+                padding: 6px;
+                border-radius: 8px;
+                transition: color 0.12s;
+                touch-action: manipulation;
+            }
+            .share-action:hover { color: var(--text-primary); }
+            .share-action-icon {
+                width: 46px; height: 46px;
+                border-radius: 50%;
+                background: #22C55E;
+                color: #fff;
+                display: flex; align-items: center; justify-content: center;
+                font-size: 18px;
+                transition: transform 0.12s, background 0.12s;
+            }
+            .share-action:hover .share-action-icon { transform: scale(1.08); background: #16A34A; }
+            .share-action-icon .icon { width: 20px; height: 20px; }
+
+            .share-footer {
+                font-size: 11px;
+                color: var(--text-muted);
+                text-align: center;
+                line-height: 1.5;
+            }
+            .share-footer a { color: var(--accent); text-decoration: none; }
+            .share-footer a:hover { text-decoration: underline; }
+
+            /* ---- Edit inline state ---- */
+            .msg-bubble.editing {
+                outline: 2px solid var(--accent);
+                outline-offset: 2px;
+            }
+
+            @media (max-width: 480px) {
+                .share-panel { padding: 16px; }
+                .share-action-icon { width: 40px; height: 40px; }
+                .share-action { font-size: 10px; }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    // =========================================================
+    // BUILD TOOLBAR
+    // =========================================================
+    function buildToolbar(role) {
+        const wrap = document.createElement("div");
+        wrap.className = "msg-toolbar";
+
+        if (role === "user") {
+            wrap.innerHTML = `
+                <button class="msg-tool" data-act="copy-user" type="button" aria-label="Copy message">
+                    <i data-lucide="copy" class="icon"></i>
+                    <span class="tip">Copy message</span>
+                </button>
+                <button class="msg-tool" data-act="share-prompt" type="button" aria-label="Share prompt">
+                    <i data-lucide="share" class="icon"></i>
+                    <span class="tip">Share prompt</span>
+                </button>
+                <button class="msg-tool" data-act="edit-message" type="button" aria-label="Edit message">
+                    <i data-lucide="pencil" class="icon"></i>
+                    <span class="tip">Edit message</span>
+                </button>
+            `;
+        } else {
+            wrap.innerHTML = `
+                <button class="msg-tool" data-act="copy-bot" type="button" aria-label="Copy response">
+                    <i data-lucide="copy" class="icon"></i>
+                    <span class="tip">Copy response</span>
+                </button>
+                <button class="msg-tool" data-act="rate" type="button" aria-label="Rate response">
+                    <i data-lucide="thumbs-up" class="icon"></i>
+                    <span class="tip">Rate response</span>
+                </button>
+                <button class="msg-tool" data-act="share-conv" type="button" aria-label="Share to conversation">
+                    <i data-lucide="share-2" class="icon"></i>
+                    <span class="tip">Share to conversation</span>
+                </button>
+            `;
+        }
+        return wrap;
+    }
+
+    // =========================================================
+    // COPY
+    // =========================================================
+    async function copyText(text, btn, originalTip) {
+        try {
+            await navigator.clipboard.writeText(text);
+        } catch (e) {
+            const ta = document.createElement("textarea");
+            ta.value = text; document.body.appendChild(ta); ta.select();
+            try { document.execCommand("copy"); } catch {}
+            document.body.removeChild(ta);
+        }
+        const tip = btn.querySelector(".tip");
+        if (tip) {
+            const orig = tip.textContent;
+            tip.textContent = "Copied";
+            setTimeout(function () { tip.textContent = orig; }, 1400);
+        }
+        toast("Copied to clipboard");
+    }
+
+    // =========================================================
+    // EDIT — put user message back in input, delete this msg + next bot reply
+    // =========================================================
+    function editUserMessage(bubble) {
+        const text = getBubbleText(bubble);
+        const input = $("msgInput");
+        if (!input) { toast("Input not found", true); return; }
+
+        // Find the parent .message wrapper
+        const messageEl = bubble.closest(".message");
+        if (!messageEl) return;
+
+        // Find the NEXT .message in the list — if it's a bot reply, we'll delete it
+        let nextEl = messageEl.nextElementSibling;
+        while (nextEl && !nextEl.classList.contains("message")) {
+            nextEl = nextEl.nextElementSibling;
+        }
+        const deleteBot = nextEl && nextEl.querySelector(".msg-bubble.bot");
+
+        // Fill input
+        input.value = text;
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+        input.focus();
+        try { input.setSelectionRange(input.value.length, input.value.length); } catch (e) {}
+
+        // Remove from DOM
+        messageEl.remove();
+        if (deleteBot) nextEl.remove();
+
+        // Remove from state if exposed
+        if (Array.isArray(window.__crevioBotMessages)) {
+            window.__crevioBotMessages = window.__crevioBotMessages.filter(function (m) {
+                return (m.content || "").trim() !== text.trim();
+            });
         }
 
+        toast("Editing message — press Enter to resend");
+    }
+
+    // =========================================================
+    // SHARE PROMPT PANEL
+    // =========================================================
+    function ensureSharePanel() {
+        let overlay = document.getElementById("shareOverlay");
+        if (overlay) return overlay;
+
+        overlay = document.createElement("div");
+        overlay.id = "shareOverlay";
+        overlay.className = "share-overlay";
+        overlay.innerHTML = `
+            <div class="share-panel" role="dialog" aria-label="Share prompt">
+                <h2>
+                    Share prompt
+                    <button class="share-close" data-close-share type="button" aria-label="Close">
+                        <i data-lucide="x" class="icon"></i>
+                    </button>
+                </h2>
+                <div class="share-preview">
+                    <div class="share-preview-text" data-preview-text></div>
+                    <div class="share-preview-brand">Crevio</div>
+                </div>
+                <div class="share-actions">
+                    <button class="share-action" data-share="copy-link" type="button">
+                        <span class="share-action-icon"><i data-lucide="link" class="icon"></i></span>
+                        Copy link
+                    </button>
+                    <button class="share-action" data-share="x" type="button">
+                        <span class="share-action-icon"><i data-lucide="twitter" class="icon"></i></span>
+                        X
+                    </button>
+                    <button class="share-action" data-share="linkedin" type="button">
+                        <span class="share-action-icon"><i data-lucide="linkedin" class="icon"></i></span>
+                        LinkedIn
+                    </button>
+                    <button class="share-action" data-share="reddit" type="button">
+                        <span class="share-action-icon"><i data-lucide="message-circle" class="icon"></i></span>
+                        Reddit
+                    </button>
+                </div>
+                <div class="share-footer">
+                    Memory sources won't be shared with viewers. <a href="/dashboard/pages/settings.html">Learn more</a>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+
+        overlay.addEventListener("click", function (e) {
+            if (e.target === overlay) overlay.classList.remove("open");
+        });
+        overlay.querySelector("[data-close-share]").addEventListener("click", function () {
+            overlay.classList.remove("open");
+        });
+        document.addEventListener("keydown", function (e) {
+            if (e.key === "Escape") overlay.classList.remove("open");
+        });
+
+        refreshIcons();
+        return overlay;
+    }
+
+    function openSharePanel(text) {
+        const overlay = ensureSharePanel();
+        overlay.querySelector("[data-preview-text]").textContent = text;
+        overlay.classList.add("open");
+
+        // Wire share actions
+        overlay.querySelectorAll("[data-share]").forEach(function (btn) {
+            // Reset previous handler by cloning (simple approach)
+            const fresh = btn.cloneNode(true);
+            btn.parentNode.replaceChild(fresh, btn);
+
+            fresh.addEventListener("click", async function () {
+                const action = fresh.dataset.share;
+                const shareText = text.slice(0, 280);
+                const pageUrl = window.location.href;
+
+                if (action === "copy-link") {
+                    try {
+                        await navigator.clipboard.writeText(pageUrl);
+                    } catch (e) {
+                        const ta = document.createElement("textarea");
+                        ta.value = pageUrl; document.body.appendChild(ta); ta.select();
+                        try { document.execCommand("copy"); } catch {}
+                        document.body.removeChild(ta);
+                    }
+                    toast("Link copied");
+                    overlay.classList.remove("open");
+                } else if (action === "x") {
+                    window.open("https://twitter.com/intent/tweet?text=" + encodeURIComponent(shareText), "_blank");
+                } else if (action === "linkedin") {
+                    window.open("https://www.linkedin.com/sharing/share-offsite/?url=" + encodeURIComponent(pageUrl), "_blank");
+                } else if (action === "reddit") {
+                    window.open("https://www.reddit.com/submit?url=" + encodeURIComponent(pageUrl) + "&title=" + encodeURIComponent(shareText), "_blank");
+                }
+            });
+        });
+
+        refreshIcons();
+    }
+
+    // =========================================================
+    // RATE POPOVER (bot messages)
+    // =========================================================
+    function rateBubble(bubble, btn) {
+        // Simple inline rate: toggle visual
+        const state = bubble.dataset.rated;
+        const next = state === "good" ? "bad" : "good";
+        bubble.dataset.rated = next;
+        if (next === "good") {
+            btn.classList.add("active");
+            btn.style.color = "var(--success)";
+            toast("Thanks for the feedback");
+        } else {
+            btn.classList.remove("active");
+            btn.style.color = "var(--danger)";
+            toast("Noted — we'll improve");
+        }
+        setTimeout(function () { btn.style.color = ""; }, 800);
+    }
+
+    // =========================================================
+    // INJECT TOOLBARS INTO MESSAGES
+    // =========================================================
+    function injectInto(bubble) {
+        if (bubble.dataset.toolbarInjected === "1") return;
+
+        const isBot  = bubble.classList.contains("bot");
+        const isUser = bubble.classList.contains("user") || !isBot;
+        if (!isBot && !isUser) return;
+
+        const messageEl = bubble.closest(".message");
+        if (!messageEl) return;
+
+        bubble.dataset.toolbarInjected = "1";
+        const toolbar = buildToolbar(isBot ? "bot" : "user");
+        messageEl.appendChild(toolbar);
         refreshIcons();
 
-        // Hover + click on each option
-        pop.querySelectorAll("button").forEach(function (b) {
-            b.addEventListener("mouseenter", function () {
-                b.style.setProperty("background", b.dataset.r === "good" ? "rgba(34,197,94,0.2)" : "rgba(239,68,68,0.2)", "important");
-                b.style.setProperty("color", b.dataset.r === "good" ? "#22C55E" : "#EF4444", "important");
-            });
-            b.addEventListener("mouseleave", function () {
-                b.style.setProperty("background", "transparent", "important");
-                b.style.setProperty("color", "#F1F5F9", "important");
-            });
-            b.addEventListener("click", function (e) {
+        // Wire buttons
+        toolbar.querySelectorAll(".msg-tool").forEach(function (btn) {
+            btn.addEventListener("click", function (e) {
                 e.stopPropagation();
-                e.preventDefault();
-                console.log("[Bot Toolbar] rated:", b.dataset.r);
-                toast(b.dataset.r === "good" ? "Thanks for the feedback" : "Noted — we'll improve");
-                pop.remove();
-            }, true);
-        });
+                const act = btn.dataset.act;
+                const text = getBubbleText(bubble);
 
-        // Outside-click close — registered later via setTimeout so this click doesn't close it
-        setTimeout(function () {
-            var closeHandler = function (ev) {
-                if (!pop.contains(ev.target) && ev.target !== btn && !btn.contains(ev.target)) {
-                    pop.remove();
-                    document.removeEventListener("click", closeHandler, true);
+                if (act === "copy-user" || act === "copy-bot") {
+                    copyText(text, btn);
+                } else if (act === "share-prompt") {
+                    openSharePanel(text);
+                } else if (act === "edit-message") {
+                    editUserMessage(bubble);
+                } else if (act === "rate") {
+                    rateBubble(bubble, btn);
+                } else if (act === "share-conv") {
+                    openSharePanel(text);
                 }
-            };
-            document.addEventListener("click", closeHandler, true);
-        }, 200);
-
-        // Safety: auto-close if it somehow gets orphaned
-        setTimeout(function () {
-            if (pop && !document.body.contains(pop)) return;
-        }, 100);
-    }
-
-    function openMorePopover(btn, wrap) {
-        closeAllPopovers();
-        var pop = buildPopover('<button data-a="delete"><i data-lucide="trash-2" style="width:15px;height:15px;"></i> Delete message</button>');
-        document.body.appendChild(pop);
-        positionPopover(pop, btn);
-        refreshIcons();
-        var del = pop.querySelector('[data-a="delete"]');
-        styleOption(del, true);
-        del.addEventListener("click", function (e) {
-            e.stopPropagation(); e.preventDefault();
-            pop.remove();
-            var msgId = wrap.dataset.messageId;
-            var convId = window.__activeConvId;
-            if (!msgId || !convId) { wrap.remove(); return; }
-            api("/api/bot/conversations/" + convId + "/messages/" + msgId, { method: "DELETE" })
-                .then(function (r) { return r.json(); })
-                .then(function (d) {
-                    if (!d.success) throw new Error(d.message || "Failed");
-                    wrap.remove();
-                    toast("Message deleted");
-                })
-                .catch(function () { toast("Could not delete", true); });
-        });
-        setTimeout(function () {
-            document.addEventListener("click", function onDoc(ev) {
-                if (!pop.contains(ev.target) && !btn.contains(ev.target)) {
-                    pop.remove();
-                    document.removeEventListener("click", onDoc);
-                }
-            }, true);
-        }, 100);
-    }
-
-    function fallbackCopy(text) {
-        var ta = document.createElement("textarea");
-        ta.value = text;
-        ta.style.cssText = "position:fixed;opacity:0;";
-        document.body.appendChild(ta);
-        ta.select();
-        try { document.execCommand("copy"); } catch (e) {}
-        document.body.removeChild(ta);
-    }
-
-    function doCopy(bubble, btn) {
-        var text = getBubbleText(bubble);
-        var done = function () {
-            var tip = btn.querySelector(".tool-tip");
-            var icon = btn.querySelector("i, svg");
-            var old = tip ? tip.textContent : "";
-            if (tip) tip.textContent = "Copied";
-            if (icon) icon.outerHTML = '<i data-lucide="check"></i>';
-            refreshIcons();
-            setTimeout(function () {
-                if (tip) tip.textContent = old || "Copy";
-                var ic2 = btn.querySelector("i, svg");
-                if (ic2) ic2.outerHTML = '<i data-lucide="copy"></i>';
-                refreshIcons();
-            }, 1500);
-        };
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(text).then(done).catch(function () { fallbackCopy(text); done(); });
-        } else { fallbackCopy(text); done(); }
-    }
-
-    function doShare(bubble) {
-        var text = getBubbleText(bubble);
-        if (navigator.share) {
-            navigator.share({ text: text }).catch(function () { fallbackCopy(text); toast("Copied to clipboard"); });
-        } else { fallbackCopy(text); toast("Copied to clipboard"); }
-    }
-
-        function doRegen(wrap, btn) {
-        var convId = window.__activeConvId;
-        if (!convId) {
-            var active = document.querySelector(".bot-conv-item.active");
-            if (active) convId = active.dataset.id;
-        }
-        if (!convId) { toast("No active conversation", true); return; }
-        btn.disabled = true;
-        api("/api/bot/regenerate", {
-            method: "POST",
-            body: JSON.stringify({ conversation_id: parseInt(convId, 10) })
-        })
-            .then(function (r) { return r.json(); })
-            .then(function (d) {
-                if (!d.success) throw new Error(d.message || "Failed");
-                wrap.remove();
-                if (typeof window.__botResend === "function") window.__botResend(d.prompt);
-                else location.reload();
-
-                // Poll for the new reply for 20 seconds, re-injecting the toolbar
-                // as soon as the streaming completes.
-                var elapsed = 0;
-                var timer = setInterval(function () {
-                    elapsed += 400;
-                    if (typeof window.__ensureToolbars === "function") window.__ensureToolbars();
-                    if (elapsed >= 20000) clearInterval(timer);
-                }, 400);
-            })
-            .catch(function (e) {
-                toast("Could not regenerate: " + e.message, true);
-                btn.disabled = false;
             });
+        });
     }
-    document.addEventListener("click", function (e) {
-        var btn = e.target.closest(".msg-tool");
-        if (!btn) return;
-        var wrap = btn.closest(".message");
-        var bubble = wrap ? wrap.querySelector(".msg-bubble.bot") : null;
-        if (!bubble) return;
-        var act = btn.dataset.act;
-        if (act === "copy")  { e.stopPropagation(); doCopy(bubble, btn); }
-        else if (act === "rate")  { e.stopPropagation(); openRatePopover(btn); }
-        else if (act === "share") { e.stopPropagation(); doShare(bubble); }
-        else if (act === "regen") { e.stopPropagation(); doRegen(wrap, btn); }
-        else if (act === "more")  { e.stopPropagation(); openMorePopover(btn, wrap); }
-    }, true);
 
-    var container = document.getElementById("messages");
-    if (container && window.MutationObserver) {
-        var t;
+    // =========================================================
+    // SCAN — inject into every message bubble
+    // =========================================================
+    function scan() {
+        document.querySelectorAll(".msg-bubble.bot, .msg-bubble.user").forEach(injectInto);
+        document.querySelectorAll(".msg-bubble").forEach(function (b) {
+            if (!b.classList.contains("bot") && !b.dataset.toolbarInjected) injectInto(b);
+        });
+    }
+
+    // Observer: auto-inject when new messages appear
+    const container = document.getElementById("messages") || document.body;
+    if (window.MutationObserver) {
+        let t;
         new MutationObserver(function () {
             clearTimeout(t);
-            t = setTimeout(ensureToolbars, 250);
+            t = setTimeout(scan, 220);
         }).observe(container, { childList: true, subtree: true, characterData: true });
     }
-       // Expose for external triggers (regenerate, manual refresh, etc.)
-    window.__ensureToolbars = ensureToolbars;
 
-    window.addEventListener("load", function () { setTimeout(ensureToolbars, 500); });
-    setTimeout(ensureToolbars, 1200);
+    window.addEventListener("load", function () { setTimeout(scan, 400); });
+    if (document.readyState === "complete") setTimeout(scan, 200);
+    else document.addEventListener("DOMContentLoaded", function () { setTimeout(scan, 200); });
+
+    console.log("[BotToolbar] installed");
 })();
