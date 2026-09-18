@@ -172,56 +172,9 @@
     
         
 
-        /* MEDIA MOBILE FIX v2 */
-        @media (max-width: 900px) {
-            html, body {
-                height: auto !important;
-                min-height: 100dvh !important;
-                max-height: none !important;
-                overflow-y: auto !important;
-                overflow-x: hidden !important;
-                position: static !important;
-            }
-            body {
-                display: block !important;
-            }
-            .sidebar {
-                position: fixed !important;
-                top: 0;
-                left: 0;
-                height: 100dvh !important;
-                z-index: 1000;
-            }
-            .main,
-            main,
-            .content,
-            .page-content,
-            .page {
-                display: block !important;
-                height: auto !important;
-                min-height: 100dvh !important;
-                max-height: none !important;
-                overflow: visible !important;
-                margin-left: 0 !important;
-                padding: 16px 16px calc(120px + env(safe-area-inset-bottom, 0px)) 16px !important;
-                box-sizing: border-box !important;
-                width: 100% !important;
-                max-width: 100% !important;
-            }
-            * {
-                max-height: none;
-            }
-            .stats-grid,
-            [class*="stat"],
-            .media-grid,
-            [class*="media-item"],
-            .upload-zone,
-            .drop-zone,
-            [class*="upload"],
-            [class*="drop"] {
-                margin-bottom: 1.5rem !important;
-            }
         }
+
+        
 
         
 
@@ -258,8 +211,7 @@
             .page,
             .page-content,
             .main-content,
-            .page-wrapper,
-            .dashboard-content {
+            .page-wrapper {
                 display: block !important;
                 position: static !important;
                 height: auto !important;
@@ -274,16 +226,17 @@
                 max-width: 100% !important;
                 box-sizing: border-box !important;
             }
-            .main *,
-            main *,
-            .content *,
-            .page * {
+            /* Kill any fixed-height flex/grid children that could trap content */
+            .main > *,
+            main > *,
+            .content > * {
                 max-height: none !important;
+                min-height: 0 !important;
             }
         }
         /* END UNIVERSAL MOBILE SCROLL */
 </style>
-    <link rel="stylesheet" href="/dashboard/css/mobile.css?v=639253257100266558">
+    <link rel="stylesheet" href="/dashboard/css/mobile.css?v=639253263847856339">
     <link rel="stylesheet" href="/dashboard/css/loader.css?v=639253257100266558">
 </head>
 <body>

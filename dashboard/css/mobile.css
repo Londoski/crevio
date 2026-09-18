@@ -402,3 +402,122 @@
         -webkit-overflow-scrolling: touch;
     }
 }
+
+/* GLOBAL MOBILE SCROLL */
+/* Allow pages to scroll naturally on mobile. */
+@media (max-width: 900px) {
+    html, body {
+        overflow-x: hidden !important;
+        overflow-y: auto !important;
+        height: auto !important;
+        min-height: 100dvh !important;
+        max-height: none !important;
+        position: static !important;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior-y: auto;
+    }
+
+    /* Kill any transform/position that can trap content */
+    body {
+        display: block !important;
+    }
+
+    /* Sidebar stays as overlay when open */
+    body.mobile-menu-installed .sidebar {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        height: 100dvh !important;
+        z-index: 1000 !important;
+        overflow-y: auto !important;
+    }
+
+    /* Main content scrolls with the page */
+    .main,
+    main,
+    .content,
+    .page,
+    .page-content,
+    .main-content,
+    .dashboard-content,
+    .page-wrapper {
+        display: block !important;
+        position: static !important;
+        height: auto !important;
+        min-height: 0 !important;
+        max-height: none !important;
+        overflow: visible !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin-left: 0 !important;
+        box-sizing: border-box !important;
+    }
+
+    /* Padding so nothing hides under the phone's bottom bar */
+    .main,
+    main,
+    .content,
+    .page,
+    .page-content {
+        padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px)) !important;
+    }
+}
+/* END GLOBAL MOBILE SCROLL */
+
+/* KILL MOBILE TOP GAP */
+@media (max-width: 900px) {
+    /* Strip any top padding/margin from the layout containers */
+    .main,
+    main,
+    .page,
+    .page-content,
+    .main-content,
+    .dashboard-content,
+    .content,
+    .container,
+    .wrapper,
+    .app-layout,
+    .layout {
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+    }
+
+    /* Any header that sits at the top of the page — small, no huge top pad */
+    .header,
+    .page-header,
+    .topbar,
+    .main-header,
+    .main > header,
+    .main > .header {
+        margin-top: 0 !important;
+        padding-top: 0.5rem !important;
+        padding-bottom: 0.5rem !important;
+        min-height: 0 !important;
+    }
+
+    /* First child of main — no top spacing */
+    .main > *:first-child,
+    main > *:first-child,
+    .page > *:first-child,
+    .content > *:first-child {
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+    }
+
+    /* Kill page-title / h1 top margin */
+    .page-title,
+    .main-title,
+    h1:first-child,
+    .header h1,
+    .page-header h1 {
+        margin-top: 0 !important;
+    }
+
+    /* If there's a top bar element on desktop, hide it on mobile */
+    .top-bar,
+    .desktop-topbar,
+    .top-nav {
+        display: none !important;
+    }
+}
+/* END KILL MOBILE TOP GAP */
