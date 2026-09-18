@@ -207,7 +207,6 @@
         "id=\"deleteMe\"",
         "id=\"reactionBar\"",
         "id=\"msgContextMenu\"",
-        "mobile-messages.css",
         "mobile-menu.js"
       ]
     },
