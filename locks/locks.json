@@ -356,6 +356,18 @@
         "padding-top: 1.25rem",
         "body .main"
       ]
+    },
+    {
+      "id": "messages-reactions-html-entities",
+      "desc": "REACTIONS use HTML entities (not raw UTF-8) so encoding can't corrupt them",
+      "type": "fileContains",
+      "file": "dashboard/js/messages.js",
+      "patterns": [
+        "const REACTIONS",
+        "&#x1F44D;",
+        "&#x1F602;",
+        "&#x1F64F;"
+      ]
     }
   ]
 }

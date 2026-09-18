@@ -56,7 +56,7 @@ document.addEventListener("DOMContentLoaded", function () {
         { key: "archived", label: "Archived" }
     ];
 
-    const REACTIONS = ["", "", "‚", "®", "¢", ""];
+    const REACTIONS = ["&#x1F44D;", "&#x2764;&#xFE0F;", "&#x1F602;", "&#x1F62E;", "&#x1F622;", "&#x1F64F;"];
 
     const MSG_MENU = [
         { id: "reply",   icon: "corner-up-left",  label: "Reply" },
@@ -488,6 +488,10 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function openMessageMenu(msgId, x, y) {
+
+
+
+
         mcmTargetId = msgId;
         const msg = activeMessages.find(m => m.id === msgId);
         if (!msg) return;
@@ -554,6 +558,9 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function closeMessageMenu() {
+const bar = document.getElementById("reactionBar");
+        if (bar) bar.classList.remove("open");
+
         msgContextMenuEl?.classList.remove("open");
         reactionBarEl?.classList.remove("open");
         mcmTargetId = null;
