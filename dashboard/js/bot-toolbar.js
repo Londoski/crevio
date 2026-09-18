@@ -1,9 +1,10 @@
 ﻿// ============================================================
 // CREVIO — BOT TOOLBAR
 // File: dashboard/js/bot-toolbar.js
-// User messages: Copy · Share prompt · Edit
-// Bot messages:  Copy · Rate (popover → /api/bot/rate) · Share to conversation (picker → /api/bot/share)
-// Copy briefly shows a brand-colored tick, then returns to copy icon.
+// User msgs: Copy · Share prompt · Edit
+// Bot msgs:  Copy · Rate (2-step: 👍/👎 → optional text) · Share to conversation
+// Every rating + feedback is retained for the future
+// Crevio Management System (analytics on product quality).
 // ============================================================
 (function () {
     if (window.__crevioBotToolbarInstalled) return;
@@ -26,27 +27,47 @@
     function refreshIcons() {
         if (typeof lucide !== "undefined") { try { lucide.createIcons(); } catch (e) {} }
     }
-    function getBubbleText(bubble) {
+    function stripBubble(bubble) {
         const clone = bubble.cloneNode(true);
-        clone.querySelectorAll(".msg-time, .msg-toolbar, .msg-check, .msg-expand-btn").forEach(function (el) { el.remove(); });
+        clone.querySelectorAll(".msg-time, .msg-toolbar, .msg-check, .msg-expand-btn").forEach(el => el.remove());
         return (clone.innerText || clone.textContent || "").trim();
     }
+    function getBubbleText(bubble) { return stripBubble(bubble); }
     function getMessageId(bubble) {
         const m = bubble.closest(".message");
         if (m) {
             const v = m.dataset.messageId || m.dataset.id || m.getAttribute("data-msg-id");
             if (v) return v;
         }
-        const v2 = bubble.getAttribute("data-message-id") || bubble.dataset.messageId;
-        return v2 || null;
+        return bubble.getAttribute("data-message-id") || bubble.dataset.messageId || null;
     }
     function hashString(s) {
         let h = 0;
-        for (let i = 0; i < s.length; i++) {
-            h = (h << 5) - h + s.charCodeAt(i);
-            h |= 0;
-        }
+        for (let i = 0; i < s.length; i++) { h = (h << 5) - h + s.charCodeAt(i); h |= 0; }
         return "h" + Math.abs(h).toString(36);
+    }
+    function getPromptForBubble(bubble) {
+        const messageEl = bubble.closest(".message");
+        if (!messageEl) return "";
+        let prev = messageEl.previousElementSibling;
+        while (prev) {
+            if (prev.classList && prev.classList.contains("message")) {
+                const ub = prev.querySelector(".msg-bubble.user");
+                if (ub) return stripBubble(ub);
+            }
+            prev = prev.previousElementSibling;
+        }
+        return "";
+    }
+    function getConversationId(bubble) {
+        const m = bubble.closest(".message");
+        return (m && m.dataset.conversationId) || null;
+    }
+    function getUserPlan() {
+        try {
+            const u = JSON.parse(localStorage.getItem("user") || "{}");
+            return u.plan || "free";
+        } catch (e) { return "free"; }
     }
     function authHeaders() {
         const token = localStorage.getItem("token");
@@ -63,207 +84,255 @@
         const style = document.createElement("style");
         style.id = "__botToolbarStyles";
         style.textContent = `
-            .msg-toolbar { display: flex; gap: 2px; margin-top: 4px; align-items: center; }
+            .msg-toolbar { display:flex; gap:2px; margin-top:4px; align-items:center; }
             .msg-tool {
-                background: transparent; border: none; color: var(--text-muted);
-                width: 30px; height: 30px; border-radius: 8px; cursor: pointer;
-                display: flex; align-items: center; justify-content: center;
-                transition: background 0.12s, color 0.12s;
-                position: relative; padding: 0; touch-action: manipulation;
+                background:transparent; border:none; color:var(--text-muted);
+                width:30px; height:30px; border-radius:8px; cursor:pointer;
+                display:flex; align-items:center; justify-content:center;
+                transition:background 0.12s, color 0.12s;
+                position:relative; padding:0; touch-action:manipulation;
             }
-            .msg-tool:hover { background: var(--accent-dim); color: var(--accent); }
-            .msg-tool .icon { width: 15px; height: 15px; pointer-events: none; }
+            .msg-tool:hover { background:var(--accent-dim); color:var(--accent); }
+            .msg-tool .icon { width:15px; height:15px; pointer-events:none; }
             .msg-tool .tip {
-                position: absolute; bottom: calc(100% + 6px); left: 50%;
-                transform: translateX(-50%) translateY(4px);
-                background: var(--bg-card); color: var(--text-primary);
-                border: 1px solid var(--border-color); padding: 5px 10px;
-                border-radius: 6px; font-size: 12px; white-space: nowrap;
-                opacity: 0; visibility: hidden; pointer-events: none;
-                transition: opacity 0.12s, transform 0.12s, visibility 0.12s;
-                z-index: 30; box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+                position:absolute; bottom:calc(100% + 6px); left:50%;
+                transform:translateX(-50%) translateY(4px);
+                background:var(--bg-card); color:var(--text-primary);
+                border:1px solid var(--border-color); padding:5px 10px;
+                border-radius:6px; font-size:12px; white-space:nowrap;
+                opacity:0; visibility:hidden; pointer-events:none;
+                transition:opacity 0.12s, transform 0.12s, visibility 0.12s;
+                z-index:30; box-shadow:0 6px 18px rgba(0,0,0,0.35);
             }
-            .msg-tool:hover .tip { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
-            @media (hover: none) { .msg-tool .tip { display: none; } }
+            .msg-tool:hover .tip { opacity:1; visibility:visible; transform:translateX(-50%) translateY(0); }
+            @media (hover:none) { .msg-tool .tip { display:none; } }
 
-            .msg-tool.copied { color: var(--accent) !important; background: var(--accent-dim) !important; }
+            .msg-tool.copied { color:var(--accent) !important; background:var(--accent-dim) !important; }
             .msg-tool.copied .tip {
-                opacity: 1 !important; visibility: visible !important;
-                transform: translateX(-50%) translateY(0) !important;
-                border-color: var(--accent); color: var(--accent);
+                opacity:1 !important; visibility:visible !important;
+                transform:translateX(-50%) translateY(0) !important;
+                border-color:var(--accent); color:var(--accent);
             }
 
             /* ---- Share panel ---- */
             .share-overlay {
-                position: fixed; inset: 0; background: rgba(0,0,0,0.6);
-                backdrop-filter: blur(3px);
-                display: flex; align-items: center; justify-content: center;
-                padding: 20px; z-index: 3000;
-                opacity: 0; visibility: hidden;
-                transition: opacity 0.15s, visibility 0.15s;
+                position:fixed; inset:0; background:rgba(0,0,0,0.6);
+                backdrop-filter:blur(3px);
+                display:flex; align-items:center; justify-content:center;
+                padding:20px; z-index:3000;
+                opacity:0; visibility:hidden;
+                transition:opacity 0.15s, visibility 0.15s;
             }
-            .share-overlay.open { opacity: 1; visibility: visible; }
+            .share-overlay.open { opacity:1; visibility:visible; }
             .share-panel {
-                background: var(--bg-card); border: 1px solid var(--border-color);
-                border-radius: 16px; width: 100%;
-                max-width: min(420px, 94vw); max-height: 90vh;
-                padding: 20px; box-shadow: 0 24px 60px rgba(0,0,0,0.6);
-                display: flex; flex-direction: column; gap: 16px;
+                background:var(--bg-card); border:1px solid var(--border-color);
+                border-radius:16px; width:100%;
+                max-width:min(420px, 94vw); max-height:90vh;
+                padding:20px; box-shadow:0 24px 60px rgba(0,0,0,0.6);
+                display:flex; flex-direction:column; gap:16px;
             }
             .share-panel h2 {
-                font-size: 18px; font-weight: 700; color: var(--text-primary);
-                margin: 0; display: flex; align-items: center; justify-content: space-between;
+                font-size:18px; font-weight:700; color:var(--text-primary);
+                margin:0; display:flex; align-items:center; justify-content:space-between;
             }
             .share-close {
-                background: transparent; border: none; cursor: pointer;
-                color: var(--text-muted); width: 30px; height: 30px;
-                border-radius: 8px; display: flex; align-items: center; justify-content: center;
+                background:transparent; border:none; cursor:pointer;
+                color:var(--text-muted); width:30px; height:30px;
+                border-radius:8px; display:flex; align-items:center; justify-content:center;
             }
-            .share-close:hover { background: var(--bg-input); color: var(--danger); }
-            .share-close .icon { width: 16px; height: 16px; }
+            .share-close:hover { background:var(--bg-input); color:var(--danger); }
+            .share-close .icon { width:16px; height:16px; }
 
             .share-preview {
-                background: linear-gradient(135deg, #1a4d2e 0%, #2d7a4f 100%);
-                border-radius: 12px; padding: 16px;
-                min-height: 140px; max-height: 200px; overflow-y: auto;
-                font-size: 13px; color: #fff; line-height: 1.5; position: relative;
+                background:linear-gradient(135deg, #1a4d2e 0%, #2d7a4f 100%);
+                border-radius:12px; padding:16px;
+                min-height:140px; max-height:200px; overflow-y:auto;
+                font-size:13px; color:#fff; line-height:1.5; position:relative;
             }
-            .share-preview-text { white-space: pre-wrap; word-break: break-word; }
+            .share-preview-text { white-space:pre-wrap; word-break:break-word; }
             .share-preview-brand {
-                position: absolute; bottom: 8px; right: 12px;
-                font-size: 12px; font-weight: 700;
-                color: rgba(255,255,255,0.85); letter-spacing: -0.02em;
+                position:absolute; bottom:8px; right:12px;
+                font-size:12px; font-weight:700;
+                color:rgba(255,255,255,0.85); letter-spacing:-0.02em;
             }
-            .share-actions { display: flex; justify-content: space-around; gap: 8px; flex-wrap: wrap; }
+            .share-actions { display:flex; justify-content:space-around; gap:8px; flex-wrap:wrap; }
             .share-action {
-                background: transparent; border: none; cursor: pointer;
-                display: flex; flex-direction: column; align-items: center;
-                gap: 6px; color: var(--text-secondary); font-size: 11px;
-                font-family: inherit; padding: 6px; border-radius: 8px;
-                transition: color 0.12s; touch-action: manipulation;
+                background:transparent; border:none; cursor:pointer;
+                display:flex; flex-direction:column; align-items:center;
+                gap:6px; color:var(--text-secondary); font-size:11px;
+                font-family:inherit; padding:6px; border-radius:8px;
+                transition:color 0.12s; touch-action:manipulation;
             }
-            .share-action:hover { color: var(--text-primary); }
+            .share-action:hover { color:var(--text-primary); }
             .share-action-icon {
-                width: 46px; height: 46px; border-radius: 50%;
-                background: var(--accent); color: #fff;
-                display: flex; align-items: center; justify-content: center;
-                transition: transform 0.12s, background 0.12s;
+                width:46px; height:46px; border-radius:50%;
+                background:var(--accent); color:#fff;
+                display:flex; align-items:center; justify-content:center;
+                transition:transform 0.12s, background 0.12s;
             }
-            .share-action:hover .share-action-icon { transform: scale(1.08); background: var(--accent-hover); }
-            .share-action-icon .icon { width: 20px; height: 20px; }
-            .share-action.copied .share-action-icon { background: var(--accent-hover); transform: scale(1.08); }
-            .share-action.copied .share-label { color: var(--accent); font-weight: 600; }
+            .share-action:hover .share-action-icon { transform:scale(1.08); background:var(--accent-hover); }
+            .share-action-icon .icon { width:20px; height:20px; }
+            .share-action.copied .share-action-icon { background:var(--accent-hover); transform:scale(1.08); }
+            .share-action.copied .share-label { color:var(--accent); font-weight:600; }
+            .share-footer { font-size:11px; color:var(--text-muted); text-align:center; line-height:1.5; }
+            .share-footer a { color:var(--accent); text-decoration:none; }
 
-            .share-footer { font-size: 11px; color: var(--text-muted); text-align: center; line-height: 1.5; }
-            .share-footer a { color: var(--accent); text-decoration: none; }
-            .share-footer a:hover { text-decoration: underline; }
-
-            /* ---- Rate popover ---- */
+            /* ---- Rate popover (2-step) ---- */
             .rate-popover {
-                position: fixed;
-                background: var(--bg-card);
-                border: 1px solid var(--border-color);
-                border-radius: 10px;
-                padding: 4px;
-                display: flex; gap: 2px;
-                box-shadow: 0 8px 24px rgba(0,0,0,0.4);
-                z-index: 3100;
-                opacity: 0; visibility: hidden;
-                transform: translateY(4px);
-                transition: opacity 0.12s, transform 0.12s, visibility 0.12s;
+                position:fixed;
+                background:var(--bg-card);
+                border:1px solid var(--border-color);
+                border-radius:12px;
+                box-shadow:0 16px 40px rgba(0,0,0,0.5);
+                z-index:3100;
+                opacity:0; visibility:hidden;
+                transform:translateY(4px);
+                transition:opacity 0.15s, transform 0.15s, visibility 0.15s;
+                padding:4px;
+                display:flex; gap:2px;
+                min-width:200px;
             }
-            .rate-popover.open { opacity: 1; visibility: visible; transform: translateY(0); }
-            .rate-popover button {
-                background: transparent; border: none;
-                color: var(--text-secondary);
-                width: 34px; height: 34px; border-radius: 8px; cursor: pointer;
-                display: flex; align-items: center; justify-content: center;
-                transition: background 0.12s, color 0.12s;
+            .rate-popover.open { opacity:1; visibility:visible; transform:translateY(0); }
+            .rate-popover.step-2 {
+                flex-direction:column; gap:10px; padding:14px;
+                min-width:280px; max-width:340px;
             }
-            .rate-popover button:hover { background: var(--accent-dim); color: var(--accent); }
-            .rate-popover .icon { width: 16px; height: 16px; }
+            .rate-popover .rate-buttons { display:flex; gap:2px; }
+            .rate-popover.step-2 .rate-buttons { justify-content:center; }
+            .rate-popover button.rate-btn {
+                background:transparent; border:none;
+                color:var(--text-secondary);
+                width:34px; height:34px; border-radius:8px; cursor:pointer;
+                display:flex; align-items:center; justify-content:center;
+                transition:background 0.12s, color 0.12s;
+            }
+            .rate-popover button.rate-btn:hover { background:var(--accent-dim); color:var(--accent); }
+            .rate-popover button.rate-btn.selected { background:var(--accent-dim); color:var(--accent); }
+            .rate-popover button.rate-btn.selected.bad { background:rgba(239,68,68,0.12); color:var(--danger); }
+            .rate-popover .icon { width:16px; height:16px; }
+
+            .rate-popover .fb-title {
+                font-size:13px; font-weight:600;
+                color:var(--text-primary); text-align:center;
+            }
+            .rate-popover .fb-sub {
+                font-size:11px; color:var(--text-muted);
+                text-align:center; margin-top:-6px;
+            }
+            .rate-popover textarea {
+                background:var(--bg-input);
+                border:1px solid var(--border-color);
+                color:var(--text-primary);
+                padding:8px 10px; border-radius:8px;
+                font-size:13px; font-family:inherit;
+                resize:none; min-height:60px; max-height:120px;
+                width:100%;
+            }
+            .rate-popover textarea:focus {
+                outline:none; border-color:var(--accent);
+                box-shadow:0 0 0 3px var(--accent-dim);
+            }
+            .rate-popover .fb-actions {
+                display:flex; gap:6px; justify-content:flex-end;
+            }
+            .rate-popover .fb-btn {
+                font-size:12px; font-weight:600; font-family:inherit;
+                padding:7px 14px; border-radius:8px;
+                cursor:pointer; border:none;
+                transition:background 0.12s, opacity 0.12s;
+            }
+            .rate-popover .fb-btn.skip {
+                background:transparent; color:var(--text-secondary);
+            }
+            .rate-popover .fb-btn.skip:hover { background:var(--bg-input); color:var(--text-primary); }
+            .rate-popover .fb-btn.submit {
+                background:var(--accent); color:#fff;
+            }
+            .rate-popover .fb-btn.submit:hover { background:var(--accent-hover); }
+            .rate-popover .fb-btn.submit:disabled { opacity:0.4; cursor:not-allowed; }
 
             /* ---- Conversation picker ---- */
             .conv-picker-overlay {
-                position: fixed; inset: 0;
-                background: rgba(0,0,0,0.6);
-                backdrop-filter: blur(3px);
-                display: flex; align-items: center; justify-content: center;
-                padding: 20px; z-index: 3050;
-                opacity: 0; visibility: hidden;
-                transition: opacity 0.15s, visibility 0.15s;
+                position:fixed; inset:0;
+                background:rgba(0,0,0,0.6);
+                backdrop-filter:blur(3px);
+                display:flex; align-items:center; justify-content:center;
+                padding:20px; z-index:3050;
+                opacity:0; visibility:hidden;
+                transition:opacity 0.15s, visibility 0.15s;
             }
-            .conv-picker-overlay.open { opacity: 1; visibility: visible; }
+            .conv-picker-overlay.open { opacity:1; visibility:visible; }
             .conv-picker {
-                background: var(--bg-card);
-                border: 1px solid var(--border-color);
-                border-radius: 16px;
-                width: 100%; max-width: min(440px, 94vw); max-height: 80vh;
-                padding: 20px; display: flex; flex-direction: column; gap: 12px;
-                box-shadow: 0 24px 60px rgba(0,0,0,0.6);
+                background:var(--bg-card);
+                border:1px solid var(--border-color);
+                border-radius:16px;
+                width:100%; max-width:min(440px, 94vw); max-height:80vh;
+                padding:20px; display:flex; flex-direction:column; gap:12px;
+                box-shadow:0 24px 60px rgba(0,0,0,0.6);
             }
             .conv-picker h2 {
-                font-size: 17px; font-weight: 700;
-                color: var(--text-primary); margin: 0;
-                display: flex; align-items: center; justify-content: space-between;
+                font-size:17px; font-weight:700;
+                color:var(--text-primary); margin:0;
+                display:flex; align-items:center; justify-content:space-between;
             }
             .conv-picker-close {
-                background: transparent; border: none; cursor: pointer;
-                color: var(--text-muted);
-                width: 30px; height: 30px; border-radius: 8px;
-                display: flex; align-items: center; justify-content: center;
+                background:transparent; border:none; cursor:pointer;
+                color:var(--text-muted);
+                width:30px; height:30px; border-radius:8px;
+                display:flex; align-items:center; justify-content:center;
             }
-            .conv-picker-close:hover { background: var(--bg-input); color: var(--danger); }
-            .conv-picker-close .icon { width: 16px; height: 16px; }
+            .conv-picker-close:hover { background:var(--bg-input); color:var(--danger); }
+            .conv-picker-close .icon { width:16px; height:16px; }
             .conv-picker-search {
-                background: var(--bg-input);
-                border: 1px solid var(--border-color);
-                color: var(--text-primary);
-                padding: 10px 14px; border-radius: 10px;
-                font-size: 14px; font-family: inherit;
+                background:var(--bg-input);
+                border:1px solid var(--border-color);
+                color:var(--text-primary);
+                padding:10px 14px; border-radius:10px;
+                font-size:14px; font-family:inherit;
             }
             .conv-picker-search:focus {
-                outline: none; border-color: var(--accent);
-                box-shadow: 0 0 0 3px var(--accent-dim);
+                outline:none; border-color:var(--accent);
+                box-shadow:0 0 0 3px var(--accent-dim);
             }
             .conv-picker-list {
-                flex: 1; overflow-y: auto;
-                display: flex; flex-direction: column; gap: 4px;
-                min-height: 120px; max-height: 400px;
+                flex:1; overflow-y:auto;
+                display:flex; flex-direction:column; gap:4px;
+                min-height:120px; max-height:400px;
             }
             .conv-picker-item {
-                display: flex; align-items: center; gap: 12px;
-                padding: 10px 12px; border-radius: 10px;
-                border: none; background: transparent;
-                color: var(--text-primary); font-family: inherit;
-                cursor: pointer; text-align: left;
-                transition: background 0.12s; width: 100%;
+                display:flex; align-items:center; gap:12px;
+                padding:10px 12px; border-radius:10px;
+                border:none; background:transparent;
+                color:var(--text-primary); font-family:inherit;
+                cursor:pointer; text-align:left;
+                transition:background 0.12s; width:100%;
             }
-            .conv-picker-item:hover { background: var(--accent-dim); }
+            .conv-picker-item:hover { background:var(--accent-dim); }
             .conv-picker-avatar {
-                width: 36px; height: 36px; border-radius: 50%;
-                background: var(--accent); color: #fff;
-                display: flex; align-items: center; justify-content: center;
-                font-weight: 600; font-size: 14px; flex-shrink: 0;
+                width:36px; height:36px; border-radius:50%;
+                background:var(--accent); color:#fff;
+                display:flex; align-items:center; justify-content:center;
+                font-weight:600; font-size:14px; flex-shrink:0;
             }
-            .conv-picker-text { display: flex; flex-direction: column; min-width: 0; flex: 1; }
-            .conv-picker-name { font-size: 14px; font-weight: 600; }
+            .conv-picker-text { display:flex; flex-direction:column; min-width:0; flex:1; }
+            .conv-picker-name { font-size:14px; font-weight:600; }
             .conv-picker-preview {
-                font-size: 12px; color: var(--text-muted);
-                overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+                font-size:12px; color:var(--text-muted);
+                overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
             }
 
-            @media (max-width: 480px) {
-                .share-panel { padding: 16px; }
-                .share-action-icon { width: 40px; height: 40px; }
-                .share-action { font-size: 10px; }
+            @media (max-width:480px) {
+                .share-panel { padding:16px; }
+                .share-action-icon { width:40px; height:40px; }
+                .share-action { font-size:10px; }
+                .rate-popover.step-2 { min-width:260px; max-width:calc(100vw - 40px); }
             }
         `;
         document.head.appendChild(style);
     }
 
     // =========================================================
-    // TOOLBAR BUILDER
+    // TOOLBAR
     // =========================================================
     function buildToolbar(role) {
         const wrap = document.createElement("div");
@@ -309,7 +378,6 @@
             return ok;
         }
     }
-
     function showTick(btn) {
         const icon = btn.querySelector(".icon");
         if (!icon) return;
@@ -328,7 +396,6 @@
             btn.classList.remove("copied");
         }, 1500);
     }
-
     async function copyText(text, btn) {
         const ok = await copyToClipboard(text);
         if (ok) { showTick(btn); toast("Copied to clipboard"); }
@@ -399,13 +466,12 @@
                 </div>
             </div>`;
         document.body.appendChild(overlay);
-        overlay.addEventListener("click", function (e) { if (e.target === overlay) overlay.classList.remove("open"); });
-        overlay.querySelector("[data-close-share]").addEventListener("click", function () { overlay.classList.remove("open"); });
-        document.addEventListener("keydown", function (e) { if (e.key === "Escape") overlay.classList.remove("open"); });
+        overlay.addEventListener("click", e => { if (e.target === overlay) overlay.classList.remove("open"); });
+        overlay.querySelector("[data-close-share]").addEventListener("click", () => overlay.classList.remove("open"));
+        document.addEventListener("keydown", e => { if (e.key === "Escape") overlay.classList.remove("open"); });
         refreshIcons();
         return overlay;
     }
-
     function showShareTick(btn) {
         const iconWrap = btn.querySelector(".share-action-icon");
         const icon = iconWrap ? iconWrap.querySelector(".icon") : null;
@@ -424,7 +490,6 @@
             btn.classList.remove("copied");
         }, 1600);
     }
-
     function openSharePanel(text) {
         const overlay = ensureSharePanel();
         overlay.querySelector("[data-preview-text]").textContent = text;
@@ -441,8 +506,8 @@
                     if (ok) {
                         showShareTick(fresh);
                         toast("Link copied");
-                        setTimeout(function () { overlay.classList.remove("open"); }, 1000);
-                    } else { toast("Copy failed", true); }
+                        setTimeout(() => overlay.classList.remove("open"), 1000);
+                    } else toast("Copy failed", true);
                 } else if (action === "x") {
                     window.open("https://twitter.com/intent/tweet?text=" + encodeURIComponent(shareText), "_blank");
                 } else if (action === "linkedin") {
@@ -456,7 +521,8 @@
     }
 
     // =========================================================
-    // RATE POPOVER
+    // RATE POPOVER — 2-STEP with optional text feedback
+    // Everything is retained for the future Crevio Management System.
     // =========================================================
     function ensureRatePopover() {
         let pop = document.getElementById("ratePopover");
@@ -465,74 +531,182 @@
         pop.id = "ratePopover";
         pop.className = "rate-popover";
         pop.innerHTML = `
-            <button data-rate="up" type="button" title="Good response">
-                <i data-lucide="thumbs-up" class="icon"></i>
-            </button>
-            <button data-rate="down" type="button" title="Bad response">
-                <i data-lucide="thumbs-down" class="icon"></i>
-            </button>`;
+            <div class="rate-buttons">
+                <button class="rate-btn" data-rate="good" type="button" title="Good response">
+                    <i data-lucide="thumbs-up" class="icon"></i>
+                </button>
+                <button class="rate-btn" data-rate="bad" type="button" title="Bad response">
+                    <i data-lucide="thumbs-down" class="icon"></i>
+                </button>
+            </div>
+            <div class="rate-feedback" style="display:none;">
+                <div class="fb-title">Thanks for the feedback</div>
+                <div class="fb-sub">Want to tell us more? (optional)</div>
+                <textarea class="fb-text" maxlength="2000"
+                    placeholder="What went well or what could be better..."></textarea>
+                <div class="fb-actions">
+                    <button class="fb-btn skip" type="button">Skip</button>
+                    <button class="fb-btn submit" type="button" disabled>Submit</button>
+                </div>
+            </div>
+        `;
         document.body.appendChild(pop);
         refreshIcons();
         return pop;
     }
 
+    let _rateContext = null; // { bubble, btn, text, msgId, prompt, convId, plan, rating }
+
     function closeRatePopoverOnce(e) {
         const pop = document.getElementById("ratePopover");
         if (!pop || !pop.classList.contains("open")) return;
         if (pop.contains(e.target)) return;
-        pop.classList.remove("open");
+        resetRatePopover();
         document.removeEventListener("click", closeRatePopoverOnce);
+    }
+
+    function resetRatePopover() {
+        const pop = document.getElementById("ratePopover");
+        if (!pop) return;
+        pop.classList.remove("open", "step-2");
+        const fb = pop.querySelector(".rate-feedback");
+        if (fb) fb.style.display = "none";
+        const ta = pop.querySelector(".fb-text");
+        if (ta) ta.value = "";
+        const sub = pop.querySelector(".fb-btn.submit");
+        if (sub) sub.disabled = true;
+        pop.querySelectorAll(".rate-btn").forEach(b => b.classList.remove("selected", "bad"));
+        _rateContext = null;
+    }
+
+    async function saveRating(rating, feedbackText) {
+        if (!_rateContext) return;
+        const body = {
+            rating: rating,
+            message: _rateContext.text,
+            message_id: _rateContext.msgId,
+            prompt: _rateContext.prompt || "",
+            conversation_id: _rateContext.convId || null,
+            user_plan: _rateContext.plan || "free"
+        };
+        if (feedbackText != null && feedbackText !== "") body.feedback_text = feedbackText;
+        try {
+            const res = await fetch("/api/bot/rate", {
+                method: "POST",
+                headers: authHeaders(),
+                body: JSON.stringify(body)
+            });
+            const data = await res.json();
+            return data;
+        } catch (e) { return { success: false }; }
     }
 
     function showRatePopover(bubble, btn) {
         const pop = ensureRatePopover();
+        resetRatePopover();
+
         const rect = btn.getBoundingClientRect();
-        pop.style.left = rect.left + "px";
-        pop.style.top  = (rect.top - 42) + "px";
+        const width = 240;
+        let left = rect.left;
+        if (left + width > window.innerWidth - 12) left = window.innerWidth - width - 12;
+        if (left < 12) left = 12;
+        pop.style.left = left + "px";
+        pop.style.top  = (rect.top - 46) + "px";
         pop.classList.add("open");
 
         const text = getBubbleText(bubble);
         const msgId = getMessageId(bubble) || hashString(text);
+        const prompt = getPromptForBubble(bubble);
+        const convId = getConversationId(bubble);
+        const plan = getUserPlan();
 
-        pop.querySelectorAll("[data-rate]").forEach(function (b) {
+        _rateContext = { bubble, btn, text, msgId, prompt, convId, plan, rating: null };
+
+        // Step-1: 👍 / 👎 clicks
+        pop.querySelectorAll(".rate-btn").forEach(function (b) {
             const fresh = b.cloneNode(true);
             b.parentNode.replaceChild(fresh, b);
             fresh.addEventListener("click", async function (e) {
                 e.stopPropagation();
-                const rating = fresh.dataset.rate;
-                pop.classList.remove("open");
-                try {
-                    const res = await fetch("/api/bot/rate", {
-                        method: "POST",
-                        headers: authHeaders(),
-                        body: JSON.stringify({
-                            rating: rating,
-                            message: text,
-                            message_id: msgId,
-                            conversation_id: (bubble.closest(".message") && bubble.closest(".message").dataset.conversationId) || null
-                        })
-                    });
-                    const data = await res.json();
-                    if (data.success) {
-                        btn.style.color = rating === "up" ? "var(--accent)" : "var(--danger)";
-                        toast(rating === "up" ? "Thanks for the feedback" : "Noted — we'll improve");
-                    } else {
-                        toast(data.message || "Failed to rate", true);
-                    }
-                } catch (err) {
-                    toast("Failed to rate", true);
+                const rating = fresh.dataset.rate; // "good" | "bad"
+                _rateContext.rating = rating;
+
+                // Mark selected
+                pop.querySelectorAll(".rate-btn").forEach(x => x.classList.remove("selected", "bad"));
+                fresh.classList.add("selected");
+                if (rating === "bad") fresh.classList.add("bad");
+
+                // Button color on toolbar
+                btn.style.color = rating === "good" ? "var(--accent)" : "var(--danger)";
+
+                // Save rating immediately (feedback text comes later if user types)
+                const result = await saveRating(rating, "");
+                if (result.success) {
+                    toast(rating === "good" ? "Thanks for the feedback" : "Noted — we'll improve");
+                } else {
+                    toast(result.message || "Failed to save rating", true);
+                }
+
+                // Expand to step-2: feedback card
+                pop.classList.add("step-2");
+                const fb = pop.querySelector(".rate-feedback");
+                if (fb) fb.style.display = "block";
+                const ta = pop.querySelector(".fb-text");
+                if (ta) {
+                    ta.placeholder = rating === "good"
+                        ? "What did the bot do well?"
+                        : "What could be improved?";
+                    setTimeout(() => ta.focus(), 50);
                 }
             });
         });
 
-        setTimeout(function () {
+        // Textarea — enable Submit when there's text
+        const ta = pop.querySelector(".fb-text");
+        const submitBtn = pop.querySelector(".fb-btn.submit");
+        const skipBtn = pop.querySelector(".fb-btn.skip");
+        if (ta && submitBtn) {
+            ta.addEventListener("input", function () {
+                submitBtn.disabled = ta.value.trim().length === 0;
+            });
+        }
+
+        // Submit feedback text
+        if (submitBtn) {
+            const freshSub = submitBtn.cloneNode(true);
+            submitBtn.parentNode.replaceChild(freshSub, submitBtn);
+            freshSub.addEventListener("click", async function (e) {
+                e.stopPropagation();
+                const fbText = (pop.querySelector(".fb-text").value || "").trim();
+                if (!fbText || !_rateContext) return;
+                freshSub.disabled = true;
+                freshSub.textContent = "Sending…";
+                const result = await saveRating(_rateContext.rating, fbText);
+                if (result.success) {
+                    toast("Feedback received — thank you");
+                } else {
+                    toast("Couldn't save feedback", true);
+                }
+                resetRatePopover();
+            });
+        }
+
+        // Skip — rating is already saved
+        if (skipBtn) {
+            const freshSkip = skipBtn.cloneNode(true);
+            skipBtn.parentNode.replaceChild(freshSkip, skipBtn);
+            freshSkip.addEventListener("click", function (e) {
+                e.stopPropagation();
+                resetRatePopover();
+            });
+        }
+
+        setTimeout(() => {
             document.addEventListener("click", closeRatePopoverOnce);
         }, 0);
     }
 
-    function rateBubble(bubble, btn) {
-        showRatePopover(bubble, btn);
-    }
+    function rateBubble(bubble, btn) { showRatePopover(bubble, btn); }
 
     // =========================================================
     // CONVERSATION PICKER
@@ -556,15 +730,9 @@
                 </div>
             </div>`;
         document.body.appendChild(ov);
-        ov.addEventListener("click", function (e) {
-            if (e.target === ov) ov.classList.remove("open");
-        });
-        ov.querySelector(".conv-picker-close").addEventListener("click", function () {
-            ov.classList.remove("open");
-        });
-        document.addEventListener("keydown", function (e) {
-            if (e.key === "Escape") ov.classList.remove("open");
-        });
+        ov.addEventListener("click", e => { if (e.target === ov) ov.classList.remove("open"); });
+        ov.querySelector(".conv-picker-close").addEventListener("click", () => ov.classList.remove("open"));
+        document.addEventListener("keydown", e => { if (e.key === "Escape") ov.classList.remove("open"); });
         refreshIcons();
         return ov;
     }
@@ -616,12 +784,10 @@
                             } else {
                                 toast(rdata.message || "Failed to share", true);
                             }
-                        } catch (err) {
-                            toast("Failed to share", true);
-                        }
+                        } catch (e) { toast("Failed to share", true); }
                     });
                 });
-            } catch (err) {
+            } catch (e) {
                 listEl.innerHTML = '<div class="empty-state"><p>Could not load conversations.</p></div>';
             }
         }
@@ -630,7 +796,7 @@
         searchEl.oninput = function () {
             clearTimeout(searchEl.__t);
             const q = searchEl.value;
-            searchEl.__t = setTimeout(function () { loadList(q); }, 250);
+            searchEl.__t = setTimeout(() => loadList(q), 250);
         };
     }
 
@@ -677,8 +843,9 @@
             t = setTimeout(scan, 220);
         }).observe(container, { childList: true, subtree: true, characterData: true });
     }
-    window.addEventListener("load", function () { setTimeout(scan, 400); });
+    window.addEventListener("load", () => setTimeout(scan, 400));
     if (document.readyState === "complete") setTimeout(scan, 200);
-    else document.addEventListener("DOMContentLoaded", function () { setTimeout(scan, 200); });
+    else document.addEventListener("DOMContentLoaded", () => setTimeout(scan, 200));
+
     console.log("[BotToolbar] installed");
 })();

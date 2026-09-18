@@ -66,28 +66,133 @@ exports.getRating = (req, res) => {
 };
 
 // =========================================================
-// POST /api/bot/rate-batch
-// Body: { ids: [message_id, ...] }  → returns { message_id: rating }
-// Used when restoring the bot page to re-highlight already-rated bubbles.
+// POST /api/bot/rate
+// Accepts: { rating, message, message_id, prompt,
+//            conversation_id, user_plan, feedback_text }
+// Upserts on (user_id, message_id) so text feedback can
+// arrive in a 2nd call after the rating.
+// Data is retained for the future Crevio Management System.
 // =========================================================
-exports.getRatingsBatch = (req, res) => {
+exports.rate = (req, res) => {
     try {
-        const uid = req.user.id;
-        const ids = Array.isArray(req.body.ids) ? req.body.ids.filter(Boolean).slice(0, 200) : [];
-        if (!ids.length) return res.json({ success: true, ratings: {} });
-        const placeholders = ids.map(() => "?").join(",");
-        const rows = safeAll(
-            "SELECT message_id, rating FROM bot_ratings WHERE user_id = ? AND message_id IN (" + placeholders + ")",
-            uid, ...ids
+        const userId = req.user && req.user.id;
+        const {
+            rating,
+            message,
+            message_id,
+            prompt,
+            conversation_id,
+            user_plan,
+            feedback_text
+        } = req.body || {};
+
+        if (rating !== "good" && rating !== "bad") {
+            return res.status(400).json({ success: false, message: "rating must be 'good' or 'bad'" });
+        }
+
+        const msgId = (message_id != null && String(message_id).trim()) ? String(message_id) : null;
+
+        // Try to find an existing row for this user + message
+        let existing = null;
+        if (userId && msgId) {
+            try {
+                existing = db.prepare(
+                    "SELECT id FROM bot_ratings WHERE user_id = ? AND message_id = ? LIMIT 1"
+                ).get(userId, msgId);
+            } catch (e) { existing = null; }
+        }
+
+        if (existing) {
+            // Update (feedback_text arrives in 2nd call)
+            const fields = [];
+            const values = [];
+            if (rating)         { fields.push("rating = ?");         values.push(rating); }
+            if (message != null){ fields.push("message = ?");        values.push(String(message).slice(0, 8000)); }
+            if (prompt != null) { fields.push("prompt = ?");         values.push(String(prompt).slice(0, 4000)); }
+            if (conversation_id != null) { fields.push("conversation_id = ?"); values.push(conversation_id); }
+            if (user_plan)      { fields.push("user_plan = ?");      values.push(user_plan); }
+            if (feedback_text != null) { fields.push("feedback_text = ?"); values.push(String(feedback_text).slice(0, 4000)); }
+            fields.push("updated_at = CURRENT_TIMESTAMP");
+            values.push(existing.id);
+            db.prepare(`UPDATE bot_ratings SET ${fields.join(", ")} WHERE id = ?`).run(...values);
+            return res.json({ success: true, id: existing.id, updated: true });
+        }
+
+        // Insert new row
+        const r = db.prepare(`
+            INSERT INTO bot_ratings
+                (user_id, message_id, rating, message, prompt,
+                 conversation_id, user_plan, feedback_text, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        `).run(
+            userId || null,
+            msgId,
+            rating,
+            message ? String(message).slice(0, 8000) : null,
+            prompt ? String(prompt).slice(0, 4000) : null,
+            conversation_id || null,
+            user_plan || null,
+            feedback_text ? String(feedback_text).slice(0, 4000) : null
         );
-        const map = {};
-        rows.forEach(r => { map[r.message_id] = r.rating; });
-        res.json({ success: true, ratings: map });
+
+        res.json({ success: true, id: r.lastInsertRowid });
     } catch (err) {
-        res.status(500).json({ success: false, message: err.message });
+        console.error("bot.rate error:", err);
+        res.status(500).json({ success: false, message: "Failed", error: err.message });
     }
 };
 
+// =========================================================
+// GET /api/bot/ratings?message_ids=id1,id2,id3
+// Batch-fetch the current user's ratings for a set of
+// message IDs — used by the bot page to restore the
+// thumbs-up/down state on reload.
+// Full history is retained for the future Crevio
+// Management System.
+// =========================================================
+exports.getRatingsBatch = (req, res) => {
+    try {
+        const userId = req.user && req.user.id;
+        if (!userId) {
+            return res.status(401).json({ success: false, message: "Not authenticated" });
+        }
+
+        const raw = (req.query.message_ids || "").toString();
+        const ids = raw.split(",").map(s => s.trim()).filter(Boolean);
+        if (!ids.length) {
+            return res.json({ success: true, ratings: {} });
+        }
+
+        // Cap to avoid abuse
+        const safeIds = ids.slice(0, 200);
+        const placeholders = safeIds.map(() => "?").join(",");
+
+        let rows = [];
+        try {
+            rows = db.prepare(
+                `SELECT message_id, rating, feedback_text, updated_at
+                 FROM bot_ratings
+                 WHERE user_id = ? AND message_id IN (${placeholders})`
+            ).all(userId, ...safeIds);
+        } catch (e) {
+            rows = [];
+        }
+
+        const ratings = {};
+        rows.forEach(function (r) {
+            ratings[r.message_id] = {
+                rating: r.rating,
+                feedback_text: r.feedback_text || null,
+                updated_at: r.updated_at || null
+            };
+        });
+
+        res.json({ success: true, ratings: ratings });
+    } catch (err) {
+        console.error("bot.getRatingsBatch error:", err);
+        res.status(500).json({ success: false, message: "Failed", error: err.message });
+    }
+};
 // =========================================================
 // POST /api/bot/share
 // Body: { message_id, message_content, conversation_id }
