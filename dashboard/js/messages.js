@@ -56,8 +56,6 @@ document.addEventListener("DOMContentLoaded", function () {
         { key: "archived", label: "Archived" }
     ];
 
-    const REACTIONS = ["&#x1F44D;", "&#x2764;&#xFE0F;", "&#x1F602;", "&#x1F62E;", "&#x1F622;", "&#x1F64F;"];
-
     const MSG_MENU = [
         { id: "reply",   icon: "corner-up-left",  label: "Reply" },
         { id: "copy",    icon: "copy",            label: "Copy" },
@@ -71,6 +69,19 @@ document.addEventListener("DOMContentLoaded", function () {
         { id: "report",  icon: "flag",            label: "Report", danger: true },
         { id: "delete",  icon: "trash-2",         label: "Delete", danger: true }
     ];
+
+    const REACTIONS = [
+        "&#x1F44D;", "&#x2764;&#xFE0F;", "&#x1F602;", "&#x1F62E;",
+        "&#x1F622;", "&#x1F64F;", "&#x1F525;", "&#x1F44F;",
+        "&#x1F389;", "&#x1F4AF;", "&#x1F440;", "&#x1F914;",
+        "&#x1F60D;", "&#x1F60E;", "&#x1F973;", "&#x1F62D;",
+        "&#x1F621;", "&#x1F92F;", "&#x1F631;", "&#x1F917;",
+        "&#x1F44C;", "&#x1F44B;", "&#x1F91D;", "&#x1F4AA;",
+        "&#x2705;", "&#x274C;", "&#x2B50;", "&#x1F4A1;",
+        "&#x1F680;", "&#x1F4E3;", "&#x1F3AF;", "&#x1F4A5;"
+    ];
+    const PRIMARY_REACTIONS = REACTIONS.slice(0, 6);
+
 
     // =========================================================
     // FILTERS
@@ -466,8 +477,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function buildReactionBarHTML(msg) {
         const reactions = parseReactions(msg);
-        return REACTIONS.map(emoji => {
-            const active = Array.isArray(reactions[emoji]) && reactions[emoji].includes("creator");
+        return PRIMARY_REACTIONS.map(function (emoji) {
+            const active = Array.isArray(reactions[emoji]) && reactions[emoji].indexOf("creator") >= 0;
             return '<button class="reaction-btn ' + (active ? "active" : "") + '" data-react="' + emoji + '" title="' + emoji + '">' + emoji + '</button>';
         }).join("") + '<button class="reaction-more" data-react-more title="More reactions"><i data-lucide="plus" class="icon"></i></button>';
     }
@@ -487,7 +498,75 @@ document.addEventListener("DOMContentLoaded", function () {
         }).join("");
     }
 
-    function openMessageMenu(msgId, x, y) {
+    
+    function buildFullPickerHTML(msg) {
+        const reactions = parseReactions(msg);
+        return REACTIONS.map(function (emoji) {
+            const active = Array.isArray(reactions[emoji]) && reactions[emoji].indexOf("creator") >= 0;
+            return '<button class="reaction-picker-btn ' + (active ? "active" : "") + '" data-react="' + emoji + '" title="' + emoji + '">' + emoji + '</button>';
+        }).join("");
+    }
+
+
+    function openFullReactionPicker(msgId) {
+        const msg = activeMessages.find(function (m) { return m.id === msgId; });
+        if (!msg) return;
+
+        let picker = document.getElementById("reactionPicker");
+        if (!picker) {
+            picker = document.createElement("div");
+            picker.id = "reactionPicker";
+            picker.className = "reaction-picker";
+            document.body.appendChild(picker);
+        }
+
+        picker.innerHTML = buildFullPickerHTML(msg);
+        picker.classList.add("open");
+
+        // Position near the reaction bar
+        const bar = document.getElementById("reactionBar");
+        const vw = window.innerWidth, vh = window.innerHeight, margin = 8;
+
+        picker.style.left = "-9999px";
+        picker.style.top = "-9999px";
+        const pRect = picker.getBoundingClientRect();
+
+        let left = bar ? bar.getBoundingClientRect().left : 20;
+        let top  = bar ? bar.getBoundingClientRect().top - pRect.height - 8 : 20;
+
+        if (top < margin) top = (bar ? bar.getBoundingClientRect().bottom : 100) + 8;
+        if (left + pRect.width > vw - margin) left = vw - pRect.width - margin;
+        if (left < margin) left = margin;
+
+        picker.style.left = left + "px";
+        picker.style.top  = top + "px";
+
+        if (typeof lucide !== "undefined") { try { lucide.createIcons(); } catch (e) {} }
+
+        picker.querySelectorAll("[data-react]").forEach(function (btn) {
+            btn.addEventListener("click", function (e) {
+                e.stopPropagation();
+                const emoji = btn.dataset.react;
+                picker.classList.remove("open");
+                closeMessageMenu();
+                if (typeof toggleMessageReaction === "function") {
+                    toggleMessageReaction(msgId, emoji);
+                }
+            });
+        });
+
+        // Click outside to close
+        setTimeout(function () {
+            document.addEventListener("click", function closeOnce(ev) {
+                if (!picker.contains(ev.target)) {
+                    picker.classList.remove("open");
+                    document.removeEventListener("click", closeOnce);
+                }
+            });
+        }, 0);
+    }
+
+function openMessageMenu(msgId, x, y) {
 
 
 
@@ -544,7 +623,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
         reactionBarEl.querySelector("[data-react-more]")?.addEventListener("click", (e) => {
             e.stopPropagation();
-            showToast("More reactions coming soon");
+            openFullReactionPicker(mcmTargetId);
         });
 
         msgContextMenuEl.querySelectorAll("[data-mcm-action]").forEach(btn => {
