@@ -410,7 +410,6 @@
       "patterns": [
         "AUTO-SEND FROM MESSAGES",
         "crevio_bot_context",
-        "trySend",
         "sendBtn.click"
       ]
     },

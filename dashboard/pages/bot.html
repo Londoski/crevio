@@ -674,7 +674,7 @@
 
     <!-- SCRIPTS -->
     <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
-    <script src="/dashboard/js/bot.js?v=639252474812970629"></script>
+    <script src="/dashboard/js/bot.js?v=639253623569189468"></script>
     <script src="/dashboard/js/bot-toolbar.js?v=639252474812970629"></script>
     <script src="/dashboard/js/crevio-confirm.js?v=639252447485493569"></script>
 
@@ -726,88 +726,75 @@
     <script src="/dashboard/js/mobile-menu.js?v=639252892257462073"></script>
     <script src="/dashboard/js/loader.js?v=639253269318409198"></script>
 
+
+
+
 <!-- AUTO-SEND FROM MESSAGES -->
 <script>
 (function () {
-    // Read context stored by messages.js when user clicked "Ask CrevioBot"
+    console.log("[AutoSend] Script loaded");
+
     let ctx = null;
     try { ctx = JSON.parse(localStorage.getItem("crevio_bot_context") || "null"); } catch (e) {}
-    if (!ctx || !ctx.message) return;
-
-    // Consume it so refresh doesn't re-fire
+    if (!ctx || !ctx.message) { console.log("[AutoSend] No context"); return; }
+    console.log("[AutoSend] Context:", ctx);
     localStorage.removeItem("crevio_bot_context");
 
-    // Wait for bot.js to finish wiring up
-    window.addEventListener("load", function () {
+    function buildPrompt(ctx) {
+        const lines = [];
+        if (ctx.client_name)   lines.push("Client: " + ctx.client_name);
+        if (ctx.client_email)  lines.push("Email: " + ctx.client_email);
+        if (ctx.service_title) lines.push("Interested in: " + ctx.service_title);
+        if (ctx.project_title) lines.push("Related project: " + ctx.project_title);
+        return "Please help me respond to this client message.\n\n" +
+            (lines.length ? lines.join("\n") + "\n\n" : "") +
+            "Their message:\n\"" + ctx.message + "\"\n\n" +
+            "Analyze it, suggest the best reply, and explain anything I should know.";
+    }
+
+    function dispatchEnter(input) {
+        const ev = new KeyboardEvent("keydown", {
+            key: "Enter", code: "Enter", keyCode: 13, which: 13,
+            bubbles: true, cancelable: true
+        });
+        input.dispatchEvent(ev);
+    }
+
+    function trySend(input, sendBtn) {
+        console.log("[AutoSend] Attempting to send");
+        if (typeof window.sendMessage === "function") {
+            try { window.sendMessage(); return true; } catch (e) {}
+        }
+        if (sendBtn && !sendBtn.disabled) {
+            sendBtn.click();
+            return true;
+        }
+        if (input) { dispatchEnter(input); return true; }
+        const form = input?.closest("form");
+        if (form) { if (form.requestSubmit) form.requestSubmit(); else form.submit(); return true; }
+        return false;
+    }
+
+    function run() {
+        const input   = document.getElementById("msgInput");
+        const sendBtn = document.getElementById("sendBtn");
+        console.log("[AutoSend] Input:", !!input, "SendBtn:", !!sendBtn);
+
+        if (!input) { setTimeout(run, 500); return; }
+
+        input.value = buildPrompt(ctx);
+        input.dispatchEvent(new Event("input",  { bubbles: true }));
+        input.dispatchEvent(new Event("change", { bubbles: true }));
+        input.style.height = "auto";
+        input.style.height = Math.min(input.scrollHeight, 200) + "px";
+
         setTimeout(function () {
-            const input = document.getElementById("msgInput");
-            const sendBtn = document.getElementById("sendBtn");
+            trySend(input, sendBtn);
+        }, 400);
+    }
 
-            if (!input) { console.warn("[Bot] msgInput not found"); return; }
-
-            // Build the prompt
-            const lines = [];
-            if (ctx.client_name)   lines.push("Client: " + ctx.client_name);
-            if (ctx.client_email)  lines.push("Email: " + ctx.client_email);
-            if (ctx.service_title) lines.push("Interested in: " + ctx.service_title);
-            if (ctx.project_title) lines.push("Related project: " + ctx.project_title);
-
-            const prompt =
-                "Please help me respond to this client message." + "\n\n" +
-                (lines.length ? lines.join("\n") + "\n\n" : "") +
-                "Their message:\n\"" + ctx.message + "\"\n\n" +
-                "Analyze it, suggest the best reply, and explain anything I should know.";
-
-            // Fill the input
-            input.value = prompt;
-            input.dispatchEvent(new Event("input",  { bubbles: true }));
-            input.dispatchEvent(new Event("change", { bubbles: true }));
-
-            // Auto-grow
-            input.style.height = "auto";
-            input.style.height = Math.min(input.scrollHeight, 200) + "px";
-
-            // Banner
-            const banner = document.createElement("div");
-            banner.style.cssText = [
-                "position:fixed","top:14px","left:50%","transform:translateX(-50%)",
-                "background:var(--bg-card)","color:var(--text-primary)",
-                "border:1px solid var(--border-color)","border-left:4px solid var(--accent)",
-                "border-radius:10px","padding:10px 16px","font-size:13px","font-weight:500",
-                "box-shadow:0 8px 24px rgba(0,0,0,0.4)","z-index:9999","max-width:90vw",
-                "display:flex","align-items:center","gap:8px"
-            ].join(";");
-            banner.innerHTML = "<span style='color:var(--accent);font-weight:700;'>&#128206;</span> Message loaded from inbox — sending to Crevio Bot...";
-            document.body.appendChild(banner);
-
-            // AUTO-SEND after a short delay so the textarea value is committed
-            setTimeout(function () {
-                // Try clicking the send button first
-                if (sendBtn && !sendBtn.disabled) {
-                    sendBtn.click();
-                    return;
-                }
-
-                // Fallback: press Enter in the textarea
-                try {
-                    const ev = new KeyboardEvent("keydown", {
-                        key: "Enter",
-                        code: "Enter",
-                        keyCode: 13,
-                        which: 13,
-                        bubbles: true,
-                        cancelable: true
-                    });
-                    input.dispatchEvent(ev);
-                } catch (e) {
-                    console.warn("[Bot] auto-send failed:", e);
-                }
-            }, 300);
-
-            // Remove the banner after 5s
-            setTimeout(function () { banner.remove(); }, 5000);
-        }, 200);
-    });
+    if (document.readyState === "complete") setTimeout(run, 300);
+    else window.addEventListener("load", function () { setTimeout(run, 300); });
 })();
 </script>
 <!-- END AUTO-SEND -->
