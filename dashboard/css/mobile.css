@@ -583,3 +583,13 @@
     }
 }
 /* END HIGH SPECIFICITY TOP FIX */
+
+
+/* HIDE TOPBAR AVATAR */
+.topbar-right .user-avatar,
+.topbar-right .user-name,
+.topbar .user-avatar,
+.topbar .user-name {
+    display: none !important;
+}
+/* END HIDE TOPBAR AVATAR */
