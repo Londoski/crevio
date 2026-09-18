@@ -1,89 +1,109 @@
-const { db } = require('../database/schema'); // adjust to your DB client
+// =========================================================
+// CREVIO — NOTIFICATION SERVICE
+// File: backend/services/notificationService.js
+// Single SQLite-native module. Any controller in Crevio may
+// call .create() to emit a notification on a real event.
+// All queries are scoped to a user. No Postgres. No orphans.
+// =========================================================
+const db = require("../../database/db");
 
-class NotificationService {
-  async createNotification({ userId, type, category, priority, title, message, referenceType, referenceId, actionType }) {
-    const result = await db.query(
-      `INSERT INTO notifications 
-       (user_id, type, category, priority, title, message, reference_type, reference_id, action_type)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-       RETURNING *`,
-      [userId, type, category, priority, title, message, referenceType, referenceId, actionType]
-    );
-    return result.rows[0];
-  }
-
-  async getNotifications(userId, { limit = 20, offset = 0, unreadOnly = false, category = null, period = null }) {
-    let query = `SELECT * FROM notifications WHERE user_id = $1 AND archived_at IS NULL`;
-    const params = [userId];
-    let idx = 2;
-    if (unreadOnly) {
-      query += ` AND is_read = false`;
-    }
-    if (category) {
-      query += ` AND category = $${idx}`;
-      params.push(category);
-      idx++;
-    }
-    if (period === 'today') {
-      query += ` AND created_at >= CURRENT_DATE`;
-    } else if (period === 'week') {
-      query += ` AND created_at >= CURRENT_DATE - INTERVAL '7 days'`;
-    } else if (period === 'month') {
-      query += ` AND created_at >= CURRENT_DATE - INTERVAL '30 days'`;
-    } else if (period === 'older') {
-      query += ` AND created_at < CURRENT_DATE - INTERVAL '30 days'`;
-    }
-    query += ` ORDER BY created_at DESC LIMIT $${idx} OFFSET $${idx + 1}`;
-    params.push(limit, offset);
-    const result = await db.query(query, params);
-    return result.rows;
-  }
-
-  async getUnreadCount(userId) {
-    const result = await db.query(
-      `SELECT COUNT(*) FROM notifications WHERE user_id = $1 AND is_read = false AND archived_at IS NULL`,
-      [userId]
-    );
-    return parseInt(result.rows[0].count, 10);
-  }
-
-  async markAsRead(userId, notificationId) {
-    const result = await db.query(
-      `UPDATE notifications SET is_read = true, read_at = CURRENT_TIMESTAMP
-       WHERE id = $1 AND user_id = $2 AND archived_at IS NULL
-       RETURNING *`,
-      [notificationId, userId]
-    );
-    return result.rows[0];
-  }
-
-  async markAsUnread(userId, notificationId) {
-    const result = await db.query(
-      `UPDATE notifications SET is_read = false, read_at = NULL
-       WHERE id = $1 AND user_id = $2 AND archived_at IS NULL
-       RETURNING *`,
-      [notificationId, userId]
-    );
-    return result.rows[0];
-  }
-
-  async markAllAsRead(userId) {
-    await db.query(
-      `UPDATE notifications SET is_read = true, read_at = CURRENT_TIMESTAMP
-       WHERE user_id = $1 AND is_read = false AND archived_at IS NULL`,
-      [userId]
-    );
-  }
-
-  async archive(userId, notificationId) {
-    const result = await db.query(
-      `UPDATE notifications SET archived_at = CURRENT_TIMESTAMP
-       WHERE id = $1 AND user_id = $2 AND archived_at IS NULL
-       RETURNING *`,
-      [notificationId, userId]
-    );
-    return result.rows[0];
-  }
+// ---------- guards ----------
+function hasColumn(col) {
+    try {
+        return db.prepare("PRAGMA table_info(notifications)").all().some(c => c.name === col);
+    } catch (e) { return false; }
+}
+function tableExists() {
+    try {
+        return !!db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='notifications'").get();
+    } catch (e) { return false; }
 }
 
-module.exports = new NotificationService();
+// ---------- allowed types (MVP) ----------
+// MVP emits only: "message" | "system"
+// Future: "payment" | "alert" | "error" (icon already exists in UI)
+const ALLOWED_TYPES = new Set(["message", "payment", "alert", "error", "system"]);
+
+// ---------- internal helpers ----------
+function safeString(v, max) {
+    if (v === undefined || v === null) return "";
+    return String(v).slice(0, max);
+}
+
+/**
+ * Create a notification for a user.
+ * Never throws — returns { success, id?, reason? } so callers can
+ * safely fire-and-forget without breaking the primary action.
+ *
+ * @param {object} opts
+ * @param {number} opts.userId       — recipient (required)
+ * @param {string} opts.type         — one of ALLOWED_TYPES
+ * @param {string} opts.title        — short header (required)
+ * @param {string} [opts.message]    — optional body
+ * @param {string} [opts.entityType] — 'project' | 'portfolio' | 'conversation' | ...
+ * @param {number} [opts.entityId]   — id of the referenced record
+ */
+function create({ userId, type, title, message, entityType, entityId } = {}) {
+    try {
+        if (!userId) return { success: false, reason: "userId required" };
+        if (!title)  return { success: false, reason: "title required" };
+
+        const t = (type && ALLOWED_TYPES.has(type)) ? type : "system";
+
+        if (!tableExists()) {
+            return { success: false, reason: "notifications table missing" };
+        }
+
+        const hasEntityType = hasColumn("entity_type");
+        const hasEntityId   = hasColumn("entity_id");
+
+        // Build insert dynamically based on which columns exist
+        const fields = ["user_id", "title", "message", "type", "is_read", "created_at"];
+        const placeholders = ["?", "?", "?", "?", "0", "CURRENT_TIMESTAMP"];
+        const values = [userId, safeString(title, 255), safeString(message, 2000), t];
+
+        if (hasEntityType) {
+            fields.push("entity_type");
+            placeholders.push("?");
+            values.push(entityType ? safeString(entityType, 50) : null);
+        }
+        if (hasEntityId) {
+            fields.push("entity_id");
+            placeholders.push("?");
+            values.push(entityId ? Number(entityId) : null);
+        }
+
+        const stmt = db.prepare(
+            `INSERT INTO notifications (${fields.join(", ")}) VALUES (${placeholders.join(", ")})`
+        );
+        const r = stmt.run(...values);
+
+        return { success: true, id: r.lastInsertRowid };
+    } catch (err) {
+        console.error("[notificationService.create] failed:", err.message);
+        return { success: false, reason: err.message };
+    }
+}
+
+/**
+ * Count unread notifications for a user.
+ * Never throws — returns 0 on failure.
+ */
+function unreadCount(userId) {
+    try {
+        if (!userId || !tableExists()) return 0;
+        const row = db.prepare(
+            "SELECT COUNT(*) AS c FROM notifications WHERE user_id = ? AND is_read = 0"
+        ).get(userId);
+        return row ? Number(row.c) : 0;
+    } catch (e) {
+        return 0;
+    }
+}
+
+module.exports = {
+    create,
+    unreadCount,
+    // Exposed for tests / future use
+    ALLOWED_TYPES
+};
