@@ -725,5 +725,92 @@
     </script>
     <script src="/dashboard/js/mobile-menu.js?v=639252892257462073"></script>
     <script src="/dashboard/js/loader.js?v=639253269318409198"></script>
+
+<!-- AUTO-SEND FROM MESSAGES -->
+<script>
+(function () {
+    // Read context stored by messages.js when user clicked "Ask CrevioBot"
+    let ctx = null;
+    try { ctx = JSON.parse(localStorage.getItem("crevio_bot_context") || "null"); } catch (e) {}
+    if (!ctx || !ctx.message) return;
+
+    // Consume it so refresh doesn't re-fire
+    localStorage.removeItem("crevio_bot_context");
+
+    // Wait for bot.js to finish wiring up
+    window.addEventListener("load", function () {
+        setTimeout(function () {
+            const input = document.getElementById("msgInput");
+            const sendBtn = document.getElementById("sendBtn");
+
+            if (!input) { console.warn("[Bot] msgInput not found"); return; }
+
+            // Build the prompt
+            const lines = [];
+            if (ctx.client_name)   lines.push("Client: " + ctx.client_name);
+            if (ctx.client_email)  lines.push("Email: " + ctx.client_email);
+            if (ctx.service_title) lines.push("Interested in: " + ctx.service_title);
+            if (ctx.project_title) lines.push("Related project: " + ctx.project_title);
+
+            const prompt =
+                "Please help me respond to this client message." + "\n\n" +
+                (lines.length ? lines.join("\n") + "\n\n" : "") +
+                "Their message:\n\"" + ctx.message + "\"\n\n" +
+                "Analyze it, suggest the best reply, and explain anything I should know.";
+
+            // Fill the input
+            input.value = prompt;
+            input.dispatchEvent(new Event("input",  { bubbles: true }));
+            input.dispatchEvent(new Event("change", { bubbles: true }));
+
+            // Auto-grow
+            input.style.height = "auto";
+            input.style.height = Math.min(input.scrollHeight, 200) + "px";
+
+            // Banner
+            const banner = document.createElement("div");
+            banner.style.cssText = [
+                "position:fixed","top:14px","left:50%","transform:translateX(-50%)",
+                "background:var(--bg-card)","color:var(--text-primary)",
+                "border:1px solid var(--border-color)","border-left:4px solid var(--accent)",
+                "border-radius:10px","padding:10px 16px","font-size:13px","font-weight:500",
+                "box-shadow:0 8px 24px rgba(0,0,0,0.4)","z-index:9999","max-width:90vw",
+                "display:flex","align-items:center","gap:8px"
+            ].join(";");
+            banner.innerHTML = "<span style='color:var(--accent);font-weight:700;'>&#128206;</span> Message loaded from inbox — sending to Crevio Bot...";
+            document.body.appendChild(banner);
+
+            // AUTO-SEND after a short delay so the textarea value is committed
+            setTimeout(function () {
+                // Try clicking the send button first
+                if (sendBtn && !sendBtn.disabled) {
+                    sendBtn.click();
+                    return;
+                }
+
+                // Fallback: press Enter in the textarea
+                try {
+                    const ev = new KeyboardEvent("keydown", {
+                        key: "Enter",
+                        code: "Enter",
+                        keyCode: 13,
+                        which: 13,
+                        bubbles: true,
+                        cancelable: true
+                    });
+                    input.dispatchEvent(ev);
+                } catch (e) {
+                    console.warn("[Bot] auto-send failed:", e);
+                }
+            }, 300);
+
+            // Remove the banner after 5s
+            setTimeout(function () { banner.remove(); }, 5000);
+        }, 200);
+    });
+})();
+</script>
+<!-- END AUTO-SEND -->
+
 </body>
 </html>

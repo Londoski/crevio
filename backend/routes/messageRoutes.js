@@ -22,6 +22,7 @@ router.post("/forward", auth, c.forwardMessage);
 
 router.get("/conversations",       auth, c.getConversations);
 router.get("/conversations/:id",   auth, c.getConversation);
+router.get("/conversations/:id/context", auth, c.getConversationContext);
 router.post("/conversations/:id",  auth, c.sendMessage);
 router.patch("/conversations/:id", auth, c.updateConversation);
 router.delete("/conversations/:id",auth, c.deleteConversation);
