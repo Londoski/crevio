@@ -1,7 +1,9 @@
 ﻿// ============================================================
 // CREVIO — BOT TOOLBAR
 // File: dashboard/js/bot-toolbar.js
-// Copy briefly shows a green tick, then returns to copy icon.
+// User messages: Copy · Share prompt · Edit
+// Bot messages:  Copy · Rate (popover → /api/bot/rate) · Share to conversation (picker → /api/bot/share)
+// Copy briefly shows a brand-colored tick, then returns to copy icon.
 // ============================================================
 (function () {
     if (window.__crevioBotToolbarInstalled) return;
@@ -29,7 +31,17 @@
         clone.querySelectorAll(".msg-time, .msg-toolbar, .msg-check, .msg-expand-btn").forEach(function (el) { el.remove(); });
         return (clone.innerText || clone.textContent || "").trim();
     }
+    function authHeaders() {
+        const token = localStorage.getItem("token");
+        return {
+            "Content-Type": "application/json",
+            "Authorization": token ? "Bearer " + token : ""
+        };
+    }
 
+    // =========================================================
+    // CSS
+    // =========================================================
     if (!document.getElementById("__botToolbarStyles")) {
         const style = document.createElement("style");
         style.id = "__botToolbarStyles";
@@ -64,6 +76,7 @@
                 border-color: var(--accent); color: var(--accent);
             }
 
+            /* ---- Share panel ---- */
             .share-overlay {
                 position: fixed; inset: 0; background: rgba(0,0,0,0.6);
                 backdrop-filter: blur(3px);
@@ -128,6 +141,101 @@
             .share-footer a { color: var(--accent); text-decoration: none; }
             .share-footer a:hover { text-decoration: underline; }
 
+            /* ---- Rate popover ---- */
+            .rate-popover {
+                position: fixed;
+                background: var(--bg-card);
+                border: 1px solid var(--border-color);
+                border-radius: 10px;
+                padding: 4px;
+                display: flex; gap: 2px;
+                box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+                z-index: 3100;
+                opacity: 0; visibility: hidden;
+                transform: translateY(4px);
+                transition: opacity 0.12s, transform 0.12s, visibility 0.12s;
+            }
+            .rate-popover.open { opacity: 1; visibility: visible; transform: translateY(0); }
+            .rate-popover button {
+                background: transparent; border: none;
+                color: var(--text-secondary);
+                width: 34px; height: 34px; border-radius: 8px; cursor: pointer;
+                display: flex; align-items: center; justify-content: center;
+                transition: background 0.12s, color 0.12s;
+            }
+            .rate-popover button:hover { background: var(--accent-dim); color: var(--accent); }
+            .rate-popover .icon { width: 16px; height: 16px; }
+
+            /* ---- Conversation picker ---- */
+            .conv-picker-overlay {
+                position: fixed; inset: 0;
+                background: rgba(0,0,0,0.6);
+                backdrop-filter: blur(3px);
+                display: flex; align-items: center; justify-content: center;
+                padding: 20px; z-index: 3050;
+                opacity: 0; visibility: hidden;
+                transition: opacity 0.15s, visibility 0.15s;
+            }
+            .conv-picker-overlay.open { opacity: 1; visibility: visible; }
+            .conv-picker {
+                background: var(--bg-card);
+                border: 1px solid var(--border-color);
+                border-radius: 16px;
+                width: 100%; max-width: min(440px, 94vw); max-height: 80vh;
+                padding: 20px; display: flex; flex-direction: column; gap: 12px;
+                box-shadow: 0 24px 60px rgba(0,0,0,0.6);
+            }
+            .conv-picker h2 {
+                font-size: 17px; font-weight: 700;
+                color: var(--text-primary); margin: 0;
+                display: flex; align-items: center; justify-content: space-between;
+            }
+            .conv-picker-close {
+                background: transparent; border: none; cursor: pointer;
+                color: var(--text-muted);
+                width: 30px; height: 30px; border-radius: 8px;
+                display: flex; align-items: center; justify-content: center;
+            }
+            .conv-picker-close:hover { background: var(--bg-input); color: var(--danger); }
+            .conv-picker-close .icon { width: 16px; height: 16px; }
+            .conv-picker-search {
+                background: var(--bg-input);
+                border: 1px solid var(--border-color);
+                color: var(--text-primary);
+                padding: 10px 14px; border-radius: 10px;
+                font-size: 14px; font-family: inherit;
+            }
+            .conv-picker-search:focus {
+                outline: none; border-color: var(--accent);
+                box-shadow: 0 0 0 3px var(--accent-dim);
+            }
+            .conv-picker-list {
+                flex: 1; overflow-y: auto;
+                display: flex; flex-direction: column; gap: 4px;
+                min-height: 120px; max-height: 400px;
+            }
+            .conv-picker-item {
+                display: flex; align-items: center; gap: 12px;
+                padding: 10px 12px; border-radius: 10px;
+                border: none; background: transparent;
+                color: var(--text-primary); font-family: inherit;
+                cursor: pointer; text-align: left;
+                transition: background 0.12s; width: 100%;
+            }
+            .conv-picker-item:hover { background: var(--accent-dim); }
+            .conv-picker-avatar {
+                width: 36px; height: 36px; border-radius: 50%;
+                background: var(--accent); color: #fff;
+                display: flex; align-items: center; justify-content: center;
+                font-weight: 600; font-size: 14px; flex-shrink: 0;
+            }
+            .conv-picker-text { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+            .conv-picker-name { font-size: 14px; font-weight: 600; }
+            .conv-picker-preview {
+                font-size: 12px; color: var(--text-muted);
+                overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+            }
+
             @media (max-width: 480px) {
                 .share-panel { padding: 16px; }
                 .share-action-icon { width: 40px; height: 40px; }
@@ -137,6 +245,9 @@
         document.head.appendChild(style);
     }
 
+    // =========================================================
+    // TOOLBAR BUILDER
+    // =========================================================
     function buildToolbar(role) {
         const wrap = document.createElement("div");
         wrap.className = "msg-toolbar";
@@ -166,6 +277,9 @@
         return wrap;
     }
 
+    // =========================================================
+    // CLIPBOARD + TICK
+    // =========================================================
     async function copyToClipboard(text) {
         try { await navigator.clipboard.writeText(text); return true; }
         catch (e) {
@@ -204,6 +318,9 @@
         else { toast("Copy failed", true); }
     }
 
+    // =========================================================
+    // EDIT
+    // =========================================================
     function editUserMessage(bubble) {
         const text = getBubbleText(bubble);
         const input = $("msgInput");
@@ -222,6 +339,9 @@
         toast("Editing message — press Enter to resend");
     }
 
+    // =========================================================
+    // SHARE PANEL (Share prompt)
+    // =========================================================
     function ensureSharePanel() {
         let overlay = document.getElementById("shareOverlay");
         if (overlay) return overlay;
@@ -318,14 +438,182 @@
         refreshIcons();
     }
 
-    function rateBubble(bubble, btn) {
-        const next = bubble.dataset.rated === "good" ? "bad" : "good";
-        bubble.dataset.rated = next;
-        if (next === "good") { btn.style.color = "var(--success)"; toast("Thanks for the feedback"); }
-        else { btn.style.color = "var(--danger)"; toast("Noted — we'll improve"); }
-        setTimeout(function () { btn.style.color = ""; }, 800);
+    // =========================================================
+    // RATE POPOVER
+    // =========================================================
+    function ensureRatePopover() {
+        let pop = document.getElementById("ratePopover");
+        if (pop) return pop;
+        pop = document.createElement("div");
+        pop.id = "ratePopover";
+        pop.className = "rate-popover";
+        pop.innerHTML = `
+            <button data-rate="up" type="button" title="Good response">
+                <i data-lucide="thumbs-up" class="icon"></i>
+            </button>
+            <button data-rate="down" type="button" title="Bad response">
+                <i data-lucide="thumbs-down" class="icon"></i>
+            </button>`;
+        document.body.appendChild(pop);
+        refreshIcons();
+        return pop;
     }
 
+    function closeRatePopoverOnce(e) {
+        const pop = document.getElementById("ratePopover");
+        if (!pop || !pop.classList.contains("open")) return;
+        if (pop.contains(e.target)) return;
+        pop.classList.remove("open");
+        document.removeEventListener("click", closeRatePopoverOnce);
+    }
+
+    function showRatePopover(bubble, btn) {
+        const pop = ensureRatePopover();
+        const rect = btn.getBoundingClientRect();
+        pop.style.left = rect.left + "px";
+        pop.style.top  = (rect.top - 42) + "px";
+        pop.classList.add("open");
+
+        const text = getBubbleText(bubble);
+
+        pop.querySelectorAll("[data-rate]").forEach(function (b) {
+            const fresh = b.cloneNode(true);
+            b.parentNode.replaceChild(fresh, b);
+            fresh.addEventListener("click", async function (e) {
+                e.stopPropagation();
+                const rating = fresh.dataset.rate;
+                pop.classList.remove("open");
+                try {
+                    const res = await fetch("/api/bot/rate", {
+                        method: "POST",
+                        headers: authHeaders(),
+                        body: JSON.stringify({ rating: rating, message: text })
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        btn.style.color = rating === "up" ? "var(--accent)" : "var(--danger)";
+                        toast(rating === "up" ? "Thanks for the feedback" : "Noted — we'll improve");
+                    } else {
+                        toast(data.message || "Failed to rate", true);
+                    }
+                } catch (err) {
+                    toast("Failed to rate", true);
+                }
+            });
+        });
+
+        setTimeout(function () {
+            document.addEventListener("click", closeRatePopoverOnce);
+        }, 0);
+    }
+
+    function rateBubble(bubble, btn) {
+        showRatePopover(bubble, btn);
+    }
+
+    // =========================================================
+    // CONVERSATION PICKER (Share to conversation)
+    // =========================================================
+    function ensureConvPicker() {
+        let ov = document.getElementById("convPickerOverlay");
+        if (ov) return ov;
+        ov = document.createElement("div");
+        ov.id = "convPickerOverlay";
+        ov.className = "conv-picker-overlay";
+        ov.innerHTML = `
+            <div class="conv-picker">
+                <h2>Share to conversation
+                    <button class="conv-picker-close" type="button" aria-label="Close">
+                        <i data-lucide="x" class="icon"></i>
+                    </button>
+                </h2>
+                <input type="text" class="conv-picker-search" placeholder="Search conversations...">
+                <div class="conv-picker-list">
+                    <div class="loading">Loading conversations…</div>
+                </div>
+            </div>`;
+        document.body.appendChild(ov);
+        ov.addEventListener("click", function (e) {
+            if (e.target === ov) ov.classList.remove("open");
+        });
+        ov.querySelector(".conv-picker-close").addEventListener("click", function () {
+            ov.classList.remove("open");
+        });
+        document.addEventListener("keydown", function (e) {
+            if (e.key === "Escape") ov.classList.remove("open");
+        });
+        refreshIcons();
+        return ov;
+    }
+
+    async function openConvPicker(text) {
+        const ov = ensureConvPicker();
+        const listEl = ov.querySelector(".conv-picker-list");
+        const searchEl = ov.querySelector(".conv-picker-search");
+        ov.classList.add("open");
+        searchEl.value = "";
+
+        async function loadList(query) {
+            listEl.innerHTML = '<div class="loading">Loading conversations…</div>';
+            try {
+                const url = "/api/messages/conversations?filter=all&search=" + encodeURIComponent(query || "");
+                const res = await fetch(url, { headers: authHeaders() });
+                const data = await res.json();
+                const convs = (data.conversations || []).slice(0, 40);
+                if (!convs.length) {
+                    listEl.innerHTML = '<div class="empty-state"><p>No conversations found.</p></div>';
+                    return;
+                }
+                listEl.innerHTML = convs.map(function (c) {
+                    const name = (c.client_name || "Client");
+                    const initial = name.charAt(0).toUpperCase();
+                    const preview = (c.last_message || "No messages yet").slice(0, 50);
+                    return '<button class="conv-picker-item" data-id="' + c.id + '" type="button">' +
+                        '<span class="conv-picker-avatar">' + initial + '</span>' +
+                        '<span class="conv-picker-text">' +
+                            '<span class="conv-picker-name">' + name + '</span>' +
+                            '<span class="conv-picker-preview">' + preview + '</span>' +
+                        '</span>' +
+                    '</button>';
+                }).join("");
+
+                listEl.querySelectorAll(".conv-picker-item").forEach(function (item) {
+                    item.addEventListener("click", async function () {
+                        const cid = item.dataset.id;
+                        try {
+                            const r = await fetch("/api/bot/share", {
+                                method: "POST",
+                                headers: authHeaders(),
+                                body: JSON.stringify({ conversation_id: cid, content: text })
+                            });
+                            const rdata = await r.json();
+                            if (rdata.success) {
+                                toast("Shared to conversation");
+                                ov.classList.remove("open");
+                            } else {
+                                toast(rdata.message || "Failed to share", true);
+                            }
+                        } catch (err) {
+                            toast("Failed to share", true);
+                        }
+                    });
+                });
+            } catch (err) {
+                listEl.innerHTML = '<div class="empty-state"><p>Could not load conversations.</p></div>';
+            }
+        }
+
+        loadList("");
+        searchEl.oninput = function () {
+            clearTimeout(searchEl.__t);
+            const q = searchEl.value;
+            searchEl.__t = setTimeout(function () { loadList(q); }, 250);
+        };
+    }
+
+    // =========================================================
+    // INJECT TOOLBARS
+    // =========================================================
     function injectInto(bubble) {
         if (bubble.dataset.toolbarInjected === "1") return;
         const isBot = bubble.classList.contains("bot");
@@ -343,7 +631,8 @@
                 const act = btn.dataset.act;
                 const text = getBubbleText(bubble);
                 if (act === "copy-user" || act === "copy-bot") copyText(text, btn);
-                else if (act === "share-prompt" || act === "share-conv") openSharePanel(text);
+                else if (act === "share-prompt") openSharePanel(text);
+                else if (act === "share-conv") openConvPicker(text);
                 else if (act === "edit-message") editUserMessage(bubble);
                 else if (act === "rate") rateBubble(bubble, btn);
             });
