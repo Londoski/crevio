@@ -57,11 +57,11 @@
             .msg-tool:hover .tip { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
             @media (hover: none) { .msg-tool .tip { display: none; } }
 
-            .msg-tool.copied { color: #22C55E !important; background: rgba(34,197,94,0.14) !important; }
+            .msg-tool.copied { color: var(--accent) !important; background: var(--accent-dim) !important; }
             .msg-tool.copied .tip {
                 opacity: 1 !important; visibility: visible !important;
                 transform: translateX(-50%) translateY(0) !important;
-                border-color: #22C55E; color: #22C55E;
+                border-color: var(--accent); color: var(--accent);
             }
 
             .share-overlay {
@@ -115,14 +115,14 @@
             .share-action:hover { color: var(--text-primary); }
             .share-action-icon {
                 width: 46px; height: 46px; border-radius: 50%;
-                background: #22C55E; color: #fff;
+                background: var(--accent); color: #fff;
                 display: flex; align-items: center; justify-content: center;
                 transition: transform 0.12s, background 0.12s;
             }
-            .share-action:hover .share-action-icon { transform: scale(1.08); background: #16A34A; }
+            .share-action:hover .share-action-icon { transform: scale(1.08); background: var(--accent-hover); }
             .share-action-icon .icon { width: 20px; height: 20px; }
-            .share-action.copied .share-action-icon { background: #0ea55b; transform: scale(1.08); }
-            .share-action.copied .share-label { color: #22C55E; font-weight: 600; }
+            .share-action.copied .share-action-icon { background: var(--accent-hover); transform: scale(1.08); }
+            .share-action.copied .share-label { color: var(--accent); font-weight: 600; }
 
             .share-footer { font-size: 11px; color: var(--text-muted); text-align: center; line-height: 1.5; }
             .share-footer a { color: var(--accent); text-decoration: none; }
