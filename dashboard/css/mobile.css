@@ -563,17 +563,21 @@
 }
 /* END NUCLEAR TOP GAP FIX */
 
+
+
+
 /* HIGH SPECIFICITY TOP FIX */
-/* Uses body prefix so it wins over ANY .main / .dashboard-main rule with the same !important */
 @media (max-width: 900px) {
     body .main,
     body main.main,
-    body .dashboard-main {
-        padding-top: 0 !important;
+    body .dashboard-main,
+    body main {
+        /* Small, balanced breathing room from the top edge */
+        padding-top: 1.25rem !important;   /* 20px */
         margin-top: 0 !important;
     }
-    body .main > .topbar:first-child,
-    body .dashboard-main > .topbar:first-child {
+    body .main > .topbar,
+    body .main > *:first-child {
         margin-top: 0 !important;
         padding-top: 0 !important;
     }

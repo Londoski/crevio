@@ -345,6 +345,17 @@
         "conv-header-mobile-flex",
         ".conv-header .conv-search"
       ]
+    },
+    {
+      "id": "mobile-top-padding-balanced",
+      "desc": "Mobile top padding balanced (20px, not 74px/0) via body-prefixed high-specificity rule",
+      "type": "fileContains",
+      "file": "dashboard/css/mobile.css",
+      "patterns": [
+        "HIGH SPECIFICITY TOP FIX",
+        "padding-top: 1.25rem",
+        "body .main"
+      ]
     }
   ]
 }
