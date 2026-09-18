@@ -435,6 +435,19 @@
         "Copy message",
         "Edit message"
       ]
+    },
+    {
+      "id": "bot-copy-tick",
+      "desc": "Copy buttons show green check for 1.5s, then restore original copy icon",
+      "type": "fileContains",
+      "file": "dashboard/js/bot-toolbar.js",
+      "patterns": [
+        "showTick",
+        "__origIconHTML",
+        "msg-tool.copied",
+        "showShareTick",
+        "CHECK_SVG_15"
+      ]
     }
   ]
 }
