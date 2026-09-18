@@ -664,6 +664,26 @@ document.addEventListener("DOMContentLoaded", function () {
         const summaryEl = $("wsSummary");
         const issuesEl = $("wsIssues");
         if (!panel) return;
+
+        // Clear any previous hidden state
+        panel.style.removeProperty("display");
+        panel.style.removeProperty("visibility");
+        panel.style.removeProperty("height");
+        panel.style.removeProperty("min-height");
+        panel.style.removeProperty("max-height");
+        panel.style.removeProperty("margin");
+        panel.style.removeProperty("padding");
+        panel.style.removeProperty("border");
+        panel.style.removeProperty("overflow");
+        panel.removeAttribute("data-ws-hidden");
+        // Also clear any parent hidden state
+        let p = panel.parentElement;
+        let depth = 0;
+        while (p && p !== document.body && depth < 3) {
+            p.style.removeProperty("display");
+            p = p.parentElement;
+            depth++;
+        }
         panel.style.display = "block";
         summaryEl.innerHTML = '<div class="ws-stat"><div class="ws-stat-label">Status</div><div class="ws-stat-value">Loading…</div></div>';
         issuesEl.innerHTML = "";
@@ -738,7 +758,35 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function closeWorkspacePanel() {
         const panel = $("wsPanel");
-        if (panel) panel.style.display = "none";
+        if (!panel) return;
+
+        // Nuclear hide — inline styles with highest priority
+        panel.style.setProperty("display", "none", "important");
+        panel.style.setProperty("visibility", "hidden", "important");
+        panel.style.setProperty("height", "0", "important");
+        panel.style.setProperty("min-height", "0", "important");
+        panel.style.setProperty("max-height", "0", "important");
+        panel.style.setProperty("margin", "0", "important");
+        panel.style.setProperty("padding", "0", "important");
+        panel.style.setProperty("border", "0", "important");
+        panel.style.setProperty("overflow", "hidden", "important");
+        panel.setAttribute("data-ws-hidden", "1");
+
+        // Hide any parent wrapper that only contains this panel
+        let p = panel.parentElement;
+        let depth = 0;
+        while (p && p !== document.body && depth < 3) {
+            const visibleSiblings = Array.from(p.children).filter(function (c) {
+                return c !== panel && (c.textContent || "").trim().length > 0;
+            });
+            if (visibleSiblings.length === 0) {
+                p.style.setProperty("display", "none", "important");
+            }
+            p = p.parentElement;
+            depth++;
+        }
+
+        console.log("[WS] Panel hidden");
     }
 
     // Wire

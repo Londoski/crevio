@@ -674,7 +674,7 @@
 
     <!-- SCRIPTS -->
     <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
-    <script src="/dashboard/js/bot.js?v=639253625925706771"></script>
+    <script src="/dashboard/js/bot.js?v=639253629478620112"></script>
     <script src="/dashboard/js/bot-toolbar.js?v=639252474812970629"></script>
     <script src="/dashboard/js/crevio-confirm.js?v=639252447485493569"></script>
 
@@ -800,95 +800,14 @@
 <!-- END AUTO-SEND -->
 
 
-<!-- FAST CLICK FEEDBACK -->
-<style>
-    /* Instant press visual */
-    .icon-btn:active,
-    .chat-actions .icon-btn:active,
-    button[id$="Btn"]:active {
-        transform: scale(0.92);
-        transition: transform 0.05s;
-    }
-    /* Loading state â€” spinner overlay */
-    .btn-loading {
-        position: relative;
-        pointer-events: none;
-        opacity: 0.7;
-    }
-    .btn-loading::after {
-        content: "";
-        position: absolute;
-        inset: 0;
-        border-radius: inherit;
-        border: 2px solid transparent;
-        border-top-color: var(--accent, #2563EB);
-        animation: btn-spin 0.7s linear infinite;
-    }
-    @keyframes btn-spin {
-        to { transform: rotate(360deg); }
-    }
-</style>
-<script>
-(function () {
-    // Wait for bot.js?v=639253625925706771 to finish wiring its handlers
-    window.addEventListener("load", function () {
-        setTimeout(function () {
-            // Target every clickable action button in the chat header
-            const candidateSelectors = [
-                "#wsBtn",
-                "#clearBtn",
-                "#optionsBtn",
-                "#settingsBtn",
-                ".chat-actions .icon-btn",
-                ".chat-header .icon-btn"
-            ];
 
-            const buttons = new Set();
-            candidateSelectors.forEach(function (sel) {
-                document.querySelectorAll(sel).forEach(function (b) {
-                    if (b.id !== "inputEmojiBtn" && b.id !== "sendBtn" && b.id !== "backBtn") {
-                        buttons.add(b);
-                    }
-                });
-            });
 
-            buttons.forEach(function (btn) {
-                // Skip if already wired
-                if (btn.dataset.fastClick === "1") return;
-                btn.dataset.fastClick = "1";
 
-                // Add pressed state immediately on mousedown (feels instant)
-                btn.addEventListener("mousedown", function () {
-                    btn.style.transform = "scale(0.92)";
-                }, { capture: true });
-                btn.addEventListener("mouseup", function () {
-                    btn.style.transform = "";
-                }, { capture: true });
-                btn.addEventListener("mouseleave", function () {
-                    btn.style.transform = "";
-                });
 
-                // On click: show spinner immediately, remove after 1.5s (or when bot.js?v=639253625925706771 clears it)
-                btn.addEventListener("click", function () {
-                    // Skip if button toggles a menu (like options dropdown)
-                    if (btn.dataset.noSpinner === "1") return;
 
-                    btn.classList.add("btn-loading");
 
-                    // Auto-remove spinner after 1.5s if bot.js?v=639253625925706771 hasn't already cleaned up
-                    clearTimeout(btn._fastClickTimer);
-                    btn._fastClickTimer = setTimeout(function () {
-                        btn.classList.remove("btn-loading");
-                    }, 1500);
-                }, { capture: true });
-            });
 
-            console.log("[FastClick] Wired", buttons.size, "buttons for instant feedback");
-        }, 150);
-    });
-})();
-</script>
-<!-- END FAST CLICK -->
 
+    <script src="/dashboard/js/button-feedback.js?v=639253633627588411"></script>
 </body>
 </html>
