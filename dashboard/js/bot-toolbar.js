@@ -31,6 +31,23 @@
         clone.querySelectorAll(".msg-time, .msg-toolbar, .msg-check, .msg-expand-btn").forEach(function (el) { el.remove(); });
         return (clone.innerText || clone.textContent || "").trim();
     }
+    function getMessageId(bubble) {
+        const m = bubble.closest(".message");
+        if (m) {
+            const v = m.dataset.messageId || m.dataset.id || m.getAttribute("data-msg-id");
+            if (v) return v;
+        }
+        const v2 = bubble.getAttribute("data-message-id") || bubble.dataset.messageId;
+        return v2 || null;
+    }
+    function hashString(s) {
+        let h = 0;
+        for (let i = 0; i < s.length; i++) {
+            h = (h << 5) - h + s.charCodeAt(i);
+            h |= 0;
+        }
+        return "h" + Math.abs(h).toString(36);
+    }
     function authHeaders() {
         const token = localStorage.getItem("token");
         return {
@@ -340,7 +357,7 @@
     }
 
     // =========================================================
-    // SHARE PANEL (Share prompt)
+    // SHARE PANEL
     // =========================================================
     function ensureSharePanel() {
         let overlay = document.getElementById("shareOverlay");
@@ -475,6 +492,7 @@
         pop.classList.add("open");
 
         const text = getBubbleText(bubble);
+        const msgId = getMessageId(bubble) || hashString(text);
 
         pop.querySelectorAll("[data-rate]").forEach(function (b) {
             const fresh = b.cloneNode(true);
@@ -487,7 +505,12 @@
                     const res = await fetch("/api/bot/rate", {
                         method: "POST",
                         headers: authHeaders(),
-                        body: JSON.stringify({ rating: rating, message: text })
+                        body: JSON.stringify({
+                            rating: rating,
+                            message: text,
+                            message_id: msgId,
+                            conversation_id: (bubble.closest(".message") && bubble.closest(".message").dataset.conversationId) || null
+                        })
                     });
                     const data = await res.json();
                     if (data.success) {
@@ -512,7 +535,7 @@
     }
 
     // =========================================================
-    // CONVERSATION PICKER (Share to conversation)
+    // CONVERSATION PICKER
     // =========================================================
     function ensureConvPicker() {
         let ov = document.getElementById("convPickerOverlay");
@@ -612,7 +635,7 @@
     }
 
     // =========================================================
-    // INJECT TOOLBARS
+    // INJECT
     // =========================================================
     function injectInto(bubble) {
         if (bubble.dataset.toolbarInjected === "1") return;
