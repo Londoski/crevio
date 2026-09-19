@@ -447,6 +447,52 @@
         "showShareTick",
         "CHECK_SVG_15"
       ]
+    },
+    {
+      "id": "phase-B1-email",
+      "desc": "Phase B1 — emailService (Resend + outbox fallback)",
+      "type": "fileContains",
+      "file": "backend/services/emailService.js",
+      "patterns": [
+        "send",
+        "retryQueued",
+        "RESEND_API_KEY",
+        "email_outbox"
+      ]
+    },
+    {
+      "id": "phase-B1-geo",
+      "desc": "Phase B1 — geoService (ipapi.co + cache)",
+      "type": "fileContains",
+      "file": "backend/services/geoService.js",
+      "patterns": [
+        "ipapi.co",
+        "geo_cache",
+        "lookup",
+        "friendly"
+      ]
+    },
+    {
+      "id": "phase-B1-device",
+      "desc": "Phase B1 — deviceService (UA parser)",
+      "type": "fileContains",
+      "file": "backend/services/deviceService.js",
+      "patterns": [
+        "parse",
+        "fingerprint",
+        "Chrome",
+        "Windows"
+      ]
+    },
+    {
+      "id": "phase-B1-migration",
+      "desc": "Phase B1 — email_outbox + geo_cache tables",
+      "type": "fileContains",
+      "file": "scripts/migrate-email-geo.js",
+      "patterns": [
+        "email_outbox",
+        "geo_cache"
+      ]
     }
   ]
 }
