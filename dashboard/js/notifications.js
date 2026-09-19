@@ -1,22 +1,56 @@
 // =========================================================
 // CREVIO — NOTIFICATIONS PAGE
 // File: dashboard/js/notifications.js
-// Renders real notifications. Card click marks read, then
-// navigates via entity_type + entity_id to the workspace
-// record it refers to (project / portfolio / conversation).
+// Two-pane layout: list on left, reading pane on right.
+// Click a notification → marks read → renders full content
+// in the reading pane with markdown support (headings, bold,
+// lists). No navigation, no reply, read-only.
+// Mobile: reading pane slides over with a back button.
 // =========================================================
 
 document.addEventListener("DOMContentLoaded", function () {
     const $ = (id) => document.getElementById(id);
 
-    const container     = $("notificationsContainer");
-    const markAllBtn    = $("markAllBtn");
-    const unreadCountEl = $("unreadCount");
-    const totalLabel    = $("totalLabel");
-    const toast         = $("toast");
+    const container      = $("notificationsContainer");
+    const markAllBtn     = $("markAllBtn");
+    const unreadCountEl  = $("unreadCount");
+    const totalLabel     = $("totalLabel");
+    const toast          = $("toast");
+    const readingPane    = $("readingPane");
+    const readingEmpty   = $("readingEmpty");
+    const readingContent = $("readingContent");
+    const readingBack    = $("readingBack");
 
     let notifications = [];
     let filter        = "all";
+    let activeId      = null;
+
+    // =========================================================
+    // INJECT MARKDOWN CSS (once)
+    // =========================================================
+    if (!document.getElementById("__notifMdStyles")) {
+        const st = document.createElement("style");
+        st.id = "__notifMdStyles";
+        st.textContent = `
+            .reading-body { white-space: normal; }
+            .reading-body h1 { font-size:22px; font-weight:700; margin:26px 0 12px; color:var(--text-primary); line-height:1.3; letter-spacing:-0.01em; }
+            .reading-body h2 { font-size:18px; font-weight:700; margin:24px 0 10px; color:var(--text-primary); line-height:1.3; }
+            .reading-body h3 { font-size:16px; font-weight:600; margin:22px 0 8px; color:var(--text-primary); line-height:1.35; }
+            .reading-body p  { margin:0 0 14px; }
+            .reading-body p:last-child { margin-bottom:0; }
+            .reading-body strong { color:var(--text-primary); font-weight:600; }
+            .reading-body em { font-style:italic; color:var(--text-secondary); }
+            .reading-body code {
+                background:var(--bg-card); border:1px solid var(--border-color);
+                padding:1px 6px; border-radius:4px; font-size:0.9em;
+                font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            }
+            .reading-body ul, .reading-body ol { margin:0 0 14px 22px; padding:0; }
+            .reading-body li { margin:0 0 6px; }
+            .reading-body li:last-child { margin-bottom:0; }
+        `;
+        document.head.appendChild(st);
+    }
 
     // =========================================================
     // LOAD
@@ -35,7 +69,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     // =========================================================
-    // RENDER
+    // RENDER LIST
     // =========================================================
     function render() {
         const unreadCount = notifications.filter(n => !n.is_read).length;
@@ -46,7 +80,7 @@ document.addEventListener("DOMContentLoaded", function () {
         if (filter === "unread") {
             filtered = notifications.filter(n => !n.is_read);
         } else if (filter !== "all") {
-            filtered = notifications.filter(n => (n.type || "system").toLowerCase() === filter);
+            filtered = filtered.filter(n => (n.type || "system").toLowerCase() === filter);
         }
 
         if (!filtered.length) {
@@ -62,13 +96,13 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
-        container.innerHTML = `<div class="notif-list">${filtered.map(renderItem).join("")}</div>`;
+        container.innerHTML = filtered.map(renderListItem).join("");
         if (typeof lucide !== "undefined") lucide.createIcons();
 
-        container.querySelectorAll("[data-mark-read]").forEach(el => {
+        container.querySelectorAll(".notif-item").forEach(el => {
             el.addEventListener("click", (e) => {
                 if (e.target.closest("[data-delete]")) return;
-                handleCardClick(el.dataset.markRead);
+                openNotification(parseInt(el.dataset.id, 10));
             });
         });
 
@@ -82,6 +116,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     const data = await res.json();
                     if (data.success) {
                         notifications = notifications.filter(n => String(n.id) !== String(id));
+                        if (String(activeId) === String(id)) closeReadingPane();
                         render();
                         showToast("Deleted");
                     }
@@ -90,26 +125,26 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    function renderItem(n) {
+    function renderListItem(n) {
         const type   = (n.type || "system").toLowerCase();
         const unread = !n.is_read;
+        const active = String(n.id) === String(activeId);
         const time   = formatRelativeTime(n.created_at);
-        const navigable = !!destinationFor(n);
+        const preview = stripMarkdown(n.message || "").slice(0, 140);
 
         return `
-            <div class="notif-item ${unread ? 'unread' : ''}" data-mark-read="${n.id}"
-                 ${navigable ? 'role="link" tabindex="0"' : 'role="button" tabindex="0"'}
-                 style="cursor:pointer;">
+            <div class="notif-item ${unread ? 'unread' : ''} ${active ? 'active' : ''}" data-id="${n.id}">
+                ${unread ? '<span class="notif-dot"></span>' : ''}
                 <div class="notif-icon ${type}">
                     <i data-lucide="${iconForType(type)}" class="icon"></i>
                 </div>
                 <div class="notif-body">
                     <div class="notif-title">${escapeHtml(n.title || "Notification")}</div>
-                    <div class="notif-message">${escapeHtml(n.message || "")}</div>
+                    <div class="notif-preview">${escapeHtml(preview)}</div>
                     <div class="notif-time">${time}</div>
                 </div>
                 <div class="notif-actions">
-                    <button class="icon-btn danger" data-delete="${n.id}" title="Delete">
+                    <button class="icon-btn danger" data-delete="${n.id}" title="Delete" type="button">
                         <i data-lucide="trash-2" class="icon"></i>
                     </button>
                 </div>
@@ -128,30 +163,145 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     // =========================================================
-    // NAVIGATION
+    // MARKDOWN RENDERER (safe: escape first, then transform)
+    // Supports: # ## ### headings, **bold**, *italic*, `code`,
+    // and both - / * bullet lists plus 1. ordered lists.
     // =========================================================
-    function destinationFor(n) {
-        const et = (n.entity_type || "").toLowerCase();
-        const eid = n.entity_id;
-
-        if (et === "project" && eid) {
-            return "/dashboard/pages/project-edit.html?id=" + encodeURIComponent(eid);
-        }
-        if (et === "portfolio") {
-            return "/dashboard/pages/portfolio-edit.html";
-        }
-        if (et === "conversation" && eid) {
-            return "/dashboard/pages/messages.html?conversation=" + encodeURIComponent(eid);
-        }
-        return null;
+    function stripMarkdown(text) {
+        return String(text || "")
+            .replace(/\*\*([^*]+)\*\*/g, "$1")
+            .replace(/\*([^*]+)\*/g, "$1")
+            .replace(/`([^`]+)`/g, "$1")
+            .replace(/^#{1,3}\s+/gm, "")
+            .replace(/\r\n/g, "\n");
     }
 
-    async function handleCardClick(id) {
+    function renderMarkdown(text) {
+        if (!text) return "";
+        // Escape HTML FIRST for safety
+        let s = escapeHtml(text);
+        s = s.replace(/\r\n/g, "\n");
+
+        // Inline: bold → italic → code (order matters)
+        s = s.replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>");
+        s = s.replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, "$1<em>$2</em>");
+        s = s.replace(/`([^`\n]+)`/g, "<code>$1</code>");
+
+        const lines = s.split("\n");
+        const html = [];
+        let buffer = [];
+        let listItems = [];
+        let listType = null; // 'ol' | 'ul'
+
+        function flushPara() {
+            if (buffer.length) {
+                html.push("<p>" + buffer.join("<br>") + "</p>");
+                buffer = [];
+            }
+        }
+        function flushList() {
+            if (listItems.length) {
+                const tag = listType === "ol" ? "ol" : "ul";
+                html.push("<" + tag + ">" + listItems.map(li => "<li>" + li + "</li>").join("") + "</" + tag + ">");
+                listItems = [];
+                listType = null;
+            }
+        }
+
+        for (const rawLine of lines) {
+            const trimmed = rawLine.trim();
+
+            if (!trimmed) { flushPara(); flushList(); continue; }
+
+            let m;
+            if ((m = trimmed.match(/^###\s+(.+)$/))) { flushPara(); flushList(); html.push("<h3>" + m[1] + "</h3>"); continue; }
+            if ((m = trimmed.match(/^##\s+(.+)$/)))  { flushPara(); flushList(); html.push("<h2>" + m[1] + "</h2>"); continue; }
+            if ((m = trimmed.match(/^#\s+(.+)$/)))   { flushPara(); flushList(); html.push("<h1>" + m[1] + "</h1>"); continue; }
+
+            if ((m = trimmed.match(/^\d+\.\s+(.+)$/))) {
+                flushPara();
+                if (listType !== "ol") { flushList(); listType = "ol"; }
+                listItems.push(m[1]);
+                continue;
+            }
+            if ((m = trimmed.match(/^[-*]\s+(.+)$/))) {
+                flushPara();
+                if (listType !== "ul") { flushList(); listType = "ul"; }
+                listItems.push(m[1]);
+                continue;
+            }
+
+            flushList();
+            buffer.push(trimmed);
+        }
+        flushPara();
+        flushList();
+
+        return html.join("");
+    }
+
+    // =========================================================
+    // OPEN NOTIFICATION → RENDER READING PANE
+    // =========================================================
+    async function openNotification(id) {
         const n = notifications.find(x => String(x.id) === String(id));
-        await markRead(id);
         if (!n) return;
-        const dest = destinationFor(n);
-        if (dest) window.location.href = dest;
+
+        activeId = id;
+
+        if (!n.is_read) {
+            await markRead(id);
+        } else {
+            updateActiveHighlight();
+        }
+
+        renderReadingPane(n);
+        openReadingPaneMobile();
+    }
+
+    function updateActiveHighlight() {
+        container.querySelectorAll(".notif-item").forEach(el => {
+            el.classList.toggle("active", String(el.dataset.id) === String(activeId));
+        });
+    }
+
+    function renderReadingPane(n) {
+        const type   = (n.type || "system").toLowerCase();
+        const time   = formatFullTime(n.created_at);
+
+        readingEmpty.style.display = "none";
+        readingContent.style.display = "block";
+
+        readingContent.innerHTML = `
+            <div class="reading-header">
+                <div class="reading-icon ${type}">
+                    <i data-lucide="${iconForType(type)}" class="icon"></i>
+                </div>
+                <div class="reading-meta">
+                    <div class="reading-type">${escapeHtml(type)}</div>
+                    <div class="reading-timestamp">${time}</div>
+                </div>
+            </div>
+            <h2 class="reading-title">${escapeHtml(n.title || "Notification")}</h2>
+            <div class="reading-body">${renderMarkdown(n.message || "")}</div>
+        `;
+
+        if (typeof lucide !== "undefined") lucide.createIcons();
+        readingContent.scrollTop = 0;
+    }
+
+    function closeReadingPane() {
+        activeId = null;
+        readingContent.style.display = "none";
+        readingEmpty.style.display = "flex";
+        readingPane.classList.remove("mobile-open");
+        updateActiveHighlight();
+    }
+
+    function openReadingPaneMobile() {
+        if (window.innerWidth <= 768) {
+            readingPane.classList.add("mobile-open");
+        }
     }
 
     // =========================================================
@@ -199,6 +349,13 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     // =========================================================
+    // MOBILE BACK BUTTON
+    // =========================================================
+    readingBack?.addEventListener("click", () => {
+        readingPane.classList.remove("mobile-open");
+    });
+
+    // =========================================================
     // HELPERS
     // =========================================================
     function formatRelativeTime(str) {
@@ -214,6 +371,17 @@ document.addEventListener("DOMContentLoaded", function () {
             const days = Math.floor(hrs / 24);
             if (days < 7)  return days + " day" + (days === 1 ? "" : "s") + " ago";
             return d.toLocaleDateString();
+        } catch { return str; }
+    }
+
+    function formatFullTime(str) {
+        if (!str) return "";
+        try {
+            const d = new Date(str.replace(" ", "T") + (str.includes("Z") ? "" : "Z"));
+            return d.toLocaleString(undefined, {
+                year: "numeric", month: "long", day: "numeric",
+                hour: "2-digit", minute: "2-digit"
+            });
         } catch { return str; }
     }
 
