@@ -578,8 +578,8 @@
       "file": "admin/pages/login.html",
       "patterns": [
         "appearance: none",
-        "#475569",
-        "#2563EB"
+        "#2563EB",
+        "#FFFFFF"
       ]
     },
     {
