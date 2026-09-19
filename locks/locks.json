@@ -624,13 +624,13 @@
     },
     {
       "id": "notifications-mobile-header-clear",
-      "desc": "Notifications page header has generous top+left padding on mobile to clear the floating hamburger",
+      "desc": "Hamburger sits inline in .list-header via CSS grid; no floating overlap on notifications page",
       "type": "fileContains",
-      "file": "dashboard/pages/notifications.html",
+      "file": "dashboard/js/mobile-menu.js",
       "patterns": [
-        "padding-top: 76px",
-        "padding-left: 64px",
-        "__notifMobileHeaderFix"
+        "grid-template-areas",
+        ".list-header",
+        "mobile-menu-open #mobileMenuBtn"
       ]
     },
     {

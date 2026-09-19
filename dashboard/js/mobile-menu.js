@@ -1,9 +1,9 @@
 // =========================================================
 // CREVIO — MOBILE MENU (shared)
 // File: dashboard/js/mobile-menu.js
-// Floating hamburger hides when drawer opens (uses ID
-// specificity to beat mobile.css). No close X — tap outside
-// or a nav link closes. Body scroll locked while open.
+// Hamburger sits inline inside .list-header (notifications)
+// or other header slots; only falls back to floating fixed
+// if no slot is found. Hides when drawer is open.
 // =========================================================
 (function () {
     if (window.__crevioMobileMenu) return;
@@ -60,6 +60,54 @@
             @media ${MQ} {
                 .mobile-menu-btn { display: flex; }
 
+                /* ---- Inline header slot layout ---- */
+                /* Any slot that receives the hamburger becomes a grid:
+                   [☰] Title
+                   [☰] Subtitle  */
+                .list-header,
+                .header,
+                .topbar,
+                .page-header,
+                .main > header,
+                .main > .header {
+                    display: grid !important;
+                    grid-template-columns: auto 1fr !important;
+                    grid-template-rows: auto auto !important;
+                    grid-template-areas: "btn title" "btn sub" !important;
+                    align-items: center !important;
+                    column-gap: 12px !important;
+                    row-gap: 2px !important;
+                }
+                .list-header > .mobile-menu-btn,
+                .header > .mobile-menu-btn,
+                .topbar > .mobile-menu-btn,
+                .page-header > .mobile-menu-btn,
+                .main > header > .mobile-menu-btn,
+                .main > .header > .mobile-menu-btn {
+                    grid-area: btn !important;
+                    align-self: center !important;
+                }
+                .list-header > h1,
+                .header > h1,
+                .topbar > h1,
+                .page-header > h1,
+                .main > header > h1,
+                .main > .header > h1 {
+                    grid-area: title !important;
+                    margin: 0 !important;
+                    align-self: end !important;
+                }
+                .list-header > p,
+                .header > p,
+                .topbar > p,
+                .page-header > p,
+                .main > header > p,
+                .main > .header > p {
+                    grid-area: sub !important;
+                    margin: 0 !important;
+                    align-self: start !important;
+                }
+
                 body.mobile-menu-installed .sidebar {
                     display: flex !important;
                     position: fixed !important;
@@ -82,7 +130,6 @@
                     transform: translateX(0);
                 }
 
-                /* Body lock while drawer is open */
                 body.mobile-menu-open {
                     overflow: hidden !important;
                     position: fixed !important;
@@ -90,7 +137,6 @@
                     touch-action: none;
                 }
 
-                /* HIDE THE HAMBURGER — high specificity to beat mobile.css */
                 body.mobile-menu-open #mobileMenuBtn.mobile-menu-btn {
                     display: none !important;
                     visibility: hidden !important;
@@ -113,10 +159,12 @@
 
         if (document.querySelector(".mobile-menu-btn")) return;
 
+        // Prefer inline slots over floating
         const slotSelectors = [
-            ".conv-header",
-            ".chat-header-left",
-            ".header",
+            ".list-header",        // notifications page
+            ".conv-header",        // messages — conversation list
+            ".chat-header-left",   // bot page + messages chat panel
+            ".header",             // settings page
             ".topbar",
             ".page-header",
             ".main > header",
@@ -137,8 +185,10 @@
         btn.innerHTML = hamburgerSVG();
 
         if (slot) {
+            // Insert hamburger as first child of the slot
             slot.insertBefore(btn, slot.firstChild);
         } else {
+            // Fallback — floating at top-left
             btn.style.position = "fixed";
             btn.style.top = "16px";
             btn.style.left = "16px";
