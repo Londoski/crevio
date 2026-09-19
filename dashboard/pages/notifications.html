@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Notifications â€” Crevio</title>
+    <title>Notifications Ã¢â‚¬â€ Crevio</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
@@ -37,7 +37,7 @@
         /* Split layout */
         .split { flex:1; display:flex; height:100vh; overflow:hidden; }
 
-        /* LEFT â€” List pane */
+        /* LEFT Ã¢â‚¬â€ List pane */
         .list-pane { width:420px; background:var(--bg-primary); border-right:1px solid var(--border-color); display:flex; flex-direction:column; flex-shrink:0; overflow:hidden; }
         .list-header { padding:24px 24px 12px; flex-shrink:0; }
         .list-header h1 { font-size:22px; font-weight:700; }
@@ -93,7 +93,7 @@
         .icon-btn.danger:hover { background:rgba(239,68,68,0.1); color:var(--danger); }
         .icon-btn .icon { width:14px; height:14px; }
 
-        /* RIGHT â€” Reading pane */
+        /* RIGHT Ã¢â‚¬â€ Reading pane */
         .reading-pane { flex:1; display:flex; flex-direction:column; background:var(--bg-primary); overflow:hidden; min-width:0; }
 
         .reading-body-wrap { flex:1; display:flex; overflow:hidden; min-height:0; }
@@ -208,6 +208,17 @@
     </style>
     <link rel="stylesheet" href="/dashboard/css/mobile.css?v=639253624517313970">
     <link rel="stylesheet" href="/dashboard/css/loader.css?v=639253269318409198">
+<style id="__notifMobileHeaderFix">
+/* Mobile: clear the floating hamburger so the page header has space */
+@media (max-width: 900px) {
+    .list-header { padding-top: 64px !important; }
+}
+@media (max-width: 480px) {
+    .list-header { padding-top: 60px !important; }
+    .list-header h1 { font-size: 20px !important; }
+    .list-header p { font-size: 12px !important; }
+}
+</style>
 </head>
 <body>
 
@@ -295,7 +306,7 @@
     <div class="toast" id="toast"></div>
 
     <script src="/dashboard/js/crevio-confirm.js?v=1789835596912"></script>
-    <script src="/dashboard/js/notifications.js?v=1789835596912"></script>
+    <script src="/dashboard/js/notifications.js?v=639254537060490028"></script>
     <script>
         document.getElementById('logoutButton')?.addEventListener('click', () => {
             localStorage.removeItem('token');
