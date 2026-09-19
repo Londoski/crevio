@@ -570,6 +570,25 @@
       "patterns": [
         "crevioAlert"
       ]
+    },
+    {
+      "id": "login-remember-device",
+      "desc": "Remember-device checkbox — Crevio soft style",
+      "type": "fileContains",
+      "file": "admin/pages/login.html",
+      "patterns": [
+        "appearance: none",
+        "accent-dim"
+      ]
+    },
+    {
+      "id": "login-remember-forward",
+      "desc": "login.js reads rememberDevice + sends in payload",
+      "type": "fileContains",
+      "file": "admin/js/login.js",
+      "patterns": [
+        "rememberDevice"
+      ]
     }
   ]
 }

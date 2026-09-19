@@ -2,9 +2,13 @@
 // CREVIO — LOGIN SECURITY SERVICE
 // File: backend/services/loginSecurityService.js
 // Called once per successful login. Never blocks — everything
-// after the session insert is fire-and-forget. Emits a real
-// notification + queues a real email ONLY when the device is
-// new AND it isn't the user's very first login.
+// after the session insert is fire-and-forget.
+//
+// Device trust behavior:
+//   rememberDevice = true  → device added to trusted_devices
+//                            (30 days), no notify on repeat
+//   rememberDevice = false → device NOT persisted, notification
+//                            fires every login
 // =========================================================
 const crypto = require("crypto");
 const db = require("../../database/db");
@@ -13,26 +17,22 @@ const geoService = require("./geoService");
 const notificationService = require("./notificationService");
 const emailService = require("./emailService");
 
-const DEVICE_TTL_MS  = 90 * 24 * 60 * 60 * 1000; // 90 days device trust
+const DEVICE_TTL_MS  = 30 * 24 * 60 * 60 * 1000; // 30 days when trusted
 const SESSION_TTL_MS =  7 * 24 * 60 * 60 * 1000; // 7 days — matches JWT
 
 function sha256(s) {
     return crypto.createHash("sha256").update(String(s)).digest("hex");
 }
-
 function futureIso(ms) {
     return new Date(Date.now() + ms).toISOString().replace("T", " ").replace(/\.\d{3}Z$/, "");
 }
-
 function nowIso() {
     return new Date().toISOString().replace("T", " ").replace(/\.\d{3}Z$/, "");
 }
-
 function appUrl() {
     const u = process.env.APP_URL || process.env.SITE_URL || "http://localhost:3000";
     return String(u).replace(/\/+$/, "");
 }
-
 function formatDateTime(iso) {
     try {
         const d = new Date(iso.replace(" ", "T") + "Z");
@@ -43,11 +43,12 @@ function formatDateTime(iso) {
     } catch (e) { return iso; }
 }
 
-async function recordLogin({ userId, userEmail, token, userAgent, ipAddress, acceptLanguage }) {
+async function recordLogin({ userId, userEmail, token, userAgent, ipAddress, acceptLanguage, rememberDevice = true }) {
     if (!userId || !token) return { success: false, reason: "missing_user_or_token" };
 
     try {
         const tokenHash = sha256(token);
+        const remember = rememberDevice !== false; // default true
 
         // ---------- 1. Record session ----------
         try {
@@ -58,11 +59,11 @@ async function recordLogin({ userId, userEmail, token, userAgent, ipAddress, acc
             `).run(userId, tokenHash, userAgent || null, ipAddress || null, futureIso(SESSION_TTL_MS));
         } catch (e) { console.error("[loginSecurity] session insert failed:", e.message); }
 
-        // ---------- 2. Device fingerprint (IP NOT included — so switching Wi-Fi→4G isn't "new") ----------
+        // ---------- 2. Device fingerprint ----------
         const parsed = deviceService.parse(userAgent || "");
         const fp = deviceService.fingerprint({ userAgent, ipAddress: null, acceptLanguage });
 
-        // ---------- 3. Is this the user's very first login? ----------
+        // ---------- 3. First-ever login? ----------
         let priorSessions = 1;
         try {
             const row = db.prepare("SELECT COUNT(*) AS c FROM sessions WHERE user_id = ?").get(userId);
@@ -72,11 +73,13 @@ async function recordLogin({ userId, userEmail, token, userAgent, ipAddress, acc
 
         // ---------- 4. Existing trusted device? ----------
         let existingDevice = null;
-        try {
-            existingDevice = db.prepare(
-                "SELECT * FROM trusted_devices WHERE user_id = ? AND device_token = ? LIMIT 1"
-            ).get(userId, fp) || null;
-        } catch (e) { existingDevice = null; }
+        if (remember) {
+            try {
+                existingDevice = db.prepare(
+                    "SELECT * FROM trusted_devices WHERE user_id = ? AND device_token = ? LIMIT 1"
+                ).get(userId, fp) || null;
+            } catch (e) { existingDevice = null; }
+        }
 
         if (existingDevice) {
             try {
@@ -86,29 +89,31 @@ async function recordLogin({ userId, userEmail, token, userAgent, ipAddress, acc
             return { success: true, isNewDevice: false, device: parsed.friendly };
         }
 
-        // ---------- 5. New device → record it ----------
-        try {
-            db.prepare(`
-                INSERT INTO trusted_devices
-                    (user_id, device_token, device_name, user_agent, ip_address, expires_at, last_used_at)
-                VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-            `).run(userId, fp, parsed.friendly, userAgent || null, ipAddress || null, futureIso(DEVICE_TTL_MS));
-        } catch (e) { console.error("[loginSecurity] device insert failed:", e.message); }
+        // ---------- 5. New device → record it (only if remember=true) ----------
+        if (remember) {
+            try {
+                db.prepare(`
+                    INSERT INTO trusted_devices
+                        (user_id, device_token, device_name, user_agent, ip_address, expires_at, last_used_at)
+                    VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                `).run(userId, fp, parsed.friendly, userAgent || null, ipAddress || null, futureIso(DEVICE_TTL_MS));
+            } catch (e) { console.error("[loginSecurity] device insert failed:", e.message); }
+        }
 
-        // ---------- 6. First-ever login: trust silently, no notification ----------
+        // ---------- 6. First-ever login: silent, no notification ----------
         if (isFirstEver) {
             return { success: true, isNewDevice: true, firstEver: true, device: parsed.friendly };
         }
 
-        // ---------- 7. GeoIP (async, cached, 1.5s timeout) ----------
+        // ---------- 7. GeoIP ----------
         let loc = { private: true };
         try {
             loc = await geoService.lookup(ipAddress);
-        } catch (e) { /* handled inside */ }
+        } catch (e) {}
         const locationText = geoService.friendly(loc);
         const timestamp = formatDateTime(nowIso());
 
-        // ---------- 8. Notification (short, in-app) ----------
+        // ---------- 8. Notification ----------
         try {
             notificationService.create({
                 userId: userId,
@@ -123,7 +128,7 @@ async function recordLogin({ userId, userEmail, token, userAgent, ipAddress, acc
             });
         } catch (e) { console.error("[loginSecurity] notification failed:", e.message); }
 
-        // ---------- 9. Email (different wording, more detailed) ----------
+        // ---------- 9. Email ----------
         if (userEmail) {
             const subject = "Security alert: New sign-in to your Crevio account";
             const text =

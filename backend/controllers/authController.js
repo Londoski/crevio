@@ -88,7 +88,8 @@ exports.login = async (req, res) => {
                 token:       token,
                 userAgent:   req.headers["user-agent"] || "",
                 ipAddress:   String(req.headers["x-forwarded-for"] || "").split(",")[0].trim() || req.ip || "",
-                acceptLanguage: req.headers["accept-language"] || ""
+                acceptLanguage: req.headers["accept-language"] || "",
+                rememberDevice: req.body && req.body.rememberDevice === false ? false : true
             }).catch(function () {});
         } catch (e) {}
 

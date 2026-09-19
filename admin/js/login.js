@@ -7,6 +7,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         const email    = document.getElementById("email").value.trim();
         const password = document.getElementById("password").value.trim();
+        const remember = document.getElementById("rememberDevice") ? document.getElementById("rememberDevice").checked : true;
 
         if (!email || !password) return crevioAlert("Please enter email and password.", { kind: "warning" });
 
@@ -14,7 +15,7 @@ document.addEventListener("DOMContentLoaded", function () {
             const response = await fetch("/api/auth/login", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email, password })
+                body: JSON.stringify({ email, password, rememberDevice: remember })
             });
 
             const data = await response.json();
