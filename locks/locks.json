@@ -577,9 +577,9 @@
       "type": "fileContains",
       "file": "admin/pages/login.html",
       "patterns": [
-        "appearance: none",
+        "crevio-checkbox-final",
         "#2563EB",
-        "#FFFFFF"
+        "appearance: none"
       ]
     },
     {

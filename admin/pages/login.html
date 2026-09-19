@@ -232,6 +232,61 @@
 </style>
     <link rel="stylesheet" href="/dashboard/css/loader.css?v=639252903025998955">
     <script src="/dashboard/js/crevio-alert.js"></script>
+<style id="crevio-checkbox-final">
+/* Final override — wins against every previous rule */
+.checkbox-group input[type="checkbox"] {
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    display: inline-block !important;
+    width: 20px !important;
+    height: 20px !important;
+    min-width: 20px !important;
+    border-radius: 6px !important;
+    border: 2px solid #64748B !important;
+    background-color: #0F172A !important;
+    cursor: pointer !important;
+    position: relative !important;
+    flex-shrink: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+    vertical-align: middle !important;
+    transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease !important;
+}
+
+.checkbox-group input[type="checkbox"]:hover:not(:checked) {
+    border-color: #94A3B8 !important;
+}
+
+.checkbox-group input[type="checkbox"]:checked {
+    background-color: #2563EB !important;
+    border-color: #2563EB !important;
+}
+
+.checkbox-group input[type="checkbox"]:checked:hover {
+    background-color: #1D4ED8 !important;
+    border-color: #1D4ED8 !important;
+}
+
+.checkbox-group input[type="checkbox"]:checked::after {
+    content: "" !important;
+    position: absolute !important;
+    left: 6px !important;
+    top: 1px !important;
+    width: 5px !important;
+    height: 11px !important;
+    border: solid #FFFFFF !important;
+    border-width: 0 2px 2px 0 !important;
+    transform: rotate(45deg) !important;
+    display: block !important;
+}
+
+.checkbox-group input[type="checkbox"]:focus-visible {
+    outline: none !important;
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.35) !important;
+}
+</style>
 </head>
 <body>
 
