@@ -1,6 +1,9 @@
 // =========================================================
 // CREVIO — NOTIFICATIONS PAGE
 // File: dashboard/js/notifications.js
+// Renders real notifications. Card click marks read, then
+// navigates via entity_type + entity_id to the workspace
+// record it refers to (project / portfolio / conversation).
 // =========================================================
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -35,12 +38,10 @@ document.addEventListener("DOMContentLoaded", function () {
     // RENDER
     // =========================================================
     function render() {
-        // Update counts
         const unreadCount = notifications.filter(n => !n.is_read).length;
         unreadCountEl.textContent = unreadCount;
         totalLabel.textContent = `${notifications.length} notification${notifications.length === 1 ? "" : "s"}`;
 
-        // Filter
         let filtered = notifications;
         if (filter === "unread") {
             filtered = notifications.filter(n => !n.is_read);
@@ -64,12 +65,13 @@ document.addEventListener("DOMContentLoaded", function () {
         container.innerHTML = `<div class="notif-list">${filtered.map(renderItem).join("")}</div>`;
         if (typeof lucide !== "undefined") lucide.createIcons();
 
-        // Mark read on click
         container.querySelectorAll("[data-mark-read]").forEach(el => {
-            el.addEventListener("click", () => markRead(el.dataset.markRead));
+            el.addEventListener("click", (e) => {
+                if (e.target.closest("[data-delete]")) return;
+                handleCardClick(el.dataset.markRead);
+            });
         });
 
-        // Delete
         container.querySelectorAll("[data-delete]").forEach(el => {
             el.addEventListener("click", async (e) => {
                 e.stopPropagation();
@@ -92,9 +94,12 @@ document.addEventListener("DOMContentLoaded", function () {
         const type   = (n.type || "system").toLowerCase();
         const unread = !n.is_read;
         const time   = formatRelativeTime(n.created_at);
+        const navigable = !!destinationFor(n);
 
         return `
-            <div class="notif-item ${unread ? 'unread' : ''}" data-mark-read="${n.id}">
+            <div class="notif-item ${unread ? 'unread' : ''}" data-mark-read="${n.id}"
+                 ${navigable ? 'role="link" tabindex="0"' : 'role="button" tabindex="0"'}
+                 style="cursor:pointer;">
                 <div class="notif-icon ${type}">
                     <i data-lucide="${iconForType(type)}" class="icon"></i>
                 </div>
@@ -120,6 +125,33 @@ document.addEventListener("DOMContentLoaded", function () {
             error:   "alert-circle",
             system:  "info"
         }[t] || "bell";
+    }
+
+    // =========================================================
+    // NAVIGATION
+    // =========================================================
+    function destinationFor(n) {
+        const et = (n.entity_type || "").toLowerCase();
+        const eid = n.entity_id;
+
+        if (et === "project" && eid) {
+            return "/dashboard/pages/project-edit.html?id=" + encodeURIComponent(eid);
+        }
+        if (et === "portfolio") {
+            return "/dashboard/pages/portfolio-edit.html";
+        }
+        if (et === "conversation" && eid) {
+            return "/dashboard/pages/messages.html?conversation=" + encodeURIComponent(eid);
+        }
+        return null;
+    }
+
+    async function handleCardClick(id) {
+        const n = notifications.find(x => String(x.id) === String(id));
+        await markRead(id);
+        if (!n) return;
+        const dest = destinationFor(n);
+        if (dest) window.location.href = dest;
     }
 
     // =========================================================
