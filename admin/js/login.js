@@ -8,7 +8,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const email    = document.getElementById("email").value.trim();
         const password = document.getElementById("password").value.trim();
 
-        if (!email || !password) return alert("Please enter email and password.");
+        if (!email || !password) return crevioAlert("Please enter email and password.", { kind: "warning" });
 
         try {
             const response = await fetch("/api/auth/login", {
@@ -26,11 +26,11 @@ document.addEventListener("DOMContentLoaded", function () {
                 console.log("✅ Token saved, redirecting...");
                 window.location.href = "/dashboard/";
             } else {
-                alert(data.message || "Login failed.");
+                crevioAlert(data.message || "Login failed.", { kind: "error" });
             }
         } catch (err) {
             console.error("Login error:", err);
-            alert("Server error. Please try again.");
+            crevioAlert("Server error. Please try again.", { kind: "error" });
         }
     });
 });

@@ -549,6 +549,27 @@
         "notify2FAEnabled",
         "notify2FADisabled"
       ]
+    },
+    {
+      "id": "crevio-alert-shared",
+      "desc": "Reusable Crevio-styled alert dialog (window.crevioAlert)",
+      "type": "fileContains",
+      "file": "dashboard/js/crevio-alert.js",
+      "patterns": [
+        "crevioAlert",
+        "crevio-alert-overlay",
+        "crevio-alert-card",
+        "KINDS"
+      ]
+    },
+    {
+      "id": "login-uses-crevio-alert",
+      "desc": "Login page uses crevioAlert, not native alert()",
+      "type": "fileContains",
+      "file": "admin/js/login.js",
+      "patterns": [
+        "crevioAlert"
+      ]
     }
   ]
 }
