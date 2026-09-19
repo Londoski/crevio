@@ -590,6 +590,28 @@
       "patterns": [
         "rememberDevice"
       ]
+    },
+    {
+      "id": "notifications-unread-count-endpoint",
+      "desc": "GET /api/notifications/unread-count returns user unread count",
+      "type": "fileContains",
+      "file": "backend/routes/notificationRoutes.js",
+      "patterns": [
+        "/unread-count",
+        "unreadCount"
+      ]
+    },
+    {
+      "id": "sidebar-unread-badges",
+      "desc": "Red dot badges on Messages + Notifications nav items",
+      "type": "fileContains",
+      "file": "dashboard/js/sidebar-badges.js",
+      "patterns": [
+        "nav-badge",
+        "notifications.html",
+        "messages.html",
+        "refresh"
+      ]
     }
   ]
 }

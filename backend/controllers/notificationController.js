@@ -118,3 +118,18 @@ exports.createNotification = (req, res) => {
         res.status(500).json({ success: false, message: "Failed", error: err.message });
     }
 };
+
+// =========================================================
+// GET /api/notifications/unread-count
+// =========================================================
+exports.unreadCount = (req, res) => {
+    try {
+        if (!ensureTable()) return res.json({ success: true, count: 0 });
+        const row = db.prepare(
+            "SELECT COUNT(*) AS c FROM notifications WHERE user_id = ? AND is_read = 0"
+        ).get(req.user.id);
+        res.json({ success: true, count: row ? Number(row.c) : 0 });
+    } catch (err) {
+        res.status(500).json({ success: false, message: "Failed", error: err.message });
+    }
+};

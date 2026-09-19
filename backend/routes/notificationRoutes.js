@@ -10,6 +10,7 @@ const notificationController = require("../controllers/notificationController");
 
 router.get("/",              auth, notificationController.getNotifications);
 router.post("/",             auth, notificationController.createNotification);
+router.get("/unread-count", auth, notificationController.unreadCount);
 router.patch("/read-all",    auth, notificationController.markAllRead);
 router.patch("/:id/read",    auth, notificationController.markRead);
 router.delete("/:id",        auth, notificationController.deleteNotification);
