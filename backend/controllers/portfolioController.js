@@ -8,6 +8,7 @@
 // =========================================================
 
 const db = require("../../database/db");
+const notificationService = require("../services/notificationService");
 
 function cols(table) {
     try { return db.prepare(`PRAGMA table_info(${table})`).all().map(c => c.name); }
@@ -212,6 +213,19 @@ exports.publish = (req, res) => {
 
             values.push(req.user.id);
             db.prepare(`UPDATE portfolio_config SET ${setClauses.join(", ")} WHERE user_id = ?`).run(...values);
+        }
+
+        if (publish) {
+            try {
+                notificationService.create({
+                    userId: req.user.id,
+                    type: "system",
+                    title: "Portfolio published",
+                    message: "Your portfolio is now publicly available.",
+                    entityType: "portfolio",
+                    entityId: req.user.id
+                });
+            } catch (e) { /* silent */ }
         }
 
         res.json({ success: true, published: publish });

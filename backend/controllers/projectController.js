@@ -6,6 +6,7 @@
 // =========================================================
 
 const db = require("../../database/db");
+const notificationService = require("../services/notificationService");
 const path = require("path");
 const fs = require("fs");
 
@@ -250,6 +251,19 @@ exports.publishProject = (req, res) => {
             WHERE id = ? AND user_id = ?
         `).run(req.params.id, req.user.id);
         if (r.changes === 0) return res.status(404).json({ success: false, message: "Not found" });
+        try {
+            const __p = db.prepare("SELECT name FROM projects WHERE id = ?").get(req.params.id);
+            const __n = (__p && __p.name) ? __p.name : "your project";
+            notificationService.create({
+                userId: req.user.id,
+                type: "system",
+                title: "Project published",
+                message: '"' + __n + '" is now publicly visible.',
+                entityType: "project",
+                entityId: Number(req.params.id)
+            });
+        } catch (e) { /* silent */ }
+
         res.json({ success: true, message: "Project published" });
     } catch (err) {
         res.status(500).json({ success: false, message: "Failed", error: err.message });
@@ -264,6 +278,19 @@ exports.unpublishProject = (req, res) => {
             WHERE id = ? AND user_id = ?
         `).run(req.params.id, req.user.id);
         if (r.changes === 0) return res.status(404).json({ success: false, message: "Not found" });
+        try {
+            const __p = db.prepare("SELECT name FROM projects WHERE id = ?").get(req.params.id);
+            const __n = (__p && __p.name) ? __p.name : "your project";
+            notificationService.create({
+                userId: req.user.id,
+                type: "system",
+                title: "Project unpublished",
+                message: '"' + __n + '" is no longer publicly visible.',
+                entityType: "project",
+                entityId: Number(req.params.id)
+            });
+        } catch (e) { /* silent */ }
+
         res.json({ success: true, message: "Project unpublished" });
     } catch (err) {
         res.status(500).json({ success: false, message: "Failed", error: err.message });

@@ -4,6 +4,7 @@
 // =========================================================
 
 const db = require("../../database/db");
+const notificationService = require("../services/notificationService");
 
 function safeGet(sql, ...p) { try { return db.prepare(sql).get(...p); } catch { return null; } }
 function safeAll(sql, ...p) { try { return db.prepare(sql).all(...p); } catch { return []; } }
@@ -458,6 +459,21 @@ exports.startConversation = (req, res) => {
             db.prepare("INSERT INTO messages (conversation_id, sender_type, content, created_at) VALUES (?, 'client', ?, CURRENT_TIMESTAMP)")
               .run(conv.id, message.trim());
         }
+        try {
+            const __who = (client_name && String(client_name).trim()) || "a client";
+            const __prev = message && String(message).trim()
+                ? String(message).trim().slice(0, 180)
+                : "New inquiry received.";
+            notificationService.create({
+                userId: creator_id,
+                type: "message",
+                title: "New message from " + __who,
+                message: __prev,
+                entityType: "conversation",
+                entityId: conv.id
+            });
+        } catch (e) { /* silent */ }
+
         res.json({ success: true, conversation_id: conv.id });
     } catch (err) { res.status(500).json({ success: false, message: err.message }); }
 };
