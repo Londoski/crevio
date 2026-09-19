@@ -493,6 +493,62 @@
         "email_outbox",
         "geo_cache"
       ]
+    },
+    {
+      "id": "phase-B2-login-security",
+      "desc": "Phase B2 — login records session + new-device notification + email",
+      "type": "fileContains",
+      "file": "backend/controllers/authController.js",
+      "patterns": [
+        "loginSecurityService",
+        "recordLogin"
+      ]
+    },
+    {
+      "id": "phase-B2-login-service",
+      "desc": "Phase B2 — loginSecurityService (session + device + notify + email)",
+      "type": "fileContains",
+      "file": "backend/services/loginSecurityService.js",
+      "patterns": [
+        "recordLogin",
+        "trusted_devices",
+        "notificationService",
+        "emailService"
+      ]
+    },
+    {
+      "id": "phase-B3-account-security-service",
+      "desc": "Phase B3 — accountSecurityService",
+      "type": "fileContains",
+      "file": "backend/services/accountSecurityService.js",
+      "patterns": [
+        "notifyPasswordChanged",
+        "notifyEmailChanged",
+        "notify2FAEnabled",
+        "notify2FADisabled"
+      ]
+    },
+    {
+      "id": "phase-B3-auth-wired",
+      "desc": "Phase B3 — authController wires password + email change notifications",
+      "type": "fileContains",
+      "file": "backend/controllers/authController.js",
+      "patterns": [
+        "accountSecurityService",
+        "notifyPasswordChanged",
+        "notifyEmailChanged"
+      ]
+    },
+    {
+      "id": "phase-B3-2fa-wired",
+      "desc": "Phase B3 — twoFactorController wires 2FA notifications",
+      "type": "fileContains",
+      "file": "backend/controllers/twoFactorController.js",
+      "patterns": [
+        "accountSecurityService",
+        "notify2FAEnabled",
+        "notify2FADisabled"
+      ]
     }
   ]
 }

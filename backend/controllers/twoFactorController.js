@@ -4,6 +4,7 @@
 // =========================================================
 
 const db = require("../../database/db");
+const accountSecurityService = require("../services/accountSecurityService");
 
 function cols(table) {
     try { return db.prepare(`PRAGMA table_info(${table})`).all().map(c => c.name); }
@@ -17,6 +18,17 @@ exports.setup = (req, res) => {
         if (c.includes("two_factor_enabled")) {
             db.prepare("UPDATE users SET two_factor_enabled = 1 WHERE id = ?").run(req.user.id);
         }
+        // Notify: 2FA enabled (fire-and-forget)
+        try {
+            const __row = db.prepare("SELECT email FROM users WHERE id = ?").get(req.user.id);
+            accountSecurityService.notify2FAEnabled({
+                userId:    req.user.id,
+                userEmail: __row && __row.email,
+                ipAddress: String(req.headers["x-forwarded-for"] || "").split(",")[0].trim() || req.ip || "",
+                userAgent: req.headers["user-agent"] || ""
+            }).catch(function () {});
+        } catch (e) {}
+
         res.json({ success: true, message: "2FA enabled" });
     } catch (err) {
         res.status(500).json({ success: false, message: "Failed", error: err.message });
@@ -30,6 +42,17 @@ exports.disable = (req, res) => {
         if (c.includes("two_factor_enabled")) {
             db.prepare("UPDATE users SET two_factor_enabled = 0 WHERE id = ?").run(req.user.id);
         }
+        // Notify: 2FA disabled (fire-and-forget)
+        try {
+            const __row = db.prepare("SELECT email FROM users WHERE id = ?").get(req.user.id);
+            accountSecurityService.notify2FADisabled({
+                userId:    req.user.id,
+                userEmail: __row && __row.email,
+                ipAddress: String(req.headers["x-forwarded-for"] || "").split(",")[0].trim() || req.ip || "",
+                userAgent: req.headers["user-agent"] || ""
+            }).catch(function () {});
+        } catch (e) {}
+
         res.json({ success: true, message: "2FA disabled" });
     } catch (err) {
         res.status(500).json({ success: false, message: "Failed", error: err.message });

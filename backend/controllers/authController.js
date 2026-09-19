@@ -6,6 +6,8 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const db = require("../../database/db");
+const accountSecurityService = require("../services/accountSecurityService");
+const loginSecurityService = require("../services/loginSecurityService");
 
 function cols(table) {
     try { return db.prepare(`PRAGMA table_info(${table})`).all().map(c => c.name); }
@@ -76,6 +78,19 @@ exports.login = async (req, res) => {
             process.env.JWT_SECRET,
             { expiresIn: "7d" }
         );
+
+
+        // Record login + detect new device (fire-and-forget — never blocks login)
+        try {
+            loginSecurityService.recordLogin({
+                userId:      user.id,
+                userEmail:   user.email,
+                token:       token,
+                userAgent:   req.headers["user-agent"] || "",
+                ipAddress:   String(req.headers["x-forwarded-for"] || "").split(",")[0].trim() || req.ip || "",
+                acceptLanguage: req.headers["accept-language"] || ""
+            }).catch(function () {});
+        } catch (e) {}
 
         res.json({
             success: true,
@@ -158,6 +173,17 @@ exports.changeEmail = async (req, res) => {
         // Invalidate other sessions (force re-login)
         try { db.prepare("DELETE FROM sessions WHERE user_id = ?").run(uid); } catch (e) {}
 
+        // Notify: email was changed (fire-and-forget)
+        try {
+            accountSecurityService.notifyEmailChanged({
+                userId:    uid,
+                oldEmail:  user.email,
+                newEmail:  newEmail,
+                ipAddress: String(req.headers["x-forwarded-for"] || "").split(",")[0].trim() || req.ip || "",
+                userAgent: req.headers["user-agent"] || ""
+            }).catch(function () {});
+        } catch (e) {}
+
         res.json({ success: true, message: "Email updated. Please sign in again.", email: newEmail });
     } catch (err) {
         console.error("Change email error:", err);
@@ -203,6 +229,16 @@ exports.changePassword = async (req, res) => {
         const newHash = await bcrypt.hash(newPassword, 12);
         const col = user.password_hash ? "password_hash" : "password";
         db.prepare(`UPDATE users SET ${col} = ? WHERE id = ?`).run(newHash, uid);
+
+        // Notify: password was changed (fire-and-forget)
+        try {
+            accountSecurityService.notifyPasswordChanged({
+                userId:    uid,
+                userEmail: user.email,
+                ipAddress: String(req.headers["x-forwarded-for"] || "").split(",")[0].trim() || req.ip || "",
+                userAgent: req.headers["user-agent"] || ""
+            }).catch(function () {});
+        } catch (e) {}
 
         // Invalidate all sessions
         try { db.prepare("DELETE FROM sessions WHERE user_id = ?").run(uid); } catch (e) {}
