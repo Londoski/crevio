@@ -1,49 +1,59 @@
 // =========================================================
 // CREVIO — SIDEBAR UNREAD BADGES
 // File: dashboard/js/sidebar-badges.js
-// Adds a red dot next to "Messages" and "Notifications"
-// nav items when there are unread items. Works on every
-// page that has the sidebar. Idempotent.
+// Rule: dot shows whenever unread count > 0 — on EVERY page,
+// including the notifications/messages page itself. Only hides
+// when the count actually drops to 0 (user read everything).
 // =========================================================
 (function () {
     if (window.__crevioSidebarBadgesInstalled) return;
     window.__crevioSidebarBadgesInstalled = true;
 
-    const POLL_MS = 60000; // refresh every 60s when visible
+    const POLL_MS = 30000;
 
     // ---------- CSS ----------
     if (!document.getElementById("__navBadgeStyles")) {
         const st = document.createElement("style");
         st.id = "__navBadgeStyles";
         st.textContent = `
-            .nav-item.nav-has-badge { position: relative; }
+            .nav-item.nav-has-badge { position: relative !important; }
             .nav-badge {
-                position: absolute;
-                top: 6px;
-                right: 10px;
-                width: 8px;
-                height: 8px;
-                border-radius: 50%;
-                background: #EF4444;
-                box-shadow: 0 0 0 2px var(--bg-secondary, #1E293B);
-                display: none;
-                pointer-events: none;
-                animation: navBadgePulse 2s ease-in-out infinite;
+                position: absolute !important;
+                top: 50% !important;
+                right: 14px !important;
+                transform: translateY(-50%) !important;
+                width: 9px !important;
+                height: 9px !important;
+                border-radius: 50% !important;
+                background: #EF4444 !important;
+                box-shadow: 0 0 0 2px var(--bg-secondary, #1E293B) !important;
+                display: none !important;
+                pointer-events: none !important;
+                z-index: 10 !important;
+                animation: navBadgePulse 2s ease-in-out infinite !important;
             }
-            .nav-badge.visible { display: block; }
+            .nav-badge.visible { display: block !important; }
             @keyframes navBadgePulse {
-                0%, 100% { transform: scale(1); opacity: 1; }
-                50%      { transform: scale(1.15); opacity: 0.85; }
+                0%, 100% { opacity: 1;   }
+                50%      { opacity: 0.55; }
             }
         `;
         document.head.appendChild(st);
     }
 
-    // ---------- Find or inject badge into a nav item ----------
+    // ---------- Token ----------
+    function getToken() {
+        try { return localStorage.getItem("token"); } catch (e) { return null; }
+    }
+
+    // ---------- Find or create badge on a nav item ----------
     function ensureBadgeFor(hrefFragment) {
-        const links = document.querySelectorAll(".sidebar .nav-item, aside .nav-item, .mobile-sidebar .nav-item");
+        const links = document.querySelectorAll(
+            "aside.sidebar .nav-item, .sidebar .nav-item, aside .nav-item, .mobile-sidebar .nav-item, .mobile-menu .nav-item, nav .nav-item"
+        );
         for (const link of links) {
-            if (link.getAttribute("href") && link.getAttribute("href").indexOf(hrefFragment) !== -1) {
+            const href = link.getAttribute("href") || "";
+            if (href.indexOf(hrefFragment) !== -1) {
                 link.classList.add("nav-has-badge");
                 let dot = link.querySelector(".nav-badge");
                 if (!dot) {
@@ -59,52 +69,58 @@
 
     function setDot(dot, visible) {
         if (!dot) return;
-        if (visible) dot.classList.add("visible");
-        else dot.classList.remove("visible");
+        dot.classList.toggle("visible", !!visible);
     }
 
-    // ---------- Fetch counts ----------
-    async function fetchNotificationCount() {
-        try {
-            const res = await window.apiFetch("/api/notifications/unread-count");
-            const data = await res.json();
-            return data && data.success ? Number(data.count || 0) : 0;
-        } catch (e) { return 0; }
+    // ---------- Raw fetch ----------
+    async function fetchJson(url) {
+        const token = getToken();
+        const headers = { "Accept": "application/json" };
+        if (token) headers["Authorization"] = "Bearer " + token;
+        const res = await fetch(url, { headers, cache: "no-store" });
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        return await res.json();
     }
 
-    async function fetchMessageCount() {
+    async function getUnreadNotifications() {
         try {
-            const res = await window.apiFetch("/api/messages/stats");
-            const data = await res.json();
-            return data && data.success && data.stats ? Number(data.stats.unread || 0) : 0;
-        } catch (e) { return 0; }
+            const d = await fetchJson("/api/notifications/unread-count");
+            return d && d.success ? Number(d.count || 0) : 0;
+        } catch (e) {
+            console.warn("[SidebarBadges] notifications fetch failed:", e.message);
+            return 0;
+        }
+    }
+
+    async function getUnreadMessages() {
+        try {
+            const d = await fetchJson("/api/messages/stats");
+            return d && d.success && d.stats ? Number(d.stats.unread || 0) : 0;
+        } catch (e) {
+            console.warn("[SidebarBadges] messages fetch failed:", e.message);
+            return 0;
+        }
     }
 
     // ---------- Refresh ----------
-    let currentPath = window.location.pathname;
-    let isNotifPage  = /notifications\.html$/.test(currentPath);
-    let isMsgPage    = /messages\.html$/.test(currentPath);
-
     async function refresh() {
         const notifDot = ensureBadgeFor("notifications.html");
         const msgDot   = ensureBadgeFor("messages.html");
 
-        // Only fetch if the sidebar is present
-        if (!notifDot && !msgDot) return;
-
-        // Skip fetching for the count of the page we're on (avoids spurious dots while reading)
-        if (!isNotifPage) {
-            const nc = await fetchNotificationCount();
-            setDot(notifDot, nc > 0);
-        } else {
-            setDot(notifDot, false);
+        if (!notifDot && !msgDot) {
+            console.warn("[SidebarBadges] no matching nav items found");
+            return;
         }
 
-        if (!isMsgPage) {
-            const mc = await fetchMessageCount();
-            setDot(msgDot, mc > 0);
-        } else {
-            setDot(msgDot, false);
+        if (notifDot) {
+            const n = await getUnreadNotifications();
+            setDot(notifDot, n > 0);
+            console.log("[SidebarBadges] notifications unread =", n, "→ dot", n > 0 ? "ON" : "OFF");
+        }
+        if (msgDot) {
+            const m = await getUnreadMessages();
+            setDot(msgDot, m > 0);
+            console.log("[SidebarBadges] messages unread =", m, "→ dot", m > 0 ? "ON" : "OFF");
         }
     }
 
@@ -119,9 +135,13 @@
         });
     }
 
-    window.addEventListener("load", function () { setTimeout(start, 300); });
-    if (document.readyState === "complete") setTimeout(start, 200);
-    else document.addEventListener("DOMContentLoaded", function () { setTimeout(start, 200); });
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", function () { setTimeout(start, 200); });
+    } else {
+        setTimeout(start, 200);
+    }
+    window.addEventListener("load", function () { setTimeout(refresh, 400); });
 
+    window.__crevioRefreshBadges = refresh;
     console.log("[SidebarBadges] installed");
 })();

@@ -612,6 +612,15 @@
         "messages.html",
         "refresh"
       ]
+    },
+    {
+      "id": "sidebar-badges-overview",
+      "desc": "Overview (dashboard/index.html) loads sidebar-badges.js too",
+      "type": "fileContains",
+      "file": "dashboard/index.html",
+      "patterns": [
+        "sidebar-badges.js"
+      ]
     }
   ]
 }
