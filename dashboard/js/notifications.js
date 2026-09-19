@@ -1,11 +1,8 @@
 // =========================================================
-// CREVIO — NOTIFICATIONS PAGE
+// CREVIO â€” NOTIFICATIONS PAGE
 // File: dashboard/js/notifications.js
-// Two-pane layout: list on left, reading pane on right.
-// Click a notification → marks read → renders full content
-// in the reading pane with markdown support (headings, bold,
-// lists). No navigation, no reply, read-only.
-// Mobile: reading pane slides over with a back button.
+// Reading pane with markdown content + context panel on the
+// right (type, received, source, actions). Read-only.
 // =========================================================
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -19,6 +16,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const readingPane    = $("readingPane");
     const readingEmpty   = $("readingEmpty");
     const readingContent = $("readingContent");
+    const readingContext = $("readingContext");
     const readingBack    = $("readingBack");
 
     let notifications = [];
@@ -26,28 +24,22 @@ document.addEventListener("DOMContentLoaded", function () {
     let activeId      = null;
 
     // =========================================================
-    // INJECT MARKDOWN CSS (once)
+    // Inline markdown CSS for reading body
     // =========================================================
     if (!document.getElementById("__notifMdStyles")) {
         const st = document.createElement("style");
         st.id = "__notifMdStyles";
         st.textContent = `
-            .reading-body { white-space: normal; }
             .reading-body h1 { font-size:22px; font-weight:700; margin:26px 0 12px; color:var(--text-primary); line-height:1.3; letter-spacing:-0.01em; }
             .reading-body h2 { font-size:18px; font-weight:700; margin:24px 0 10px; color:var(--text-primary); line-height:1.3; }
             .reading-body h3 { font-size:16px; font-weight:600; margin:22px 0 8px; color:var(--text-primary); line-height:1.35; }
             .reading-body p  { margin:0 0 14px; }
             .reading-body p:last-child { margin-bottom:0; }
             .reading-body strong { color:var(--text-primary); font-weight:600; }
-            .reading-body em { font-style:italic; color:var(--text-secondary); }
-            .reading-body code {
-                background:var(--bg-card); border:1px solid var(--border-color);
-                padding:1px 6px; border-radius:4px; font-size:0.9em;
-                font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-            }
+            .reading-body em { font-style:italic; }
+            .reading-body code { background:var(--bg-card); border:1px solid var(--border-color); padding:1px 6px; border-radius:4px; font-size:0.9em; font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
             .reading-body ul, .reading-body ol { margin:0 0 14px 22px; padding:0; }
             .reading-body li { margin:0 0 6px; }
-            .reading-body li:last-child { margin-bottom:0; }
         `;
         document.head.appendChild(st);
     }
@@ -88,9 +80,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 <div class="empty-state">
                     <i data-lucide="${filter === "all" ? "bell-off" : "inbox"}" class="icon"></i>
                     <h3>${filter === "all" ? "No notifications yet" : "Nothing here"}</h3>
-                    <p>${filter === "all"
-                        ? "You'll see activity updates here."
-                        : "Try a different filter."}</p>
+                    <p>${filter === "all" ? "You'll see activity updates here." : "Try a different filter."}</p>
                 </div>`;
             if (typeof lucide !== "undefined") lucide.createIcons();
             return;
@@ -107,20 +97,9 @@ document.addEventListener("DOMContentLoaded", function () {
         });
 
         container.querySelectorAll("[data-delete]").forEach(el => {
-            el.addEventListener("click", async (e) => {
+            el.addEventListener("click", (e) => {
                 e.stopPropagation();
-                const id = el.dataset.delete;
-                if (!confirm("Delete this notification?")) return;
-                try {
-                    const res  = await window.apiFetch(`/api/notifications/${id}`, { method: "DELETE" });
-                    const data = await res.json();
-                    if (data.success) {
-                        notifications = notifications.filter(n => String(n.id) !== String(id));
-                        if (String(activeId) === String(id)) closeReadingPane();
-                        render();
-                        showToast("Deleted");
-                    }
-                } catch (err) { showToast("Failed: " + err.message, true); }
+                deleteNotification(el.dataset.delete);
             });
         });
     }
@@ -163,9 +142,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     // =========================================================
-    // MARKDOWN RENDERER (safe: escape first, then transform)
-    // Supports: # ## ### headings, **bold**, *italic*, `code`,
-    // and both - / * bullet lists plus 1. ordered lists.
+    // MARKDOWN (escape first, then transform)
     // =========================================================
     function stripMarkdown(text) {
         return String(text || "")
@@ -178,11 +155,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function renderMarkdown(text) {
         if (!text) return "";
-        // Escape HTML FIRST for safety
-        let s = escapeHtml(text);
-        s = s.replace(/\r\n/g, "\n");
+        let s = escapeHtml(text).replace(/\r\n/g, "\n");
 
-        // Inline: bold → italic → code (order matters)
         s = s.replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>");
         s = s.replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, "$1<em>$2</em>");
         s = s.replace(/`([^`\n]+)`/g, "<code>$1</code>");
@@ -191,57 +165,43 @@ document.addEventListener("DOMContentLoaded", function () {
         const html = [];
         let buffer = [];
         let listItems = [];
-        let listType = null; // 'ol' | 'ul'
+        let listType = null;
 
-        function flushPara() {
-            if (buffer.length) {
-                html.push("<p>" + buffer.join("<br>") + "</p>");
-                buffer = [];
-            }
-        }
+        function flushPara() { if (buffer.length) { html.push("<p>" + buffer.join("<br>") + "</p>"); buffer = []; } }
         function flushList() {
             if (listItems.length) {
                 const tag = listType === "ol" ? "ol" : "ul";
                 html.push("<" + tag + ">" + listItems.map(li => "<li>" + li + "</li>").join("") + "</" + tag + ">");
-                listItems = [];
-                listType = null;
+                listItems = []; listType = null;
             }
         }
 
         for (const rawLine of lines) {
             const trimmed = rawLine.trim();
-
             if (!trimmed) { flushPara(); flushList(); continue; }
-
             let m;
             if ((m = trimmed.match(/^###\s+(.+)$/))) { flushPara(); flushList(); html.push("<h3>" + m[1] + "</h3>"); continue; }
             if ((m = trimmed.match(/^##\s+(.+)$/)))  { flushPara(); flushList(); html.push("<h2>" + m[1] + "</h2>"); continue; }
             if ((m = trimmed.match(/^#\s+(.+)$/)))   { flushPara(); flushList(); html.push("<h1>" + m[1] + "</h1>"); continue; }
-
             if ((m = trimmed.match(/^\d+\.\s+(.+)$/))) {
                 flushPara();
                 if (listType !== "ol") { flushList(); listType = "ol"; }
-                listItems.push(m[1]);
-                continue;
+                listItems.push(m[1]); continue;
             }
             if ((m = trimmed.match(/^[-*]\s+(.+)$/))) {
                 flushPara();
                 if (listType !== "ul") { flushList(); listType = "ul"; }
-                listItems.push(m[1]);
-                continue;
+                listItems.push(m[1]); continue;
             }
-
             flushList();
             buffer.push(trimmed);
         }
-        flushPara();
-        flushList();
-
+        flushPara(); flushList();
         return html.join("");
     }
 
     // =========================================================
-    // OPEN NOTIFICATION → RENDER READING PANE
+    // OPEN â†’ RENDER READING PANE + CONTEXT PANEL
     // =========================================================
     async function openNotification(id) {
         const n = notifications.find(x => String(x.id) === String(id));
@@ -256,6 +216,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
         renderReadingPane(n);
+        renderContextPanel(n);
         openReadingPaneMobile();
     }
 
@@ -290,18 +251,86 @@ document.addEventListener("DOMContentLoaded", function () {
         readingContent.scrollTop = 0;
     }
 
+    function renderContextPanel(n) {
+        if (!readingContext) return;
+        readingContext.style.display = "flex";
+
+        const type = (n.type || "system").toLowerCase();
+        const fullDate = formatFullTime(n.created_at);
+        const entityLabel = labelForEntity(n.entity_type);
+        const entityRef = n.entity_id ? `#${n.entity_id}` : "";
+        const openDest = destinationFor(n);
+
+        readingContext.innerHTML = `
+            <div class="ctx-section">
+                <span class="ctx-type-badge ${type}">${escapeHtml(type)}</span>
+            </div>
+
+            <div class="ctx-divider"></div>
+
+            <div class="ctx-section">
+                <div class="ctx-label">Received</div>
+                <div class="ctx-value">${escapeHtml(fullDate)}</div>
+            </div>
+
+            ${entityLabel ? `
+                <div class="ctx-section">
+                    <div class="ctx-label">Source</div>
+                    <div class="ctx-value">${escapeHtml(entityLabel)}${entityRef ? ` <span style="color:var(--text-muted);font-weight:500;">${escapeHtml(entityRef)}</span>` : ""}</div>
+                </div>
+            ` : ""}
+
+            <div class="ctx-divider"></div>
+
+            <div class="ctx-section">
+                <div class="ctx-label">Actions</div>
+                ${openDest ? `
+                    <button class="ctx-action primary" id="ctxOpen" type="button">
+                        <i data-lucide="external-link" class="icon"></i>
+                        Open ${escapeHtml(entityLabel || "item")}
+                    </button>
+                ` : ""}
+                <button class="ctx-action danger" id="ctxDelete" type="button">
+                    <i data-lucide="trash-2" class="icon"></i>
+                    Delete notification
+                </button>
+            </div>
+        `;
+
+        if (typeof lucide !== "undefined") lucide.createIcons();
+
+        $("ctxOpen")?.addEventListener("click", () => {
+            if (openDest) window.location.href = openDest;
+        });
+        $("ctxDelete")?.addEventListener("click", () => deleteNotification(n.id));
+    }
+
+    function labelForEntity(et) {
+        if (!et) return "";
+        const map = { project: "Project", portfolio: "Portfolio", conversation: "Conversation" };
+        return map[String(et).toLowerCase()] || "";
+    }
+
+    function destinationFor(n) {
+        const et = (n.entity_type || "").toLowerCase();
+        const eid = n.entity_id;
+        if (et === "project" && eid) return "/dashboard/pages/project-edit.html?id=" + encodeURIComponent(eid);
+        if (et === "portfolio") return "/dashboard/pages/portfolio-edit.html";
+        if (et === "conversation" && eid) return "/dashboard/pages/messages.html?conversation=" + encodeURIComponent(eid);
+        return null;
+    }
+
     function closeReadingPane() {
         activeId = null;
         readingContent.style.display = "none";
         readingEmpty.style.display = "flex";
+        if (readingContext) readingContext.style.display = "none";
         readingPane.classList.remove("mobile-open");
         updateActiveHighlight();
     }
 
     function openReadingPaneMobile() {
-        if (window.innerWidth <= 768) {
-            readingPane.classList.add("mobile-open");
-        }
+        if (window.innerWidth <= 768) readingPane.classList.add("mobile-open");
     }
 
     // =========================================================
@@ -314,9 +343,22 @@ document.addEventListener("DOMContentLoaded", function () {
             await window.apiFetch(`/api/notifications/${id}/read`, { method: "PATCH" });
             n.is_read = 1;
             render();
-        } catch (err) {
-            console.error("Mark read error:", err);
-        }
+        } catch (err) { console.error("Mark read error:", err); }
+    }
+
+    async function deleteNotification(id) {
+        const __ok = await window.crevioConfirm("Delete this notification?", { title: "Delete notification", confirmText: "Delete", danger: true });
+        if (!__ok) return;
+        try {
+            const res = await window.apiFetch(`/api/notifications/${id}`, { method: "DELETE" });
+            const data = await res.json();
+            if (data.success) {
+                notifications = notifications.filter(n => String(n.id) !== String(id));
+                if (String(activeId) === String(id)) closeReadingPane();
+                render();
+                showToast("Deleted");
+            }
+        } catch (err) { showToast("Failed: " + err.message, true); }
     }
 
     markAllBtn?.addEventListener("click", async () => {
@@ -349,7 +391,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     // =========================================================
-    // MOBILE BACK BUTTON
+    // MOBILE BACK
     // =========================================================
     readingBack?.addEventListener("click", () => {
         readingPane.classList.remove("mobile-open");
