@@ -1,4 +1,4 @@
-﻿// =========================================================
+// =========================================================
 // CREVIO — MOBILE MENU (shared)
 // File: dashboard/js/mobile-menu.js
 // Auto-installs a hamburger button + slide-in sidebar drawer
@@ -19,11 +19,13 @@
         style.textContent = `
             .mobile-menu-btn {
                 display: none;
-                background: transparent;
+                background: var(--bg-card, #1E293B);
                 border: 1px solid var(--border-color, #334155);
                 color: var(--text-primary, #F1F5F9);
                 width: 40px; height: 40px;
-                border-radius: 8px;
+                border-radius: 50%;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.45);
+                z-index: 9999;
                 cursor: pointer;
                 align-items: center; justify-content: center;
                 padding: 0;
@@ -32,9 +34,10 @@
             }
             .mobile-menu-btn:active,
             .mobile-menu-btn:hover {
-                background: var(--accent-dim, rgba(37,99,235,0.15));
+                background: var(--bg-input, #0F172A);
                 border-color: var(--accent, #2563EB);
                 color: var(--accent, #2563EB);
+                box-shadow: 0 6px 16px rgba(0,0,0,0.55);
             }
             .mobile-menu-btn svg { width: 20px; height: 20px; }
 

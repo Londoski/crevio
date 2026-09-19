@@ -631,6 +631,17 @@
         "__notifMobileHeaderFix",
         "padding-top: 64px"
       ]
+    },
+    {
+      "id": "mobile-hamburger-fab",
+      "desc": "Mobile hamburger is a solid circular floating button — no text bleed-through",
+      "type": "fileContains",
+      "file": "dashboard/js/mobile-menu.js",
+      "patterns": [
+        "border-radius: 50%",
+        "z-index: 9999",
+        "box-shadow: 0 4px 12px"
+      ]
     }
   ]
 }
