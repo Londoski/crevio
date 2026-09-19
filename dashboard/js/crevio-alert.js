@@ -1,15 +1,27 @@
 // =========================================================
 // CREVIO ALERT DIALOG
 // File: dashboard/js/crevio-alert.js
-// Self-contained: injects CSS + overlay on load.
+// Self-contained. Uses inline SVG icons (no lucide dependency).
 // API: await window.crevioAlert(message, opts) -> true
-//   opts.kind   = "error" | "warning" | "info" | "success"
-//   opts.title  = string (overrides default title)
+//   opts.kind = "error" | "warning" | "info" | "success"
+//   opts.title = string (overrides default title)
 //   opts.confirmText = string (default "OK")
 // =========================================================
 (function () {
     if (window.__crevioAlertInstalled) return;
     window.__crevioAlertInstalled = true;
+
+    // ---------- Inline SVG icons (bulletproof) ----------
+    const SVG = {
+        error:
+            '<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>',
+        warning:
+            '<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>',
+        info:
+            '<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>',
+        success:
+            '<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>'
+    };
 
     // ---------- CSS ----------
     if (!document.getElementById("__crevioAlertStyles")) {
@@ -47,20 +59,20 @@
                 transform: translateY(0) scale(1);
             }
             .crevio-alert-header {
-                display: flex; align-items: flex-start; gap: 12px;
+                display: flex; align-items: flex-start; gap: 14px;
             }
             .crevio-alert-icon {
-                width: 40px; height: 40px;
+                width: 44px; height: 44px;
                 border-radius: 50%;
                 display: flex; align-items: center; justify-content: center;
                 flex-shrink: 0;
-                background: rgba(239,68,68,0.12);
+                background: rgba(239,68,68,0.14);
                 color: #EF4444;
             }
-            .crevio-alert-icon.info    { background: rgba(37,99,235,0.12); color: #2563EB; }
-            .crevio-alert-icon.success { background: rgba(34,197,94,0.12); color: #22C55E; }
-            .crevio-alert-icon.warning { background: rgba(245,158,11,0.12); color: #F59E0B; }
-            .crevio-alert-icon .icon { width: 20px; height: 20px; }
+            .crevio-alert-icon svg { display: block; }
+            .crevio-alert-icon.info    { background: rgba(37,99,235,0.14);  color: #2563EB; }
+            .crevio-alert-icon.success { background: rgba(34,197,94,0.14);  color: #22C55E; }
+            .crevio-alert-icon.warning { background: rgba(245,158,11,0.14); color: #F59E0B; }
             .crevio-alert-titles { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 0; }
             .crevio-alert-title {
                 font-size: 16px; font-weight: 700;
@@ -107,9 +119,7 @@
         o.innerHTML = `
             <div class="crevio-alert-card">
                 <div class="crevio-alert-header">
-                    <div class="crevio-alert-icon" id="crevioAlertIcon">
-                        <i data-lucide="alert-circle" class="icon"></i>
-                    </div>
+                    <div class="crevio-alert-icon" id="crevioAlertIcon"></div>
                     <div class="crevio-alert-titles">
                         <div class="crevio-alert-title" id="crevioAlertTitle">Notice</div>
                         <div class="crevio-alert-message" id="crevioAlertMessage"></div>
@@ -124,17 +134,11 @@
         return o;
     }
 
-    function refreshIcons() {
-        if (typeof lucide !== "undefined") {
-            try { lucide.createIcons(); } catch (e) {}
-        }
-    }
-
     const KINDS = {
-        error:   { icon: "alert-circle",   cls: "",        title: "Something went wrong" },
-        warning: { icon: "alert-triangle", cls: "warning", title: "Heads up" },
-        info:    { icon: "info",           cls: "info",    title: "Notice" },
-        success: { icon: "check-circle",   cls: "success", title: "Success" }
+        error:   { svg: "error",   cls: "",        title: "Something went wrong" },
+        warning: { svg: "warning", cls: "warning", title: "Heads up" },
+        info:    { svg: "info",    cls: "info",    title: "Notice" },
+        success: { svg: "success", cls: "success", title: "Success" }
     };
 
     // ---------- Public API ----------
@@ -155,9 +159,8 @@
             okBtn.textContent   = opts.confirmText || "OK";
 
             iconEl.className = "crevio-alert-icon " + conf.cls;
-            iconEl.innerHTML = '<i data-lucide="' + conf.icon + '" class="icon"></i>';
+            iconEl.innerHTML = SVG[conf.svg];
 
-            refreshIcons();
             overlay.classList.add("open");
 
             function close() {
