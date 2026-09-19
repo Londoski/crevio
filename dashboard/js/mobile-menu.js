@@ -1,8 +1,9 @@
 // =========================================================
 // CREVIO — MOBILE MENU (shared)
 // File: dashboard/js/mobile-menu.js
-// Auto-installs a hamburger button + slide-in sidebar drawer
-// on every page that has a .sidebar element (mobile only).
+// Floating hamburger hides when drawer opens (uses ID
+// specificity to beat mobile.css). No close X — tap outside
+// or a nav link closes. Body scroll locked while open.
 // =========================================================
 (function () {
     if (window.__crevioMobileMenu) return;
@@ -11,7 +12,6 @@
     const MQ = "(max-width: 768px)";
     const isMobile = () => window.matchMedia(MQ).matches;
 
-    // -------- CSS --------
     function injectCSS() {
         if (document.getElementById("__crevioMobileMenuStyles")) return;
         const style = document.createElement("style");
@@ -23,21 +23,25 @@
                 border: 1px solid var(--border-color, #334155);
                 color: var(--text-primary, #F1F5F9);
                 width: 40px; height: 40px;
-                border-radius: 50%;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.45);
-                z-index: 9999;
+                border-radius: 10px;
                 cursor: pointer;
                 align-items: center; justify-content: center;
                 padding: 0;
                 flex-shrink: 0;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.35);
                 transition: background 0.12s, border-color 0.12s, color 0.12s;
             }
-            .mobile-menu-btn:active,
-            .mobile-menu-btn:hover {
+            @media (hover: hover) {
+                .mobile-menu-btn:hover {
+                    background: var(--bg-input, #0F172A);
+                    border-color: var(--accent, #2563EB);
+                    color: var(--accent, #2563EB);
+                }
+            }
+            .mobile-menu-btn:active {
                 background: var(--bg-input, #0F172A);
                 border-color: var(--accent, #2563EB);
                 color: var(--accent, #2563EB);
-                box-shadow: 0 6px 16px rgba(0,0,0,0.55);
             }
             .mobile-menu-btn svg { width: 20px; height: 20px; }
 
@@ -49,6 +53,7 @@
                 z-index: 950;
                 opacity: 0; visibility: hidden;
                 transition: opacity 0.18s ease, visibility 0.18s ease;
+                touch-action: none;
             }
             .mobile-menu-overlay.open { opacity: 1; visibility: visible; }
 
@@ -58,46 +63,61 @@
                 body.mobile-menu-installed .sidebar {
                     display: flex !important;
                     position: fixed !important;
-                    top: 0; left: 0;
+                    top: 0 !important;
+                    left: 0 !important;
                     height: 100vh !important;
+                    height: 100dvh !important;
                     width: 260px !important;
                     max-width: 82vw;
                     z-index: 1000 !important;
                     transform: translateX(-100%);
                     transition: transform 0.22s ease;
                     overflow-y: auto;
+                    overscroll-behavior: contain;
+                    -webkit-overflow-scrolling: touch;
+                    touch-action: pan-y;
                     box-shadow: 8px 0 32px rgba(0,0,0,0.45);
                 }
                 body.mobile-menu-installed .sidebar.mobile-open {
                     transform: translateX(0);
                 }
-                body.mobile-menu-open { overflow: hidden; }
+
+                /* Body lock while drawer is open */
+                body.mobile-menu-open {
+                    overflow: hidden !important;
+                    position: fixed !important;
+                    width: 100% !important;
+                    touch-action: none;
+                }
+
+                /* HIDE THE HAMBURGER — high specificity to beat mobile.css */
+                body.mobile-menu-open #mobileMenuBtn.mobile-menu-btn {
+                    display: none !important;
+                    visibility: hidden !important;
+                    pointer-events: none !important;
+                }
             }
         `;
         document.head.appendChild(style);
     }
 
-    // -------- hamburger icon --------
     function hamburgerSVG() {
         return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>';
     }
 
-    // -------- install --------
     function install() {
         const sidebar = document.querySelector(".sidebar");
-        if (!sidebar) return;   // page has no sidebar — nothing to do
+        if (!sidebar) return;
 
         document.body.classList.add("mobile-menu-installed");
 
-        // Already installed?
         if (document.querySelector(".mobile-menu-btn")) return;
 
-        // Find the best slot for the hamburger
         const slotSelectors = [
-            ".conv-header",        // messages page — conversation list
-            ".chat-header-left",   // bot page + messages chat panel
-            ".header",             // settings page
-            ".topbar",             // generic
+            ".conv-header",
+            ".chat-header-left",
+            ".header",
+            ".topbar",
             ".page-header",
             ".main > header",
             ".main > .header"
@@ -119,7 +139,6 @@
         if (slot) {
             slot.insertBefore(btn, slot.firstChild);
         } else {
-            // Floating fallback (top-left of the viewport)
             btn.style.position = "fixed";
             btn.style.top = "16px";
             btn.style.left = "16px";
@@ -127,14 +146,16 @@
             document.body.appendChild(btn);
         }
 
-        // Overlay
         const overlay = document.createElement("div");
         overlay.className = "mobile-menu-overlay";
         overlay.id = "mobileMenuOverlay";
         document.body.appendChild(overlay);
 
-        // -------- open / close --------
+        let __savedScrollY = 0;
+
         function open() {
+            __savedScrollY = window.scrollY || window.pageYOffset || 0;
+            document.body.style.top = -__savedScrollY + "px";
             sidebar.classList.add("mobile-open");
             overlay.classList.add("open");
             document.body.classList.add("mobile-menu-open");
@@ -143,6 +164,8 @@
             sidebar.classList.remove("mobile-open");
             overlay.classList.remove("open");
             document.body.classList.remove("mobile-menu-open");
+            document.body.style.top = "";
+            window.scrollTo(0, __savedScrollY);
         }
         function toggle() {
             if (sidebar.classList.contains("mobile-open")) close();
@@ -154,26 +177,23 @@
             e.preventDefault();
             toggle();
         });
+
         overlay.addEventListener("click", close);
         document.addEventListener("keydown", (e) => {
             if (e.key === "Escape") close();
         });
 
-        // Close on nav link tap (so the drawer slides away while the page navigates)
         sidebar.querySelectorAll("a").forEach(a => {
             a.addEventListener("click", () => setTimeout(close, 80));
         });
 
-        // Auto-close if the viewport grows past mobile (e.g. rotation to tablet)
         window.addEventListener("resize", () => {
             if (!isMobile()) close();
         });
 
-        // Touch: prevent scroll bleed
         overlay.addEventListener("touchmove", (e) => e.preventDefault(), { passive: false });
     }
 
-    // -------- run --------
     function start() {
         injectCSS();
         install();
@@ -185,7 +205,6 @@
         start();
     }
 
-    // Reinstall if the DOM changed (e.g. SPA-like nav)
     if (window.MutationObserver) {
         new MutationObserver(() => {
             clearTimeout(window.__crevioMobMenuT);
