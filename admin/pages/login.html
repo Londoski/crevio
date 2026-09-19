@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login Ã¢â‚¬â€ Crevio Admin</title>
+    <title>Sign in — Crevio</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
@@ -66,13 +66,35 @@
             width: 20px;
             height: 20px;
             border-radius: 6px;
-            border: 2px solid var(--border-color);
-            background: var(--bg-card);
+            border: 2px solid #475569;
+            background: #0B1220;
             cursor: pointer;
             position: relative;
             flex-shrink: 0;
             margin: 0;
             transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+        }
+        .checkbox-group input[type="checkbox"]:hover {
+            border-color: #64748B;
+        }
+        .checkbox-group input[type="checkbox"]:checked {
+            background: rgba(37,99,235,0.20);
+            border-color: #2563EB;
+        }
+        .checkbox-group input[type="checkbox"]:checked::after {
+            content: "";
+            position: absolute;
+            left: 4px;
+            top: 0px;
+            width: 6px;
+            height: 11px;
+            border: solid #60A5FA;
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg);
+        }
+        .checkbox-group input[type="checkbox"]:focus-visible {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(37,99,235,0.25);
         }
         .checkbox-group input[type="checkbox"]:hover {
             border-color: var(--accent);

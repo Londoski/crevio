@@ -578,7 +578,8 @@
       "file": "admin/pages/login.html",
       "patterns": [
         "appearance: none",
-        "accent-dim"
+        "#475569",
+        "#2563EB"
       ]
     },
     {
