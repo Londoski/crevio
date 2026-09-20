@@ -691,6 +691,28 @@
         "isSuspended",
         "compromise_lockdown"
       ]
+    },
+    {
+      "id": "phase-D3-endpoint",
+      "desc": "Compromise-report endpoints (GET validate + POST lockdown)",
+      "type": "fileContains",
+      "file": "backend/routes/securityRoutes.js",
+      "patterns": [
+        "report-compromise",
+        "reportCompromiseGet",
+        "reportCompromisePost"
+      ]
+    },
+    {
+      "id": "phase-D3-controller",
+      "desc": "securityController has compromise handlers",
+      "type": "fileContains",
+      "file": "backend/controllers/securityController.js",
+      "patterns": [
+        "reportCompromiseGet",
+        "reportCompromisePost",
+        "lockdownService"
+      ]
     }
   ]
 }

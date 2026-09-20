@@ -1,21 +1,110 @@
 // =========================================================
 // CREVIO — SECURITY CONTROLLER
 // File: backend/controllers/securityController.js
+// Includes the "This wasn't me" compromise-report flow.
 // =========================================================
 
 const bcrypt = require("bcrypt");
 const db = require("../../database/db");
+const lockdownService = require("../services/lockdownService");
 
 function cols(table) {
     try { return db.prepare(`PRAGMA table_info(${table})`).all().map(c => c.name); }
     catch (e) { return []; }
 }
-
 function tableExists(name) {
-    try {
-        return !!db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name=?").get(name);
-    } catch (e) { return false; }
+    try { return !!db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name=?").get(name); }
+    catch (e) { return false; }
 }
+function appUrl() {
+    const u = process.env.APP_URL || process.env.SITE_URL || "http://localhost:3000";
+    return String(u).replace(/\/+$/, "");
+}
+
+// =========================================================
+// GET /api/security/report-compromise?token=xyz
+// Public. Validates the token WITHOUT consuming it, then
+// redirects to the confirmation page.
+// =========================================================
+exports.reportCompromiseGet = (req, res) => {
+    try {
+        const token = String(req.query.token || "").trim();
+        if (!token) {
+            return res.redirect("/dashboard/pages/locked.html?error=missing_token");
+        }
+
+        // Peek: does this token exist, is it unconsumed, unexpired?
+        const crypto = require("crypto");
+        const hash = crypto.createHash("sha256").update(token).digest("hex");
+        const row = db.prepare(`
+            SELECT id, user_id FROM verification_tokens
+            WHERE token_hash = ?
+              AND token_type = 'compromise_lockdown'
+              AND used_at IS NULL
+              AND expires_at > CURRENT_TIMESTAMP
+        `).get(hash);
+
+        if (!row) {
+            return res.redirect("/dashboard/pages/locked.html?error=invalid_token");
+        }
+
+        // Redirect to the confirm page — do NOT consume token here.
+        return res.redirect("/dashboard/pages/locked-confirm.html?token=" + encodeURIComponent(token));
+    } catch (err) {
+        console.error("reportCompromiseGet error:", err);
+        return res.redirect("/dashboard/pages/locked.html?error=server");
+    }
+};
+
+// =========================================================
+// POST /api/security/report-compromise
+// Public. Body: { token }
+// Consumes the token, locks down the account, redirects to
+// the success page.
+// =========================================================
+exports.reportCompromisePost = async (req, res) => {
+    try {
+        const token = String((req.body && req.body.token) || "").trim();
+        if (!token) {
+            return res.status(400).json({ success: false, message: "Token required" });
+        }
+
+        const consumed = lockdownService.consumeToken(token);
+        if (!consumed.success) {
+            return res.status(400).json({
+                success: false,
+                message: consumed.reason === "invalid_or_expired"
+                    ? "This link has already been used or expired."
+                    : "Invalid link."
+            });
+        }
+
+        const ipAddress = String(req.headers["x-forwarded-for"] || "").split(",")[0].trim() || req.ip || null;
+        const userAgent = req.headers["user-agent"] || null;
+
+        const result = await lockdownService.lockdown({
+            userId: consumed.userId,
+            reason: "reported_compromise",
+            ipAddress,
+            userAgent,
+            notificationId: consumed.notificationId
+        });
+
+        if (!result.success) {
+            return res.status(500).json({ success: false, message: "Lockdown failed", reason: result.reason });
+        }
+
+        return res.json({
+            success: true,
+            message: "Your account has been secured.",
+            sessionsRevoked: result.sessionsRevoked,
+            devicesRevoked: result.devicesRevoked
+        });
+    } catch (err) {
+        console.error("reportCompromisePost error:", err);
+        return res.status(500).json({ success: false, message: "Failed", error: err.message });
+    }
+};
 
 // =========================================================
 // POST /api/security/change-password
@@ -23,7 +112,6 @@ function tableExists(name) {
 exports.changePassword = async (req, res) => {
     try {
         const { currentPassword, newPassword } = req.body;
-
         if (!currentPassword || !newPassword) {
             return res.status(400).json({ success: false, message: "Both passwords required" });
         }
@@ -51,7 +139,6 @@ exports.changePassword = async (req, res) => {
         sql += " WHERE id = ?";
 
         db.prepare(sql).run(newHash, req.user.id);
-
         res.json({ success: true, message: "Password changed successfully" });
     } catch (err) {
         console.error("Change password error:", err);
@@ -65,39 +152,19 @@ exports.changePassword = async (req, res) => {
 exports.getSessions = (req, res) => {
     try {
         let sessions = [];
-
         if (tableExists("sessions")) {
-            const c = cols("sessions");
             try {
                 sessions = db.prepare(`
                     SELECT * FROM sessions
                     WHERE user_id = ?
-                    ORDER BY COALESCE(last_active_at, created_at) DESC
+                    ORDER BY COALESCE(last_seen_at, created_at) DESC
                 `).all(req.user.id);
-            } catch (e) {
-                try {
-                    sessions = db.prepare(
-                        "SELECT id, user_id, created_at FROM sessions WHERE user_id = ? ORDER BY created_at DESC"
-                    ).all(req.user.id);
-                } catch (e2) { sessions = []; }
-            }
+            } catch (e) { sessions = []; }
         }
-
         if (sessions.length) {
             sessions[0].is_current = 1;
             for (let i = 1; i < sessions.length; i++) sessions[i].is_current = 0;
-        } else {
-            // Synthetic "current device"
-            sessions = [{
-                id: 0,
-                device: "This Device",
-                ip_address: req.ip || "localhost",
-                created_at: new Date().toISOString(),
-                last_active_at: new Date().toISOString(),
-                is_current: 1
-            }];
         }
-
         res.json({ success: true, sessions });
     } catch (err) {
         res.status(500).json({ success: false, message: "Failed", error: err.message });
@@ -109,12 +176,8 @@ exports.getSessions = (req, res) => {
 // =========================================================
 exports.revokeSession = (req, res) => {
     try {
-        if (!tableExists("sessions")) {
-            return res.json({ success: true, message: "No sessions table" });
-        }
-        const r = db.prepare(
-            "DELETE FROM sessions WHERE id = ? AND user_id = ?"
-        ).run(req.params.id, req.user.id);
+        if (!tableExists("sessions")) return res.json({ success: true, message: "No sessions table" });
+        const r = db.prepare("DELETE FROM sessions WHERE id = ? AND user_id = ?").run(req.params.id, req.user.id);
         if (r.changes === 0) return res.status(404).json({ success: false, message: "Not found" });
         res.json({ success: true, message: "Session revoked" });
     } catch (err) {
@@ -127,9 +190,7 @@ exports.revokeSession = (req, res) => {
 // =========================================================
 exports.revokeAllSessions = (req, res) => {
     try {
-        if (!tableExists("sessions")) {
-            return res.json({ success: true, message: "No sessions table" });
-        }
+        if (!tableExists("sessions")) return res.json({ success: true, message: "No sessions table" });
         const r = db.prepare("DELETE FROM sessions WHERE user_id = ?").run(req.user.id);
         res.json({ success: true, message: "All sessions revoked", count: r.changes });
     } catch (err) {
@@ -144,12 +205,10 @@ exports.toggle2FA = (req, res) => {
     try {
         const { email_2fa } = req.body;
         const userCols = cols("users");
-
         if (userCols.includes("two_factor_enabled")) {
             db.prepare("UPDATE users SET two_factor_enabled = ? WHERE id = ?")
               .run(email_2fa ? 1 : 0, req.user.id);
         }
-
         res.json({ success: true, email_2fa: !!email_2fa });
     } catch (err) {
         res.status(500).json({ success: false, message: "Failed", error: err.message });
@@ -175,7 +234,6 @@ exports.generateRecoveryCodes = (req, res) => {
                 console.warn("Could not store recovery codes:", e.message);
             }
         }
-
         res.json({ success: true, codes });
     } catch (err) {
         res.status(500).json({ success: false, message: "Failed", error: err.message });

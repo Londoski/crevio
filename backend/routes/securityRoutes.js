@@ -8,6 +8,9 @@ const router = express.Router();
 const auth = require("../middleware/authMiddleware");
 const securityController = require("../controllers/securityController");
 
+// PUBLIC — the compromise-report endpoints (no auth middleware; the token IS the auth)
+router.get("/report-compromise",  securityController.reportCompromiseGet);
+router.post("/report-compromise", securityController.reportCompromisePost);
 router.post("/change-password",  auth, securityController.changePassword);
 router.get("/sessions",          auth, securityController.getSessions);
 router.delete("/sessions/:id",   auth, securityController.revokeSession);
