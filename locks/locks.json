@@ -1023,6 +1023,17 @@
         "Device trust",
         "Login flow"
       ]
+    },
+    {
+      "id": "phase-P1b2-email2fa-login",
+      "desc": "Login gate also triggers email OTP when email_2fa_enabled = 1",
+      "type": "fileContains",
+      "file": "backend/controllers/authController.js",
+      "patterns": [
+        "email_2fa_enabled",
+        "login_otp",
+        "requiredMethod"
+      ]
     }
   ]
 }

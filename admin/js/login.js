@@ -24,7 +24,7 @@ document.addEventListener("DOMContentLoaded", function () {
             if (data.success && data.requires_2fa && data.ticket) {
                 // __2fa_routing_patched
                 if (typeof window.__show2FAStep === "function") {
-                    window.__show2FAStep(data.ticket, remember);
+                    window.__show2FAStep(data.ticket, remember, data.method);
                 } else {
                     crevioAlert("2FA step not available. Please reload.", { kind: "error" });
                 }
@@ -110,7 +110,16 @@ document.addEventListener("DOMContentLoaded", function () {
     if (!section || !codeInput || !form) return;
 
     // Called by the outer login handler when it detects requires_2fa
-    window.__show2FAStep = function (ticket, remember) {
+    window.__show2FAStep = function (ticket, remember, method) {
+        // __methodAware
+        var hintEl = document.querySelector("#login2FASection .twofa-hint");
+        if (hintEl) {
+            if (method === "email") {
+                hintEl.textContent = "We just emailed a 6-digit code to your inbox. Enter it below to finish signing in.";
+            } else {
+                hintEl.textContent = "Open Google Authenticator (or your TOTP app) and enter the current 6-digit code for your Crevio account.";
+            }
+        }
         pendingTicket = ticket;
         pendingRemember = remember;
         errorBox.classList.remove("show");

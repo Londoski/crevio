@@ -9,6 +9,7 @@ const db = require("../../database/db");
 const deviceService = require("../services/deviceService");
 const accountSecurityService = require("../services/accountSecurityService");
 const loginSecurityService = require("../services/loginSecurityService");
+const emailOtpService = require("../services/emailOtpService");
 const passwordHistoryService = require("../services/passwordHistoryService");
 
 function cols(table) {
@@ -76,39 +77,61 @@ exports.login = async (req, res) => {
         if (!ok) return res.status(401).json({ success: false, message: "Invalid email or password" });
 
         // =========================================================
-        // 2FA enforcement — require TOTP when enabled + device untrusted
+        // 2FA enforcement — TOTP preferred, else email_2fa
         // =========================================================
         try {
-            const u2 = db.prepare("SELECT two_factor_enabled FROM users WHERE id = ?").get(user.id);
+            const u2 = db.prepare("SELECT two_factor_enabled, email_2fa_enabled FROM users WHERE id = ?").get(user.id);
+
+            let requiredMethod = null;
+
             if (u2 && u2.two_factor_enabled === 1) {
-                const hasMethod = db.prepare(
+                const hasTotp = db.prepare(
                     "SELECT id FROM two_factor_methods WHERE user_id = ? AND method_type = 'authenticator' AND is_verified = 1 LIMIT 1"
                 ).get(user.id);
+                if (hasTotp) requiredMethod = "totp";
+            }
 
-                if (hasMethod) {
-                    const fp = deviceService.fingerprint({
-                        userAgent: req.headers["user-agent"] || "",
-                        ipAddress: null,
-                        acceptLanguage: req.headers["accept-language"] || ""
-                    });
-                    const trustedDev = db.prepare(
-                        "SELECT id FROM trusted_devices WHERE user_id = ? AND device_token = ? AND expires_at > CURRENT_TIMESTAMP LIMIT 1"
-                    ).get(user.id, fp);
+            if (!requiredMethod && u2 && u2.email_2fa_enabled === 1) {
+                requiredMethod = "email";
+            }
 
-                    if (!trustedDev) {
-                        const ticket = jwt.sign(
-                            { id: user.id, purpose: "2fa_login" },
-                            process.env.JWT_SECRET,
-                            { expiresIn: "5m" }
-                        );
-                        return res.json({
-                            success: true,
-                            requires_2fa: true,
-                            ticket: ticket,
-                            method: "totp",
-                            message: "Enter the 6-digit code from your authenticator app."
-                        });
+            if (requiredMethod) {
+                const fp = deviceService.fingerprint({
+                    userAgent: req.headers["user-agent"] || "",
+                    ipAddress: null,
+                    acceptLanguage: req.headers["accept-language"] || ""
+                });
+                const trustedDev = db.prepare(
+                    "SELECT id FROM trusted_devices WHERE user_id = ? AND device_token = ? AND expires_at > CURRENT_TIMESTAMP LIMIT 1"
+                ).get(user.id, fp);
+
+                if (!trustedDev) {
+                    const ticket = jwt.sign(
+                        { id: user.id, purpose: "2fa_login", method: requiredMethod },
+                        process.env.JWT_SECRET,
+                        { expiresIn: "5m" }
+                    );
+
+                    // For email method, send OTP immediately
+                    if (requiredMethod === "email") {
+                        try {
+                            await emailOtpService.createAndSend({
+                                userId: user.id,
+                                userEmail: user.email,
+                                challengeType: "login_otp"
+                            });
+                        } catch (e) { console.error("[login] send login_otp failed:", e.message); }
                     }
+
+                    return res.json({
+                        success: true,
+                        requires_2fa: true,
+                        ticket: ticket,
+                        method: requiredMethod,
+                        message: requiredMethod === "totp"
+                            ? "Enter the 6-digit code from your authenticator app."
+                            : "Check your email for a 6-digit code."
+                    });
                 }
             }
         } catch (e) { /* silent */ }
@@ -429,20 +452,33 @@ exports.verify2FALogin = async (req, res) => {
         const user = db.prepare("SELECT * FROM users WHERE id = ?").get(decoded.id);
         if (!user) return res.status(401).json({ success: false, message: "User not found" });
 
-        const method = db.prepare(
-            "SELECT * FROM two_factor_methods WHERE user_id = ? AND method_type = 'authenticator' AND is_verified = 1 ORDER BY is_primary DESC, id DESC LIMIT 1"
-        ).get(user.id);
-        if (!method) return res.status(400).json({ success: false, message: "No authenticator configured." });
+        // Branch by method: "totp" (default) or "email"
+        const loginMethod = decoded.method || "totp";
+        let ok = false;
 
-        const totpService = require("../services/totpService");
-        let secret;
-        try { secret = totpService.decryptSecret(method.secret); }
-        catch (e) {
-            console.error("verify2FALogin decrypt error:", e.message);
-            return res.status(500).json({ success: false, message: "Could not read 2FA secret." });
+        if (loginMethod === "email") {
+            const v = emailOtpService.verify({
+                userId: user.id,
+                code: code,
+                challengeType: "login_otp"
+            });
+            ok = !!v.success;
+        } else {
+            const method = db.prepare(
+                "SELECT * FROM two_factor_methods WHERE user_id = ? AND method_type = 'authenticator' AND is_verified = 1 ORDER BY is_primary DESC, id DESC LIMIT 1"
+            ).get(user.id);
+            if (!method) return res.status(400).json({ success: false, message: "No authenticator configured." });
+
+            const totpService = require("../services/totpService");
+            let secret;
+            try { secret = totpService.decryptSecret(method.secret); }
+            catch (e) {
+                console.error("verify2FALogin decrypt error:", e.message);
+                return res.status(500).json({ success: false, message: "Could not read 2FA secret." });
+            }
+            ok = await totpService.verifyToken({ secret, token: code });
         }
 
-        const ok = await totpService.verifyToken({ secret, token: code });
         if (!ok) return res.status(400).json({ success: false, message: "Incorrect code. Try again." });
 
         const token = jwt.sign(

@@ -19,7 +19,7 @@ This document covers the security infrastructure built on top of the notificatio
 | TOTP | `two_factor_methods` (AES-256-GCM encrypted secret) | Login + reset |
 | Device trust | `trusted_devices` (fingerprint, 30-day TTL) | Skips 2FA |
 
-## 3. Login flow
+## 3. Login flow (both TOTP and Email 2FA)
 
 ```
 POST /api/auth/login { email, password, rememberDevice }
@@ -212,7 +212,6 @@ Relevant lock IDs:
 
 | Gap | Severity | Notes |
 |---|---|---|
-| Email 2FA not enforced at login | P1 | Toggle persists but doesn't gate login yet |
 | Recovery codes UX uses alert-style display | P3 | Should be a proper modal with copy/download |
 | TOTP drift tolerance `window: 1` not honored | P3 | Rare user-visible issue, retry works |
 | Sessions may not record on every login | P2 | Diagnostic script confirms; synthetic fallback masks |
