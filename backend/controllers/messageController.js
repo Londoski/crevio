@@ -192,19 +192,6 @@ exports.sendMessage = (req, res) => {
         } else if (text.length > entitlementService.TECHNICAL_CAPS.message_length) {
             return res.status(400).json({ success: false, message: "Message too long" });
         }
-        const _plan = getUserPlan(uid);
-        const _limit = getPlanLimit(_plan);
-        if (_limit !== Infinity && text.length > _limit) {
-            return res.status(400).json({
-                success: false,
-                message: "Message too long for your plan (max " + _limit + " characters)",
-                plan: _plan,
-                limit: _limit,
-                length: text.length
-            });
-        }
-        
-
         const conv = safeGet("SELECT * FROM conversations WHERE id=? AND creator_id=?", req.params.id, uid);
         if (!conv) return res.status(404).json({ success: false, message: "Not found" });
 
