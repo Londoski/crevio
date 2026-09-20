@@ -14,6 +14,9 @@ module.exports = (req, res, next) => {
         if (!decoded || !decoded.id) {
             return res.status(401).json({ success: false, message: 'Invalid authentication token.' });
         }
+        if (decoded.purpose) {
+            return res.status(401).json({ success: false, message: 'Invalid token type.' });
+        }
         req.user = {
             id: decoded.id,
             username: decoded.username || null,

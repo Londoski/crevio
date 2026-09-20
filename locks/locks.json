@@ -927,6 +927,68 @@
         "__trustDeviceSection",
         "trustCurrentDeviceToggle"
       ]
+    },
+    {
+      "id": "phase-P1a-login-2fa-gate",
+      "desc": "Login returns requires_2fa + ticket when TOTP enabled + device untrusted",
+      "type": "fileContains",
+      "file": "backend/controllers/authController.js",
+      "patterns": [
+        "requires_2fa",
+        "2fa_login",
+        "verify2FALogin"
+      ]
+    },
+    {
+      "id": "phase-P1a-middleware-rejects-ticket",
+      "desc": "authMiddleware rejects tokens with purpose (2FA tickets)",
+      "type": "fileContains",
+      "file": "backend/middleware/authMiddleware.js",
+      "patterns": [
+        "Invalid token type",
+        "decoded.purpose"
+      ]
+    },
+    {
+      "id": "phase-P1a-login-2fa-ui",
+      "desc": "Login page has 2FA verification step",
+      "type": "fileContains",
+      "file": "admin/pages/login.html",
+      "patterns": [
+        "login2FASection",
+        "login2FAForm",
+        "twofa-input"
+      ]
+    },
+    {
+      "id": "phase-P1b-email2fa-column",
+      "desc": "users.email_2fa_enabled column separates email 2FA from TOTP",
+      "type": "fileContains",
+      "file": "scripts/migrate-email-2fa.js",
+      "patterns": [
+        "email_2fa_enabled"
+      ]
+    },
+    {
+      "id": "phase-P1b-email2fa-status",
+      "desc": "GET /api/security/2fa-status returns both flags",
+      "type": "fileContains",
+      "file": "backend/controllers/securityController.js",
+      "patterns": [
+        "get2FAStatus",
+        "email_2fa",
+        "totp_enabled"
+      ]
+    },
+    {
+      "id": "phase-P1b-email2fa-load",
+      "desc": "Email 2FA toggle reads state on page load",
+      "type": "fileContains",
+      "file": "dashboard/js/security.js",
+      "patterns": [
+        "__email2FALoaded",
+        "2fa-status"
+      ]
     }
   ]
 }

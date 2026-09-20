@@ -424,3 +424,29 @@ document.addEventListener("DOMContentLoaded", function () {
 
     refreshStatus();
 })();
+
+// =========================================================
+// LOAD EMAIL 2FA STATE ON PAGE LOAD
+// =========================================================
+(function () {
+    if (window.__email2FALoaded) return;
+    window.__email2FALoaded = true;
+
+    const toggle = document.getElementById("twoFactorEmail");
+    if (!toggle) return;
+
+    async function loadState() {
+        try {
+            const res = await window.apiFetch("/api/security/2fa-status");
+            const data = await res.json();
+            if (!data.success) return;
+            toggle.checked = !!data.email_2fa;
+        } catch (e) { /* silent */ }
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", loadState);
+    } else {
+        loadState();
+    }
+})();

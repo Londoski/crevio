@@ -234,7 +234,11 @@ exports.toggle2FA = (req, res) => {
     try {
         const { email_2fa } = req.body;
         const userCols = cols("users");
-        if (userCols.includes("two_factor_enabled")) {
+        if (userCols.includes("email_2fa_enabled")) {
+            db.prepare("UPDATE users SET email_2fa_enabled = ? WHERE id = ?")
+              .run(email_2fa ? 1 : 0, req.user.id);
+        } else if (userCols.includes("two_factor_enabled")) {
+            // Fallback if migration hasn't run
             db.prepare("UPDATE users SET two_factor_enabled = ? WHERE id = ?")
               .run(email_2fa ? 1 : 0, req.user.id);
         }
@@ -546,3 +550,34 @@ async function finalizeReset(userId) {
     } catch (e) { console.error("finalizeReset notify error:", e.message); }
 }
 
+// =========================================================
+// GET /api/security/2fa-status
+// Returns both email_2fa and TOTP enabled state
+// =========================================================
+exports.get2FAStatus = (req, res) => {
+    try {
+        const userId = req.user.id;
+        const userCols = cols("users");
+        const row = userCols.includes("email_2fa_enabled")
+            ? db.prepare("SELECT email_2fa_enabled, two_factor_enabled FROM users WHERE id = ?").get(userId)
+            : db.prepare("SELECT two_factor_enabled FROM users WHERE id = ?").get(userId);
+
+        const email2FA = !!(row && row.email_2fa_enabled === 1);
+
+        let totpEnabled = false;
+        try {
+            const m = db.prepare(
+                "SELECT id FROM two_factor_methods WHERE user_id = ? AND method_type = 'authenticator' AND is_verified = 1 LIMIT 1"
+            ).get(userId);
+            totpEnabled = !!m;
+        } catch (e) {}
+
+        res.json({
+            success: true,
+            email_2fa: email2FA,
+            totp_enabled: totpEnabled
+        });
+    } catch (err) {
+        res.status(500).json({ success: false, message: "Failed", error: err.message });
+    }
+};

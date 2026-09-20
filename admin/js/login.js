@@ -21,10 +21,17 @@ document.addEventListener("DOMContentLoaded", function () {
             const data = await response.json();
             console.log("Login response:", data);
 
-            if (data.success && data.token) {
+            if (data.success && data.requires_2fa && data.ticket) {
+                // __2fa_routing_patched
+                if (typeof window.__show2FAStep === "function") {
+                    window.__show2FAStep(data.ticket, remember);
+                } else {
+                    crevioAlert("2FA step not available. Please reload.", { kind: "error" });
+                }
+            } else if (data.success && data.token) {
                 localStorage.setItem("token", data.token);
                 localStorage.setItem("user", JSON.stringify(data.user));
-                console.log("✅ Token saved, redirecting...");
+                console.log("Token saved, redirecting...");
                 window.location.href = "/dashboard/";
             } else {
                 crevioAlert(data.message || "Login failed.", { kind: "error" });
@@ -83,3 +90,83 @@ document.addEventListener("DOMContentLoaded", function () {
             checkTimer = setTimeout(checkTrust, 500);
         });
     })();
+
+// =========================================================
+// TWO-FACTOR LOGIN STEP
+// =========================================================
+(function () {
+    if (window.__login2FAWired) return;
+    window.__login2FAWired = true;
+
+    let pendingTicket = null;
+    let pendingRemember = true;
+
+    const section = document.getElementById("login2FASection");
+    const codeInput = document.getElementById("login2FACode");
+    const form = document.getElementById("login2FAForm");
+    const submitBtn = document.getElementById("login2FASubmit");
+    const errorBox = document.getElementById("login2FAError");
+    const backLink = document.getElementById("login2FABack");
+    if (!section || !codeInput || !form) return;
+
+    // Called by the outer login handler when it detects requires_2fa
+    window.__show2FAStep = function (ticket, remember) {
+        pendingTicket = ticket;
+        pendingRemember = remember;
+        errorBox.classList.remove("show");
+        codeInput.value = "";
+        document.getElementById("loginForm").style.display = "none";
+        section.style.display = "block";
+        setTimeout(function () { codeInput.focus(); }, 100);
+    };
+
+    backLink.addEventListener("click", function (e) {
+        e.preventDefault();
+        pendingTicket = null;
+        section.style.display = "none";
+        document.getElementById("loginForm").style.display = "";
+    });
+
+    codeInput.addEventListener("input", function () {
+        this.value = this.value.replace(/\D/g, "").slice(0, 6);
+    });
+
+    form.addEventListener("submit", async function (e) {
+        e.preventDefault();
+        const code = codeInput.value.trim();
+        if (code.length !== 6) return;
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Verifying…";
+        errorBox.classList.remove("show");
+
+        try {
+            const res = await fetch("/api/auth/verify-2fa", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    ticket: pendingTicket,
+                    code: code,
+                    rememberDevice: pendingRemember
+                })
+            });
+            const data = await res.json();
+            if (data.success && data.token) {
+                localStorage.setItem("token", data.token);
+                localStorage.setItem("user", JSON.stringify(data.user));
+                window.location.href = "/dashboard/";
+            } else {
+                errorBox.textContent = data.message || "Incorrect code.";
+                errorBox.classList.add("show");
+                submitBtn.disabled = false;
+                submitBtn.textContent = "Verify and sign in";
+                codeInput.focus();
+                codeInput.select();
+            }
+        } catch (err) {
+            errorBox.textContent = "Network error. Please try again.";
+            errorBox.classList.add("show");
+            submitBtn.disabled = false;
+            submitBtn.textContent = "Verify and sign in";
+        }
+    });
+})();

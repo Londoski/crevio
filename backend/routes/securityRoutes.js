@@ -21,6 +21,7 @@ router.get("/sessions",          auth, securityController.getSessions);
 router.delete("/sessions/:id",   auth, securityController.revokeSession);
 router.delete("/sessions",       auth, securityController.revokeAllSessions);
 router.post("/2fa",              auth, securityController.toggle2FA);
+router.get("/2fa-status", auth, securityController.get2FAStatus);
 router.post("/recovery-codes",   auth, securityController.generateRecoveryCodes);
 
 module.exports = router;

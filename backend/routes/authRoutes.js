@@ -20,4 +20,6 @@ router.get("/trust-device-status",    auth, authController.trustDeviceStatus);
 router.post("/trust-current-device",  auth, authController.trustCurrentDevice);
 router.post("/untrust-current-device", auth, authController.untrustCurrentDevice);
 
+router.post("/verify-2fa", authController.verify2FALogin);
+
 module.exports = router;

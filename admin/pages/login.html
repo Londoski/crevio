@@ -298,6 +298,64 @@
             line-height: 1.4;
         }
         .trust-note svg { color: var(--success, #22C55E); }
+    
+        .twofa-icon {
+            display: flex; justify-content: center;
+            margin: 20px 0 14px;
+        }
+        .twofa-icon svg {
+            width: 48px; height: 48px;
+            color: var(--accent, #2563EB);
+        }
+        .twofa-title {
+            font-size: 20px; font-weight: 700;
+            text-align: center; margin-bottom: 8px;
+            color: var(--text-primary, #F1F5F9);
+        }
+        .twofa-hint {
+            font-size: 13px; color: var(--text-secondary, #94A3B8);
+            text-align: center; line-height: 1.5;
+            margin-bottom: 20px;
+        }
+        .twofa-input {
+            width: 100%; padding: 14px;
+            background: var(--bg-input, #0F172A);
+            border: 1px solid var(--border-color, #334155);
+            color: var(--text-primary, #F1F5F9);
+            border-radius: 10px;
+            font-size: 24px; text-align: center;
+            letter-spacing: 0.4em;
+            font-family: inherit; font-weight: 600;
+            margin-bottom: 12px;
+        }
+        .twofa-input:focus {
+            outline: none;
+            border-color: var(--accent, #2563EB);
+            box-shadow: 0 0 0 3px var(--accent-dim, rgba(37,99,235,0.15));
+        }
+        .twofa-error {
+            display: none;
+            font-size: 13px; color: #FCA5A5;
+            text-align: center; margin-bottom: 12px;
+        }
+        .twofa-error.show { display: block; }
+        .twofa-btn {
+            width: 100%; padding: 12px;
+            background: var(--accent, #2563EB);
+            color: #fff; font-size: 14px; font-weight: 600;
+            border: none; border-radius: 10px;
+            font-family: inherit; cursor: pointer;
+            transition: background 0.12s;
+        }
+        .twofa-btn:hover:not(:disabled) { background: var(--accent-hover, #1D4ED8); }
+        .twofa-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .twofa-back {
+            display: block; text-align: center;
+            margin-top: 14px;
+            color: var(--text-muted, #64748B);
+            font-size: 13px; text-decoration: none;
+        }
+        .twofa-back:hover { color: var(--text-primary, #F1F5F9); }
     </style>
 </head>
 <body>
@@ -340,6 +398,20 @@
                 <div id="loginMessage" class="login-message"></div>
                 <button type="submit" class="btn-primary" id="loginButton">Sign In</button>
             </form>
+
+            <div id="login2FASection" style="display:none;">
+                <div class="twofa-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+                </div>
+                <h2 class="twofa-title">Two-factor verification</h2>
+                <p class="twofa-hint">Open Google Authenticator (or your TOTP app) and enter the current 6-digit code for your Crevio account.</p>
+                <form id="login2FAForm" autocomplete="off">
+                    <input type="text" id="login2FACode" class="twofa-input" maxlength="6" inputmode="numeric" pattern="[0-9]*" placeholder="000000" autocomplete="one-time-code">
+                    <div id="login2FAError" class="twofa-error"></div>
+                    <button type="submit" class="twofa-btn" id="login2FASubmit">Verify and sign in</button>
+                </form>
+                <a href="#" id="login2FABack" class="twofa-back">Back to login</a>
+            </div>
 
             <div class="login-footer">
                 <a href="#">Forgot password?</a>
