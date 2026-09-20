@@ -73,7 +73,7 @@ async function notifyPasswordChanged({ userId, userEmail, ipAddress, userAgent }
                     "If you made this change, no action is needed.\n\n" +
                     "If you did NOT make this change, secure your account immediately:\n" +
                     appUrl() + "/admin/pages/login.html\n\n" +
-                    "The Crevio Team",
+                    "If this wasn't you, please contact our security team:\n\n    security@crevio.indevs.in\n\nOr simply reply to this email - our security team monitors replies and will respond as soon as possible.\n\nThe Crevio Team",
                 category: "security_password_changed"
             }).catch(function () {});
         }
@@ -117,7 +117,7 @@ async function notifyEmailChanged({ userId, oldEmail, newEmail, ipAddress, userA
                     "Location:  " + ctx.locationText + "\n" +
                     "IP:        " + (ipAddress || "unknown") + "\n\n" +
                     "If this wasn't you, contact support immediately.\n\n" +
-                    "The Crevio Team",
+                    "If this wasn't you, please contact our security team:\n\n    security@crevio.indevs.in\n\nOr simply reply to this email - our security team monitors replies and will respond as soon as possible.\n\nThe Crevio Team",
                 category: "security_email_changed"
             }).catch(function () {});
         }
@@ -155,7 +155,7 @@ async function notify2FAEnabled({ userId, userEmail, ipAddress, userAgent }) {
                     "If you made this change, no action is needed.\n\n" +
                     "If you did NOT enable 2FA, secure your account immediately:\n" +
                     appUrl() + "/admin/pages/login.html\n\n" +
-                    "The Crevio Team",
+                    "If this wasn't you, please contact our security team:\n\n    security@crevio.indevs.in\n\nOr simply reply to this email - our security team monitors replies and will respond as soon as possible.\n\nThe Crevio Team",
                 category: "security_2fa_enabled"
             }).catch(function () {});
         }
@@ -195,7 +195,7 @@ async function notify2FADisabled({ userId, userEmail, ipAddress, userAgent }) {
                     "If you made this change, no action is needed.\n\n" +
                     "If you did NOT disable 2FA, secure your account immediately:\n" +
                     appUrl() + "/admin/pages/login.html\n\n" +
-                    "The Crevio Team",
+                    "If this wasn't you, please contact our security team:\n\n    security@crevio.indevs.in\n\nOr simply reply to this email - our security team monitors replies and will respond as soon as possible.\n\nThe Crevio Team",
                 category: "security_2fa_disabled"
             }).catch(function () {});
         }

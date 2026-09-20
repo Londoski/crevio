@@ -159,7 +159,7 @@ async function recordLogin({ userId, userEmail, token, userAgent, ipAddress, acc
                 text += appUrl() + "/admin/pages/login.html\n\n";
             }
 
-            text += "The Crevio Team";
+            text += "If this wasn't you, please contact our security team:\n\n    security@crevio.indevs.in\n\nOr simply reply to this email - our security team monitors replies and will respond as soon as possible.\n\nThe Crevio Team";
 
             emailService.send({
                 userId: userId,

@@ -777,6 +777,16 @@
         "recordPasswordChange",
         "HISTORY_LIMIT"
       ]
+    },
+    {
+      "id": "security-emails-support-footer",
+      "desc": "All security emails include reply-to-this-email + support contact footer",
+      "type": "fileContains",
+      "file": "backend/services/accountSecurityService.js",
+      "patterns": [
+        "please contact our security team",
+        "security@crevio.indevs.in"
+      ]
     }
   ]
 }
