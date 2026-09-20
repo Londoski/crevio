@@ -8,7 +8,7 @@
     "use strict";
 
     const STORAGE_KEY = "crevio_theme";
-    const DEFAULT_THEME = "dark";
+    const DEFAULT_THEME = "light";
 
     // ---------- APPLY THEME ----------
     function applyTheme(theme) {
