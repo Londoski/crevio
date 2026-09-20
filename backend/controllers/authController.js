@@ -6,6 +6,7 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const db = require("../../database/db");
+const deviceService = require("../services/deviceService");
 const accountSecurityService = require("../services/accountSecurityService");
 const loginSecurityService = require("../services/loginSecurityService");
 const passwordHistoryService = require("../services/passwordHistoryService");
@@ -259,5 +260,110 @@ exports.changePassword = async (req, res) => {
     } catch (err) {
         console.error("Change password error:", err);
         res.status(500).json({ success: false, message: "Server error" });
+    }
+};
+
+const __DEVICE_TTL_MS = 2592000000;
+function __futureIso(ms) {
+    return new Date(Date.now() + ms).toISOString().replace("T", " ").replace(/\.\d{3}Z$/, "");
+}
+function __getFingerprint(req) {
+    return deviceService.fingerprint({
+        userAgent: req.headers["user-agent"] || "",
+        ipAddress: null,
+        acceptLanguage: req.headers["accept-language"] || ""
+    });
+}
+
+// =========================================================
+// POST /api/auth/device-status  (PUBLIC)
+// Body: { email }
+// Returns whether the current browser is already trusted for that email
+// =========================================================
+exports.deviceStatus = (req, res) => {
+    try {
+        const email = String((req.body && req.body.email) || "").trim().toLowerCase();
+        if (!email) return res.json({ success: true, trusted: false });
+        const user = db.prepare("SELECT id FROM users WHERE email = ?").get(email);
+        if (!user) return res.json({ success: true, trusted: false });
+        const fp = __getFingerprint(req);
+        const dev = db.prepare(
+            "SELECT device_name, expires_at FROM trusted_devices WHERE user_id = ? AND device_token = ? AND expires_at > CURRENT_TIMESTAMP LIMIT 1"
+        ).get(user.id, fp);
+        if (!dev) return res.json({ success: true, trusted: false });
+        return res.json({
+            success: true,
+            trusted: true,
+            deviceName: dev.device_name,
+            expiresAt: dev.expires_at
+        });
+    } catch (err) {
+        res.json({ success: true, trusted: false });
+    }
+};
+
+// =========================================================
+// GET /api/auth/trust-device-status  (AUTH)
+// =========================================================
+exports.trustDeviceStatus = (req, res) => {
+    try {
+        const fp = __getFingerprint(req);
+        const dev = db.prepare(
+            "SELECT device_name, expires_at FROM trusted_devices WHERE user_id = ? AND device_token = ? AND expires_at > CURRENT_TIMESTAMP LIMIT 1"
+        ).get(req.user.id, fp);
+        return res.json({
+            success: true,
+            trusted: !!dev,
+            deviceName: dev ? dev.device_name : null,
+            expiresAt: dev ? dev.expires_at : null
+        });
+    } catch (err) {
+        res.status(500).json({ success: false, message: "Failed", error: err.message });
+    }
+};
+
+// =========================================================
+// POST /api/auth/trust-current-device  (AUTH)
+// =========================================================
+exports.trustCurrentDevice = (req, res) => {
+    try {
+        const userAgent = req.headers["user-agent"] || "";
+        const acceptLanguage = req.headers["accept-language"] || "";
+        const ipAddress = String(req.headers["x-forwarded-for"] || "").split(",")[0].trim() || req.ip || null;
+        const fp = __getFingerprint(req);
+        const parsed = deviceService.parse(userAgent);
+        const expiresAt = __futureIso(__DEVICE_TTL_MS);
+
+        const existing = db.prepare(
+            "SELECT id FROM trusted_devices WHERE user_id = ? AND device_token = ? LIMIT 1"
+        ).get(req.user.id, fp);
+
+        if (existing) {
+            db.prepare("UPDATE trusted_devices SET last_used_at = CURRENT_TIMESTAMP, expires_at = ? WHERE id = ?").run(expiresAt, existing.id);
+        } else {
+            db.prepare(
+                "INSERT INTO trusted_devices (user_id, device_token, device_name, user_agent, ip_address, expires_at, last_used_at) VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)"
+            ).run(req.user.id, fp, parsed.friendly, userAgent, ipAddress, expiresAt);
+        }
+
+        res.json({ success: true, deviceName: parsed.friendly, expiresAt });
+    } catch (err) {
+        console.error("trustCurrentDevice error:", err);
+        res.status(500).json({ success: false, message: "Failed", error: err.message });
+    }
+};
+
+// =========================================================
+// POST /api/auth/untrust-current-device  (AUTH)
+// =========================================================
+exports.untrustCurrentDevice = (req, res) => {
+    try {
+        const fp = __getFingerprint(req);
+        const r = db.prepare(
+            "DELETE FROM trusted_devices WHERE user_id = ? AND device_token = ?"
+        ).run(req.user.id, fp);
+        res.json({ success: true, removed: r.changes });
+    } catch (err) {
+        res.status(500).json({ success: false, message: "Failed", error: err.message });
     }
 };

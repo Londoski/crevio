@@ -15,4 +15,9 @@ router.post ("/set-password",  authController.setPassword);
 router.patch("/email",         auth, authController.changeEmail);
 router.patch("/password",      auth, authController.changePassword);
 
+router.post("/device-status",         authController.deviceStatus);
+router.get("/trust-device-status",    auth, authController.trustDeviceStatus);
+router.post("/trust-current-device",  auth, authController.trustCurrentDevice);
+router.post("/untrust-current-device", auth, authController.untrustCurrentDevice);
+
 module.exports = router;

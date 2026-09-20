@@ -72,15 +72,13 @@ async function recordLogin({ userId, userEmail, token, userAgent, ipAddress, acc
         } catch (e) { priorSessions = 1; }
         const isFirstEver = priorSessions <= 1;
 
-        // 4. Existing trusted device?
+        // 4. Existing trusted device? (always check — trusted device = silent)
         let existingDevice = null;
-        if (remember) {
-            try {
-                existingDevice = db.prepare(
-                    "SELECT * FROM trusted_devices WHERE user_id = ? AND device_token = ? LIMIT 1"
-                ).get(userId, fp) || null;
-            } catch (e) { existingDevice = null; }
-        }
+        try {
+            existingDevice = db.prepare(
+                "SELECT * FROM trusted_devices WHERE user_id = ? AND device_token = ? LIMIT 1"
+            ).get(userId, fp) || null;
+        } catch (e) { existingDevice = null; }
 
         if (existingDevice) {
             try {
