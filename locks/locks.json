@@ -862,6 +862,39 @@
         "totpForm",
         "reset-verify-totp"
       ]
+    },
+    {
+      "id": "phase-D7-totp-enrollment",
+      "desc": "TOTP enrollment UI on Security page (Enable/Disable + QR modal)",
+      "type": "fileContains",
+      "file": "dashboard/pages/security.html",
+      "patterns": [
+        "enableTotpBtn",
+        "totpModal",
+        "totpQr"
+      ]
+    },
+    {
+      "id": "phase-D7-totp-status-ui",
+      "desc": "Security page refreshes TOTP status from API",
+      "type": "fileContains",
+      "file": "dashboard/js/security.js",
+      "patterns": [
+        "__totpWired",
+        "/api/2fa/totp/status",
+        "totpVerifyBtn",
+        "refreshStatus"
+      ]
+    },
+    {
+      "id": "sessions-parsed-devices",
+      "desc": "getSessions shows parsed device names, not user agents",
+      "type": "fileContains",
+      "file": "backend/controllers/securityController.js",
+      "patterns": [
+        "deviceService.parse",
+        "sessions = sessions.map"
+      ]
     }
   ]
 }

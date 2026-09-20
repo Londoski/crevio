@@ -6,6 +6,7 @@
 
 const bcrypt = require("bcrypt");
 const db = require("../../database/db");
+const deviceService = require("../services/deviceService");
 const passwordHistoryService = require("../services/passwordHistoryService");
 const emailOtpService = require("../services/emailOtpService");
 const smsService = require("../services/smsService");
@@ -178,6 +179,21 @@ exports.getSessions = (req, res) => {
             sessions[0].is_current = 1;
             for (let i = 1; i < sessions.length; i++) sessions[i].is_current = 0;
         }
+        
+        // Enrich sessions with parsed device names
+        try {
+            sessions = sessions.map(function (sess) {
+                const ua = sess.user_agent || sess.device || "";
+                const parsed = deviceService.parse(ua);
+                return Object.assign({}, sess, {
+                    device: parsed.friendly,
+                    browser: parsed.browser,
+                    os: parsed.os,
+                    location: null
+                });
+            });
+        } catch (e) { console.warn("session enrich failed:", e.message); }
+
         res.json({ success: true, sessions });
     } catch (err) {
         res.status(500).json({ success: false, message: "Failed", error: err.message });

@@ -99,6 +99,54 @@
     </style>
     <link rel="stylesheet" href="/dashboard/css/mobile.css?v=639253624517313970">
     <link rel="stylesheet" href="/dashboard/css/loader.css?v=639253269318409198">
+<style id="__totpModalCss">
+        .totp-modal-overlay {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(3px);
+            -webkit-backdrop-filter: blur(3px);
+            display: flex; align-items: center; justify-content: center;
+            padding: 20px; z-index: 5000;
+            opacity: 0; visibility: hidden;
+            transition: opacity 0.15s, visibility 0.15s;
+        }
+        .totp-modal-overlay.open { opacity: 1; visibility: visible; }
+        .totp-modal-card {
+            background: var(--bg-card, #1E293B);
+            border: 1px solid var(--border-color, #334155);
+            border-radius: 16px;
+            width: 100%; max-width: min(440px, 94vw);
+            padding: 26px; box-shadow: 0 24px 60px rgba(0,0,0,0.6);
+            display: flex; flex-direction: column; gap: 14px;
+        }
+        .totp-modal-card h3 { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+        .totp-modal-card p { font-size: 13px; color: var(--text-secondary, #94A3B8); line-height: 1.5; }
+        .totp-modal-card ol { font-size: 13px; color: var(--text-secondary, #94A3B8); line-height: 1.6; padding-left: 20px; }
+        .totp-qr-wrap { display: flex; justify-content: center; padding: 14px; background: #fff; border-radius: 12px; }
+        .totp-qr-wrap img { display: block; width: 220px; height: 220px; }
+        .totp-secret-row { font-size: 12px; color: var(--text-muted); text-align: center; word-break: break-all; }
+        .totp-secret-row code { background: var(--bg-input); padding: 4px 8px; border-radius: 6px; font-size: 12px; }
+        .totp-input {
+            width: 100%; padding: 12px;
+            background: var(--bg-input); border: 1px solid var(--border-color);
+            color: var(--text-primary); border-radius: 10px;
+            font-size: 22px; text-align: center; letter-spacing: 0.35em; font-family: inherit; font-weight: 600;
+        }
+        .totp-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
+        .totp-error { display: none; font-size: 13px; color: #FCA5A5; text-align: center; }
+        .totp-error.show { display: block; }
+        .totp-modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 6px; }
+        .totp-btn { padding: 10px 18px; border-radius: 10px; font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer; border: none; }
+        .totp-btn-primary { background: var(--accent, #2563EB); color: #fff; }
+        .totp-btn-primary:hover:not(:disabled) { background: var(--accent-hover, #1D4ED8); }
+        .totp-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+        .totp-btn-ghost { background: transparent; color: var(--text-secondary); border: 1px solid var(--border-color); }
+        .totp-btn-ghost:hover { background: var(--bg-input); color: var(--text-primary); }
+        .totp-btn-danger { background: #EF4444; color: #fff; }
+        .totp-btn-danger:hover { background: #DC2626; }
+        .hidden { display: none !important; }
+        .badge.success { background: rgba(34,197,94,0.15); color: #22C55E; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+    </style>
 </head>
 <body>
 
@@ -189,7 +237,11 @@
                     <h3>Authenticator App</h3>
                     <p>Use Google Authenticator or Authy</p>
                 </div>
-                <span class="badge muted">Coming Soon</span>
+                <div class="totp-actions" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                    <button class="btn-secondary" id="enableTotpBtn" type="button">Enable</button>
+                    <span class="badge success hidden" id="totpEnabledBadge">Enabled</span>
+                    <button class="btn-secondary hidden" id="disableTotpBtn" type="button">Disable</button>
+                </div>
             </div>
 
             <div class="setting-row">
@@ -235,5 +287,40 @@
     <script src="/dashboard/js/loader.js?v=639253269318409198"></script>
     <script src="/dashboard/js/button-feedback.js?v=639253633627588411"></script>
     <script src="/dashboard/js/sidebar-badges.js"></script>
+
+    <!-- TOTP Enable modal -->
+    <div class="totp-modal-overlay" id="totpModal">
+        <div class="totp-modal-card" role="dialog">
+            <h3>Set up two-factor authentication</h3>
+            <p>Adds an extra layer of security. You'll need your authenticator app when signing in from a new device.</p>
+            <ol>
+                <li>Install <strong>Google Authenticator</strong>, <strong>Authy</strong>, or any TOTP app.</li>
+                <li>Scan the QR code below.</li>
+                <li>Enter the 6-digit code from your app.</li>
+            </ol>
+            <div class="totp-qr-wrap"><img id="totpQr" src="" alt="QR code"></div>
+            <div class="totp-secret-row">Can&rsquo;t scan? Manual code: <code id="totpSecret"></code></div>
+            <input type="text" id="totpVerifyCode" class="totp-input" maxlength="6" inputmode="numeric" pattern="[0-9]*" placeholder="000000" autocomplete="one-time-code">
+            <div class="totp-error" id="totpError"></div>
+            <div class="totp-modal-actions">
+                <button class="totp-btn totp-btn-ghost" id="totpCancelBtn" type="button">Cancel</button>
+                <button class="totp-btn totp-btn-primary" id="totpVerifyBtn" type="button" disabled>Verify &amp; enable</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOTP Disable modal -->
+    <div class="totp-modal-overlay" id="totpDisableModal">
+        <div class="totp-modal-card" role="dialog">
+            <h3>Disable two-factor authentication?</h3>
+            <p>This reduces the security of your account. Enter your password to confirm.</p>
+            <input type="password" id="totpDisablePassword" class="totp-input" style="font-size:14px;letter-spacing:normal;text-align:left;" placeholder="Your password" autocomplete="current-password">
+            <div class="totp-error" id="totpDisableError"></div>
+            <div class="totp-modal-actions">
+                <button class="totp-btn totp-btn-ghost" id="totpDisableCancelBtn" type="button">Cancel</button>
+                <button class="totp-btn totp-btn-danger" id="totpDisableConfirmBtn" type="button">Disable 2FA</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
