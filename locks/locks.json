@@ -989,6 +989,16 @@
         "__email2FALoaded",
         "2fa-status"
       ]
+    },
+    {
+      "id": "security-page-crevio-dialogs",
+      "desc": "Security page uses crevioConfirm + crevioAlert (no native dialogs)",
+      "type": "fileContains",
+      "file": "dashboard/js/security.js",
+      "patterns": [
+        "crevioConfirm",
+        "crevioAlert"
+      ]
     }
   ]
 }

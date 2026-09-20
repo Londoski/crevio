@@ -114,7 +114,11 @@ document.addEventListener("DOMContentLoaded", function () {
             sessionsContainer.querySelectorAll("[data-revoke]").forEach(el => {
                 el.addEventListener("click", async () => {
                     const id = el.dataset.revoke;
-                    if (!confirm("Sign out this device?")) return;
+                    if (!(await window.crevioConfirm("Sign out this device?", {
+            title: "Sign out device",
+            confirmText: "Sign out",
+            danger: true
+        }))) return;
                     try {
                         const res  = await window.apiFetch(`/api/security/sessions/${id}`, { method: "DELETE" });
                         const data = await res.json();
@@ -167,7 +171,11 @@ document.addEventListener("DOMContentLoaded", function () {
     // REVOKE ALL
     // =========================================================
     $("logoutAllBtn")?.addEventListener("click", async () => {
-        if (!confirm("Sign out all other devices? You'll stay signed in here.")) return;
+        if (!(await window.crevioConfirm("Sign out all other devices? You'll stay signed in here.", {
+            title: "Sign out other devices",
+            confirmText: "Sign out all",
+            danger: true
+        }))) return;
         try {
             const res  = await window.apiFetch("/api/security/sessions", { method: "DELETE" });
             const data = await res.json();
@@ -207,12 +215,20 @@ document.addEventListener("DOMContentLoaded", function () {
     // RECOVERY CODES
     // =========================================================
     $("generateCodesBtn")?.addEventListener("click", async () => {
-        if (!confirm("Generate new recovery codes? Old ones will stop working.")) return;
+        if (!(await window.crevioConfirm("Generate new recovery codes? Old ones will stop working.", {
+            title: "Regenerate recovery codes",
+            confirmText: "Generate",
+            danger: true
+        }))) return;
         try {
             const res  = await window.apiFetch("/api/security/recovery-codes", { method: "POST" });
             const data = await res.json();
             if (data.success && data.codes) {
-                alert("Save these recovery codes in a safe place:\n\n" + data.codes.join("\n"));
+                window.crevioAlert("Save these recovery codes in a safe place:\n\n" + data.codes.join("\n"), {
+            title: "Your recovery codes",
+            kind: "info",
+            confirmText: "I've saved them"
+        });
             } else {
                 showToast(data.message || "Failed", true);
             }
