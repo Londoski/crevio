@@ -787,6 +787,49 @@
         "please contact our security team",
         "security@crevio.indevs.in"
       ]
+    },
+    {
+      "id": "phase-D6b-sms-queue",
+      "desc": "SMS queue (Twilio adapter, queued when unconfigured)",
+      "type": "fileContains",
+      "file": "backend/services/smsService.js",
+      "patterns": [
+        "sms_outbox",
+        "queued",
+        "isConfigured"
+      ]
+    },
+    {
+      "id": "phase-D6b-email-otp",
+      "desc": "Email OTP second factor for reset",
+      "type": "fileContains",
+      "file": "backend/services/emailOtpService.js",
+      "patterns": [
+        "createAndSend",
+        "verify",
+        "reset_otp"
+      ]
+    },
+    {
+      "id": "phase-D6b-otp-endpoint",
+      "desc": "verifyResetOtp endpoint on securityController",
+      "type": "fileContains",
+      "file": "backend/controllers/securityController.js",
+      "patterns": [
+        "verifyResetOtp",
+        "emailOtpService"
+      ]
+    },
+    {
+      "id": "phase-D6b-otp-page",
+      "desc": "Reset page has OTP UI + two-step flow",
+      "type": "fileContains",
+      "file": "admin/pages/reset-password.html",
+      "patterns": [
+        "otpState",
+        "otpForm",
+        "reset-verify-otp"
+      ]
     }
   ]
 }
