@@ -175,9 +175,19 @@ exports.getSessions = (req, res) => {
                 `).all(req.user.id);
             } catch (e) { sessions = []; }
         }
-        if (sessions.length) {
-            sessions[0].is_current = 1;
-            for (let i = 1; i < sessions.length; i++) sessions[i].is_current = 0;
+        // Mark the current session by matching the incoming JWT's hash
+        try {
+            const crypto = require("crypto");
+            if (req.user && req.user.token) {
+                const currentHash = crypto.createHash("sha256").update(String(req.user.token)).digest("hex");
+                sessions.forEach(function (s) {
+                    s.is_current = (s.session_token_hash === currentHash) ? 1 : 0;
+                });
+            } else {
+                sessions.forEach(function (s) { s.is_current = 0; });
+            }
+        } catch (e) {
+            sessions.forEach(function (s) { s.is_current = 0; });
         }
         
         // Enrich sessions with parsed device names
@@ -220,8 +230,25 @@ exports.revokeSession = (req, res) => {
 exports.revokeAllSessions = (req, res) => {
     try {
         if (!tableExists("sessions")) return res.json({ success: true, message: "No sessions table" });
-        const r = db.prepare("DELETE FROM sessions WHERE user_id = ?").run(req.user.id);
-        res.json({ success: true, message: "All sessions revoked", count: r.changes });
+
+        // Identify the current session by hashing the JWT we received
+        let currentHash = null;
+        if (req.user && req.user.token) {
+            const crypto = require("crypto");
+            currentHash = crypto.createHash("sha256").update(String(req.user.token)).digest("hex");
+        }
+
+        let r;
+        if (currentHash) {
+            r = db.prepare(
+                "DELETE FROM sessions WHERE user_id = ? AND session_token_hash != ?"
+            ).run(req.user.id, currentHash);
+        } else {
+            // Fallback: no token info, don't delete at all (safer than logging user out)
+            return res.status(400).json({ success: false, message: "Cannot determine current session." });
+        }
+
+        res.json({ success: true, message: "Other sessions revoked", count: r.changes });
     } catch (err) {
         res.status(500).json({ success: false, message: "Failed", error: err.message });
     }

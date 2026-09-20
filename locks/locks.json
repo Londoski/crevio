@@ -999,6 +999,17 @@
         "crevioConfirm",
         "crevioAlert"
       ]
+    },
+    {
+      "id": "sessions-preserve-current",
+      "desc": "Sign out all other devices preserves the current session",
+      "type": "fileContains",
+      "file": "backend/controllers/securityController.js",
+      "patterns": [
+        "Other sessions revoked",
+        "session_token_hash != ?",
+        "is_current"
+      ]
     }
   ]
 }

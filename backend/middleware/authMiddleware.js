@@ -22,6 +22,8 @@ module.exports = (req, res, next) => {
             username: decoded.username || null,
             email: decoded.email || null,
             role: decoded.role || 'creator'
+        ,
+            token: token
         };
         next();
     } catch (err) {
