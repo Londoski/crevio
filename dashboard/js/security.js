@@ -224,11 +224,15 @@ document.addEventListener("DOMContentLoaded", function () {
             const res  = await window.apiFetch("/api/security/recovery-codes", { method: "POST" });
             const data = await res.json();
             if (data.success && data.codes) {
-                window.crevioAlert("Save these recovery codes in a safe place:\n\n" + data.codes.join("\n"), {
-            title: "Your recovery codes",
-            kind: "info",
-            confirmText: "I've saved them"
-        });
+                if (typeof window.crevioShowRecoveryCodes === "function") {
+                    await window.crevioShowRecoveryCodes(data.codes, {
+                        title: "Your recovery codes"
+                    });
+                } else {
+                    window.crevioAlert("Save these recovery codes in a safe place:\n\n" + data.codes.join("\n"), {
+                        title: "Your recovery codes",
+                    });
+                }
             } else {
                 showToast(data.message || "Failed", true);
             }

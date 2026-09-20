@@ -1076,6 +1076,17 @@
         "planNotificationService",
         "onSignup"
       ]
+    },
+    {
+      "id": "phase-P3-recovery-codes-modal",
+      "desc": "Recovery codes shown in a Crevio modal with grid + copy + download + confirm checkbox",
+      "type": "fileContains",
+      "file": "dashboard/js/recovery-codes-modal.js",
+      "patterns": [
+        "crevioShowRecoveryCodes",
+        "rc-grid",
+        "__rcCheckbox"
+      ]
     }
   ]
 }
