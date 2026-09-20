@@ -6,6 +6,7 @@
 
 const bcrypt = require("bcrypt");
 const db = require("../../database/db");
+const passwordHistoryService = require("../services/passwordHistoryService");
 const lockdownService = require("../services/lockdownService");
 
 function cols(table) {
@@ -129,6 +130,16 @@ exports.changePassword = async (req, res) => {
         if (!matches) {
             return res.status(401).json({ success: false, message: "Current password is incorrect" });
         }
+
+        // Block reuse of current or recent passwords
+        if (await passwordHistoryService.isPasswordReused(req.user.id, newPassword)) {
+            return res.status(400).json({
+                success: false,
+                message: "This password was used recently. Please choose a different one."
+            });
+        }
+        // Record the old hash before replacing it
+        passwordHistoryService.recordPasswordChange(req.user.id, hash);
 
         const newHash = await bcrypt.hash(newPassword, 12);
         const userCols = cols("users");
@@ -294,6 +305,26 @@ exports.resetPasswordPost = async (req, res) => {
         }
         if (!/[A-Za-z]/.test(newPassword) || !/[0-9]/.test(newPassword)) {
             return res.status(400).json({ success: false, message: "Password must contain letters and numbers" });
+        }
+
+        // Peek the token to get user_id WITHOUT consuming it, then block reuse
+        const crypto = require("crypto");
+        const hashPeek = crypto.createHash("sha256").update(token).digest("hex");
+        const peek = db.prepare(
+            "SELECT user_id FROM verification_tokens WHERE token_hash = ? " +
+            "AND token_type = 'password_reset_compromise' AND used_at IS NULL " +
+            "AND expires_at > CURRENT_TIMESTAMP"
+        ).get(hashPeek);
+
+        if (!peek) {
+            return res.status(400).json({ success: false, message: "This link is invalid or has expired." });
+        }
+
+        if (await passwordHistoryService.isPasswordReused(peek.user_id, newPassword)) {
+            return res.status(400).json({
+                success: false,
+                message: "This password was used recently. Please choose a different one."
+            });
         }
 
         // Consume token via verificationService

@@ -755,6 +755,28 @@
         "resetPasswordPost",
         "password_reset_compromise"
       ]
+    },
+    {
+      "id": "password-history-table",
+      "desc": "password_history table stores last 5 passwords as bcrypt hashes",
+      "type": "fileContains",
+      "file": "scripts/migrate-password-history.js",
+      "patterns": [
+        "password_history",
+        "user_id",
+        "password_hash"
+      ]
+    },
+    {
+      "id": "password-reuse-blocked",
+      "desc": "Password reuse blocked in change + reset flows",
+      "type": "fileContains",
+      "file": "backend/services/passwordHistoryService.js",
+      "patterns": [
+        "isPasswordReused",
+        "recordPasswordChange",
+        "HISTORY_LIMIT"
+      ]
     }
   ]
 }

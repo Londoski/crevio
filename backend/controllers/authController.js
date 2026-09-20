@@ -8,6 +8,7 @@ const jwt = require("jsonwebtoken");
 const db = require("../../database/db");
 const accountSecurityService = require("../services/accountSecurityService");
 const loginSecurityService = require("../services/loginSecurityService");
+const passwordHistoryService = require("../services/passwordHistoryService");
 
 function cols(table) {
     try { return db.prepare(`PRAGMA table_info(${table})`).all().map(c => c.name); }
@@ -226,6 +227,16 @@ exports.changePassword = async (req, res) => {
         if (!hash || !(await bcrypt.compare(currentPassword, hash))) {
             return res.status(401).json({ success: false, message: "Current password is incorrect" });
         }
+
+        // Block reuse of current or recent passwords
+        if (await passwordHistoryService.isPasswordReused(uid, newPassword)) {
+            return res.status(400).json({
+                success: false,
+                message: "This password was used recently. Please choose a different one."
+            });
+        }
+        // Record the old hash before replacing it
+        passwordHistoryService.recordPasswordChange(uid, hash);
 
         const newHash = await bcrypt.hash(newPassword, 12);
         const col = user.password_hash ? "password_hash" : "password";
