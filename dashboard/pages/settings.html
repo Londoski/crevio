@@ -430,7 +430,29 @@
                 Save Settings
             </button>
         </div>
-    </main>
+    
+    <!-- =========================================================
+         TRUST THIS DEVICE
+         ========================================================= -->
+    <div class="settings-card" id="__trustDeviceSection">
+        <div class="card-header">
+            <h2><i data-lucide="shield-check" class="icon"></i> Trust This Device</h2>
+        </div>
+        <div class="card-body">
+            <div class="setting-row">
+                <div class="setting-info">
+                    <h3>Trust this browser</h3>
+                    <p>Skip new-device alerts when you sign in from this browser. Other devices stay protected.</p>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="trustCurrentDeviceToggle">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <p class="setting-hint" id="__trustDeviceStatus" style="font-size:12px;color:var(--text-muted);margin-top:8px;"></p>
+        </div>
+    </div>
+</main>
 
         <!-- CHANGE EMAIL MODAL -->
     <div class="modal-overlay" id="emailModal">

@@ -339,3 +339,62 @@ document.addEventListener("DOMContentLoaded", function () {
     load();
     initCredentialsSection();
 });
+
+// =========================================================
+// TRUST THIS DEVICE
+// =========================================================
+(function () {
+    if (window.__trustDeviceWired) return;
+    window.__trustDeviceWired = true;
+
+    const toggle = document.getElementById("trustCurrentDeviceToggle");
+    const statusEl = document.getElementById("__trustDeviceStatus");
+    if (!toggle) return;
+
+    async function loadStatus() {
+        try {
+            const res = await window.apiFetch("/api/auth/trust-device-status");
+            const data = await res.json();
+            if (!data.success) return;
+            toggle.checked = !!data.trusted;
+            if (statusEl) {
+                if (data.trusted && data.deviceName) {
+                    const exp = data.expiresAt ? " Expires " + data.expiresAt + "." : "";
+                    statusEl.textContent = "Currently trusted as " + data.deviceName + "." + exp;
+                } else {
+                    statusEl.textContent = "This browser is not trusted. You'll get new-device alerts on sign-in.";
+                }
+            }
+        } catch (e) { console.warn("trust status failed", e); }
+    }
+
+    toggle.addEventListener("change", async function () {
+        toggle.disabled = true;
+        const wantTrust = toggle.checked;
+        try {
+            const url = wantTrust
+                ? "/api/auth/trust-current-device"
+                : "/api/auth/untrust-current-device";
+            const res = await window.apiFetch(url, { method: "POST" });
+            const data = await res.json();
+            if (!data.success) {
+                toggle.checked = !wantTrust;
+                if (window.crevioAlert) window.crevioAlert(data.message || "Failed.", { kind: "error" });
+            } else {
+                if (typeof window.showToast === "function") {
+                    window.showToast(wantTrust ? "Device trusted" : "Device untrusted");
+                } else if (window.crevioAlert) {
+                    window.crevioAlert(wantTrust ? "Device trusted" : "Device untrusted", { kind: "success" });
+                }
+                await loadStatus();
+            }
+        } catch (e) {
+            toggle.checked = !wantTrust;
+            if (window.crevioAlert) window.crevioAlert("Network error.", { kind: "error" });
+        } finally {
+            toggle.disabled = false;
+        }
+    });
+
+    loadStatus();
+})();

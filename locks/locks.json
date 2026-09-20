@@ -895,6 +895,38 @@
         "deviceService.parse",
         "sessions = sessions.map"
       ]
+    },
+    {
+      "id": "phase-D8-trust-endpoints",
+      "desc": "Device trust status + trust/untrust endpoints",
+      "type": "fileContains",
+      "file": "backend/controllers/authController.js",
+      "patterns": [
+        "deviceStatus",
+        "trustDeviceStatus",
+        "trustCurrentDevice",
+        "untrustCurrentDevice"
+      ]
+    },
+    {
+      "id": "phase-D8-login-hides-checkbox",
+      "desc": "Login page hides 'Remember device' when already trusted",
+      "type": "fileContains",
+      "file": "admin/pages/login.html",
+      "patterns": [
+        "__rememberGroup",
+        "__trustNote"
+      ]
+    },
+    {
+      "id": "phase-D8-settings-trust-toggle",
+      "desc": "Settings page has Trust This Device toggle",
+      "type": "fileContains",
+      "file": "dashboard/pages/settings.html",
+      "patterns": [
+        "__trustDeviceSection",
+        "trustCurrentDeviceToggle"
+      ]
     }
   ]
 }
