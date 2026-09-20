@@ -1,46 +1,22 @@
-// =========================================================
 // CREVIO — TOTP SERVICE
-// =========================================================
-//
-// Uses current otplib functional APIs.
-//
-// TOTP defaults:
-//   SHA-1, 6 digits, 30 second period
-//
-// =========================================================
+// File: backend/services/totpService.js
+// SHA-1, 6 digits, 30s period. Secrets encrypted with AES-256-GCM.
 
 const crypto = require("crypto");
-const { generateSecret, verify, generateURI } = require("otplib");
+const otplib = require("otplib");
 const QRCode = require("qrcode");
-const twoFactorModel = require("../models/twoFactorModel");
-
-// =========================================================
-// CONFIGURATION
-// =========================================================
 
 const ISSUER = "Crevio";
 const ALGORITHM = "sha1";
 const DIGITS = 6;
 const PERIOD = 30;
 
-// =========================================================
-// ENCRYPTION KEY
-// =========================================================
-
 function getEncryptionKey() {
     const value = process.env.CREVIO_2FA_ENCRYPTION_KEY;
-    if (!value) {
-        throw new Error("CREVIO_2FA_ENCRYPTION_KEY is not configured.");
-    }
-    if (!/^[0-9a-fA-F]{64}$/.test(value)) {
-        throw new Error("CREVIO_2FA_ENCRYPTION_KEY must contain exactly 64 hexadecimal characters.");
-    }
+    if (!value) throw new Error("CREVIO_2FA_ENCRYPTION_KEY is not configured.");
+    if (!/^[0-9a-fA-F]{64}$/.test(value)) throw new Error("CREVIO_2FA_ENCRYPTION_KEY must be 64 hex characters.");
     return Buffer.from(value, "hex");
 }
-
-// =========================================================
-// ENCRYPT / DECRYPT SECRET
-// =========================================================
 
 function encryptSecret(secret) {
     const key = getEncryptionKey();
@@ -54,9 +30,7 @@ function encryptSecret(secret) {
 function decryptSecret(encryptedValue) {
     const key = getEncryptionKey();
     const parts = String(encryptedValue).split(".");
-    if (parts.length !== 3) {
-        throw new Error("Invalid encrypted TOTP secret.");
-    }
+    if (parts.length !== 3) throw new Error("Invalid encrypted TOTP secret.");
     const iv = Buffer.from(parts[0], "base64");
     const authTag = Buffer.from(parts[1], "base64");
     const encrypted = Buffer.from(parts[2], "base64");
@@ -66,16 +40,12 @@ function decryptSecret(encryptedValue) {
     return decrypted.toString("utf8");
 }
 
-// =========================================================
-// GENERATE SECRET & URI
-// =========================================================
-
 function createSecret() {
-    return generateSecret();
+    return otplib.generateSecret();
 }
 
 function createAuthenticatorUri({ secret, email }) {
-    return generateURI({
+    return otplib.generateURI({
         issuer: ISSUER,
         label: email,
         secret,
@@ -93,133 +63,30 @@ async function createQrCode(uri) {
     });
 }
 
-// =========================================================
-// VERIFY TOKEN (core verification)
-// =========================================================
-
 async function verifyToken({ secret, token }) {
     try {
-        const result = verify({
+        const clean = String(token || "").replace(/\s/g, "");
+        if (!/^\d{6}$/.test(clean)) return false;
+        const result = otplib.verify({
             secret,
-            token: String(token).replace(/\s/g, ""),
+            token: clean,
             algorithm: ALGORITHM,
             digits: DIGITS,
             period: PERIOD
         });
-        // verify() returns either boolean or { valid: true/false }
-        if (typeof result === "boolean") {
-            return result;
-        }
-        return result.valid === true;
-    } catch (error) {
-        console.error("❌ TOTP verification error:", error.message);
+        if (typeof result === "boolean") return result;
+        return result && result.valid === true;
+    } catch (e) {
+        console.error("[totpService] verifyToken error:", e.message);
         return false;
     }
 }
-
-// =========================================================
-// GET STORED SECRET
-// =========================================================
-
-function getUserSecret(userId) {
-    const method = twoFactorModel.findAuthenticatorMethod(userId);
-    if (!method || !method.secret) {
-        return null;
-    }
-    try {
-        const secret = decryptSecret(method.secret);
-        return { method, secret };
-    } catch (error) {
-        console.error("❌ Decryption error for user", userId, error.message);
-        return null;
-    }
-}
-
-// =========================================================
-// CREATE SETUP
-// =========================================================
-
-async function createSetup({ userId, email }) {
-    const secret = createSecret();
-    const encryptedSecret = encryptSecret(secret);
-    const label = email || `user-${userId}`;
-    const uri = createAuthenticatorUri({ secret, email: label });
-    const qrCode = await createQrCode(uri);
-
-    const method = twoFactorModel.createAuthenticatorMethod({
-        userId,
-        label,
-        encryptedSecret
-    });
-
-    return {
-        methodId: method.id,
-        secret,
-        uri,
-        qrCode
-    };
-}
-
-// =========================================================
-// VERIFY SETUP (for enabling 2FA)
-// =========================================================
-
-async function verifySetup({ userId, token }) {
-    const stored = getUserSecret(userId);
-    if (!stored) {
-        return { valid: false, reason: "not_configured" };
-    }
-    const valid = await verifyToken({ secret: stored.secret, token });
-    if (!valid) {
-        return { valid: false, reason: "invalid_code" };
-    }
-    // Mark as verified
-    twoFactorModel.markVerified(stored.method.id);
-    return {
-        valid: true,
-        method: twoFactorModel.findById(stored.method.id)
-    };
-}
-
-// =========================================================
-// VERIFY ACTIVE TOKEN (for login)
-// =========================================================
-
-async function verifyActiveToken({ userId, token }) {
-    console.log("🔐 verifyActiveToken called for user:", userId);
-    console.log("Token:", token);
-
-    const stored = getUserSecret(userId);
-    console.log("Stored secret found:", !!stored);
-
-    if (!stored) {
-        console.error("❌ No TOTP secret found for user:", userId);
-        return false;
-    }
-    if (!stored.method.is_verified) {
-        console.error("❌ TOTP method not verified for user:", userId);
-        return false;
-    }
-
-    try {
-        const result = await verifyToken({ secret: stored.secret, token });
-        console.log("✅ TOTP verification result:", result);
-        return result;
-    } catch (error) {
-        console.error("❌ TOTP verification error:", error.message);
-        return false;
-    }
-}
-
-// =========================================================
-// EXPORT
-// =========================================================
 
 module.exports = {
-    createSetup,
-    verifySetup,
-    verifyActiveToken,
-    getUserSecret,
+    createSecret,
+    createAuthenticatorUri,
+    createQrCode,
     encryptSecret,
-    decryptSecret
+    decryptSecret,
+    verifyToken
 };
