@@ -677,6 +677,20 @@
         "security_events",
         "suspended_reason"
       ]
+    },
+    {
+      "id": "phase-D2-lockdown-service",
+      "desc": "Lockdown service — signed tokens + suspend + unlock",
+      "type": "fileContains",
+      "file": "backend/services/lockdownService.js",
+      "patterns": [
+        "createToken",
+        "consumeToken",
+        "lockdown",
+        "unlock",
+        "isSuspended",
+        "compromise_lockdown"
+      ]
     }
   ]
 }
