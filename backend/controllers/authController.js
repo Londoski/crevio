@@ -10,6 +10,7 @@ const deviceService = require("../services/deviceService");
 const accountSecurityService = require("../services/accountSecurityService");
 const loginSecurityService = require("../services/loginSecurityService");
 const emailOtpService = require("../services/emailOtpService");
+const planNotificationService = require("../services/planNotificationService");
 const passwordHistoryService = require("../services/passwordHistoryService");
 
 function cols(table) {
@@ -123,7 +124,18 @@ exports.login = async (req, res) => {
                         } catch (e) { console.error("[login] send login_otp failed:", e.message); }
                     }
 
-                    return res.json({
+                    // Fire welcome notification (never blocks the response)
+        try {
+            if (typeof userId !== "undefined" && userId) {
+                planNotificationService.onSignup({
+                    userId: userId,
+                    userEmail: email,
+                    userName: display_name || username || null
+                }).catch(function () {});
+            }
+        } catch (e) { /* silent */ }
+
+        return res.json({
                         success: true,
                         requires_2fa: true,
                         ticket: ticket,

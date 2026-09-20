@@ -116,3 +116,18 @@ Thank you for your business.
         res.status(500).send("Failed: " + err.message);
     }
 };
+
+// =========================================================
+// Entitlements — appended by P2 Phase 2
+// =========================================================
+exports.getEntitlements = (req, res) => {
+    try {
+        const ent = require("../services/entitlementService");
+        const snapshot = ent.getEntitlements(req.user.id);
+        const allPlans = ent.getAllPlansPublic();
+        return res.json({ success: true, entitlements: snapshot, plans: allPlans });
+    } catch (e) {
+        console.error("[billing] getEntitlements failed:", e.message);
+        return res.status(500).json({ success: false, message: "Could not load entitlements" });
+    }
+};

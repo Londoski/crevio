@@ -1034,6 +1034,48 @@
         "login_otp",
         "requiredMethod"
       ]
+    },
+    {
+      "id": "phase-P2-entitlements-endpoint",
+      "desc": "Central /api/billing/entitlements endpoint returns full plan snapshot + all plans",
+      "type": "fileContains",
+      "file": "backend/controllers/billingController.js",
+      "patterns": [
+        "getEntitlements",
+        "getAllPlansPublic"
+      ]
+    },
+    {
+      "id": "phase-P2-message-length-enforcement",
+      "desc": "sendMessage enforces plan-based character limit via entitlementService",
+      "type": "fileContains",
+      "file": "backend/controllers/messageController.js",
+      "patterns": [
+        "entitlementService",
+        "MESSAGE_TOO_LONG",
+        "messages.max_length"
+      ]
+    },
+    {
+      "id": "phase-P2-messages-entitlements-ui",
+      "desc": "Messages composer shows live character counter driven by /api/billing/entitlements",
+      "type": "fileContains",
+      "file": "dashboard/js/messages-entitlements.js",
+      "patterns": [
+        "loadEntitlements",
+        "messages.max_length",
+        "ent-counter"
+      ]
+    },
+    {
+      "id": "phase-P2-signup-welcome-notification",
+      "desc": "register() fires planNotificationService.onSignup for welcome notification",
+      "type": "fileContains",
+      "file": "backend/controllers/authController.js",
+      "patterns": [
+        "planNotificationService",
+        "onSignup"
+      ]
     }
   ]
 }

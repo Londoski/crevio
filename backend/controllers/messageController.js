@@ -4,6 +4,7 @@
 // =========================================================
 
 const db = require("../../database/db");
+const entitlementService = require("../services/entitlementService");
 const notificationService = require("../services/notificationService");
 
 function safeGet(sql, ...p) { try { return db.prepare(sql).get(...p); } catch { return null; } }
@@ -163,6 +164,34 @@ exports.sendMessage = (req, res) => {
         const uid = req.user.id;
         const text = (req.body.body || req.body.content || "").trim();
         if (!text) return res.status(400).json({ success: false, message: "Message required" });
+
+        // Plan-based length enforcement (creator messages only)
+        if (req.user && req.user.id) {
+            const maxLength = entitlementService.limitFor(req.user.id, "messages.max_length");
+            const cap = entitlementService.isUnlimited(maxLength)
+                ? entitlementService.TECHNICAL_CAPS.message_length
+                : maxLength;
+            if (text.length > cap) {
+                const planId = entitlementService.getUserPlan(req.user.id);
+                const cfg = entitlementService.getPlanConfig(planId);
+                const upgradeTo = cfg && cfg.upgradeTo
+                    ? entitlementService.getPlanConfig(cfg.upgradeTo)
+                    : null;
+                return res.status(403).json({
+                    success: false,
+                    message: upgradeTo
+                        ? ("Message is " + text.length + " characters - your " + cfg.name + " plan allows " + cap + ". Upgrade to " + upgradeTo.name + " for longer messages.")
+                        : ("Message exceeds the technical limit of " + cap + " characters."),
+                    code: "MESSAGE_TOO_LONG",
+                    limit: cap,
+                    current: text.length,
+                    plan: planId,
+                    upgradeTo: upgradeTo ? upgradeTo.id : null
+                });
+            }
+        } else if (text.length > entitlementService.TECHNICAL_CAPS.message_length) {
+            return res.status(400).json({ success: false, message: "Message too long" });
+        }
         const _plan = getUserPlan(uid);
         const _limit = getPlanLimit(_plan);
         if (_limit !== Infinity && text.length > _limit) {

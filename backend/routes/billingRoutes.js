@@ -8,6 +8,7 @@ const router = express.Router();
 const auth = require("../middleware/authMiddleware");
 const billingController = require("../controllers/billingController");
 
+router.get("/entitlements",       auth, billingController.getEntitlements);
 router.get("/plan",              auth, billingController.getPlan);
 router.get("/usage",             auth, billingController.getUsage);
 router.get("/payments",          auth, billingController.getPayments);
