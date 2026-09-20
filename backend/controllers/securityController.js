@@ -204,6 +204,32 @@ exports.getSessions = (req, res) => {
             });
         } catch (e) { console.warn("session enrich failed:", e.message); }
 
+        // __synthetic_current — if the current session isn't in the DB, inject it
+        try {
+            const currentFound = sessions.some(function (x) { return x.is_current === 1; });
+            if (!currentFound) {
+                const ua = req.headers["user-agent"] || "";
+                const parsed = deviceService.parse(ua);
+                const ipAddress = String(req.headers["x-forwarded-for"] || "").split(",")[0].trim() || req.ip || "local";
+                const now = new Date().toISOString().replace("T", " ").replace(/\.\d{3}Z$/, "");
+                const synthetic = {
+                    id: 0,
+                    user_id: req.user.id,
+                    device: parsed.friendly,
+                    device_name: parsed.friendly,
+                    browser: parsed.browser,
+                    os: parsed.os,
+                    user_agent: ua,
+                    ip_address: ipAddress,
+                    created_at: now,
+                    last_seen_at: now,
+                    is_current: 1,
+                    is_synthetic: 1
+                };
+                sessions.unshift(synthetic);
+            }
+        } catch (e) { console.warn("synthetic session failed:", e.message); }
+
         res.json({ success: true, sessions });
     } catch (err) {
         res.status(500).json({ success: false, message: "Failed", error: err.message });
