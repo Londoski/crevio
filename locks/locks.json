@@ -1010,6 +1010,19 @@
         "session_token_hash != ?",
         "is_current"
       ]
+    },
+    {
+      "id": "docs-security-exists",
+      "desc": "Security suite handoff documentation present",
+      "type": "fileContains",
+      "file": "docs/SECURITY.md",
+      "patterns": [
+        "CREVIO",
+        "SECURITY SUITE",
+        "TOTP",
+        "Device trust",
+        "Login flow"
+      ]
     }
   ]
 }
