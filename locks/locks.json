@@ -666,6 +666,17 @@
         "Security events",
         "Workspace events"
       ]
+    },
+    {
+      "id": "lockdown-migration-v1",
+      "desc": "Lockdown v1 — users.suspended* + security_events audit table",
+      "type": "fileContains",
+      "file": "scripts/migrate-lockdown-v1.js",
+      "patterns": [
+        "suspended",
+        "security_events",
+        "suspended_reason"
+      ]
     }
   ]
 }
