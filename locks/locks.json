@@ -643,6 +643,29 @@
         "mobile-menu-overlay"
       ],
       "file": "dashboard/js/mobile-menu.js"
+    },
+    {
+      "id": "docs-notifications-exists",
+      "desc": "Notifications handoff documentation present",
+      "type": "fileContains",
+      "file": "docs/NOTIFICATIONS.md",
+      "patterns": [
+        "CREVIO",
+        "NOTIFICATIONS",
+        "Architecture",
+        "Troubleshooting"
+      ]
+    },
+    {
+      "id": "docs-email-policy-exists",
+      "desc": "Email/notification policy documentation present",
+      "type": "fileContains",
+      "file": "docs/EMAIL_POLICY.md",
+      "patterns": [
+        "EMAIL & NOTIFICATION POLICY",
+        "Security events",
+        "Workspace events"
+      ]
     }
   ]
 }
