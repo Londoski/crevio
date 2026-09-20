@@ -67,15 +67,20 @@ async function verifyToken({ secret, token }) {
     try {
         const clean = String(token || "").replace(/\s/g, "");
         if (!/^\d{6}$/.test(clean)) return false;
-        const result = otplib.verify({
-            secret,
+
+        // otplib v13 API — verifySync returns { valid, delta, ... }
+        // window:1 accepts the previous OR next 30-second step too, which
+        // handles clock drift between server and user's phone.
+        const result = otplib.verifySync({
+            secret: secret,
             token: clean,
-            algorithm: ALGORITHM,
-            digits: DIGITS,
-            period: PERIOD
+            window: 1
         });
-        if (typeof result === "boolean") return result;
-        return result && result.valid === true;
+
+        if (result && typeof result === "object") {
+            return result.valid === true;
+        }
+        return result === true;
     } catch (e) {
         console.error("[totpService] verifyToken error:", e.message);
         return false;
