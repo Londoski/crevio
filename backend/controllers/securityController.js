@@ -367,7 +367,7 @@ exports.resetPasswordPost = async (req, res) => {
                 userId: row.user_id,
                 to: user.email,
                 subject: "Your Crevio password was reset",
-                text: "Hi,\n\nYour Crevio password was just reset and your account has been unlocked.\n\nIf you did NOT do this, contact support immediately.\n\nThe Crevio Team",
+                text: "Hi,\n\nYour Crevio password was just reset and your account has been unlocked.\n\nIf you did NOT do this, please contact our security team immediately:\n\n    security@crevio.indevs.in\n\nOr simply reply to this email — our security team monitors replies and will respond as soon as possible.\n\nThe Crevio Team",
                 category: "security_password_reset"
             }).catch(function () {});
         } catch (e) {}
