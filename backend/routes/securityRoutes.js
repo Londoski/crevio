@@ -13,6 +13,7 @@ router.get("/report-compromise",  securityController.reportCompromiseGet);
 router.get("/reset-password", securityController.verifyResetTokenGet);
 router.post("/reset-password", securityController.resetPasswordPost);
 router.post("/reset-verify-otp", securityController.verifyResetOtp);
+router.post("/reset-verify-totp", securityController.verifyResetTotp);
 
 router.post("/report-compromise", securityController.reportCompromisePost);
 router.post("/change-password",  auth, securityController.changePassword);

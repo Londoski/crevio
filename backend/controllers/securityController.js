@@ -413,8 +413,6 @@ exports.verifyResetOtp = async (req, res) => {
         const row = db.prepare(
             "SELECT user_id FROM verification_tokens WHERE token_hash = ? AND token_type = 'password_reset_compromise' AND used_at IS NOT NULL LIMIT 1"
         ).get(hash);
-        // After resetPasswordPost consumed the token, it is marked used_at IS NOT NULL.
-        // So we look for the consumed token to identify the user.
 
         if (!row) return res.status(400).json({ success: false, message: "This session is invalid or has expired." });
 
@@ -427,41 +425,108 @@ exports.verifyResetOtp = async (req, res) => {
             return res.status(400).json({ success: false, message: msg });
         }
 
-        // OTP is valid — unlock the account
-        const lockdownService = require("../services/lockdownService");
-        lockdownService.unlock({ userId: row.user_id, reason: "otp_verified_after_reset" });
-
-        // Send confirmation email + notification
+        // OTP verified. Check if 2FA (TOTP) is enabled + has a verified method.
+        let requiresTotp = false;
         try {
-            const user = db.prepare("SELECT email FROM users WHERE id = ?").get(row.user_id);
-            const emailService = require("../services/emailService");
-            const notificationService = require("../services/notificationService");
-            notificationService.create({
-                userId: row.user_id,
-                type: "system",
-                title: "Account unlocked",
-                message: "Your identity was verified and your account is unlocked. You can sign in again."
-            });
-            if (user && user.email) {
-                emailService.send({
-                    userId: row.user_id,
-                    to: user.email,
-                    subject: "Your Crevio account has been restored",
-                    text:
-                        "Hi,\n\n" +
-                        "Your Crevio account has been unlocked and is ready to use.\n\n" +
-                        "If this wasn't you, please contact our security team immediately:\n\n" +
-                        "    security@crevio.indevs.in\n\n" +
-                        "Or simply reply to this email - our security team monitors replies and will respond as soon as possible.\n\n" +
-                        "The Crevio Team",
-                    category: "security_account_restored"
-                }).catch(function () {});
+            const u2 = db.prepare("SELECT two_factor_enabled FROM users WHERE id = ?").get(row.user_id);
+            if (u2 && u2.two_factor_enabled === 1) {
+                const m = db.prepare(
+                    "SELECT id FROM two_factor_methods WHERE user_id = ? AND method_type = 'authenticator' AND is_verified = 1 LIMIT 1"
+                ).get(row.user_id);
+                requiresTotp = !!m;
             }
-        } catch (e) {}
+        } catch (e) { requiresTotp = false; }
 
+        if (requiresTotp) {
+            return res.json({
+                success: true,
+                requires_totp: true,
+                message: "Enter your authenticator code to finish."
+            });
+        }
+
+        // No 2FA — finalize now
+        await finalizeReset(row.user_id);
         res.json({ success: true, message: "Verification complete. Your account is unlocked." });
     } catch (err) {
         console.error("verifyResetOtp error:", err);
         res.status(500).json({ success: false, message: "Failed", error: err.message });
     }
 };
+
+exports.verifyResetTotp = async (req, res) => {
+    try {
+        const token = String((req.body && req.body.token) || "").trim();
+        const code  = String((req.body && req.body.code) || "").trim();
+        if (!token || !code) return res.status(400).json({ success: false, message: "Token and code required" });
+
+        const crypto = require("crypto");
+        const hash = crypto.createHash("sha256").update(token).digest("hex");
+        const row = db.prepare(
+            "SELECT user_id FROM verification_tokens WHERE token_hash = ? AND token_type = 'password_reset_compromise' AND used_at IS NOT NULL LIMIT 1"
+        ).get(hash);
+
+        if (!row) return res.status(400).json({ success: false, message: "This session is invalid or has expired." });
+
+        const totpService = require("../services/totpService");
+        const method = db.prepare(
+            "SELECT * FROM two_factor_methods WHERE user_id = ? AND method_type = 'authenticator' AND is_verified = 1 ORDER BY is_primary DESC, id DESC LIMIT 1"
+        ).get(row.user_id);
+
+        if (!method) return res.status(400).json({ success: false, message: "No authenticator configured for this account." });
+
+        let secret;
+        try { secret = totpService.decryptSecret(method.secret); }
+        catch (e) {
+            console.error("verifyResetTotp decrypt error:", e.message);
+            return res.status(500).json({ success: false, message: "Could not read 2FA secret." });
+        }
+
+        const ok = await totpService.verifyToken({ secret, token: code });
+        if (!ok) return res.status(400).json({ success: false, message: "Incorrect code. Try again." });
+
+        await finalizeReset(row.user_id);
+        res.json({ success: true, message: "Verification complete. Your account is unlocked." });
+    } catch (err) {
+        console.error("verifyResetTotp error:", err);
+        res.status(500).json({ success: false, message: "Failed", error: err.message });
+    }
+};
+
+// =========================================================
+// Shared finalization: unlock + notify + confirmation email
+// =========================================================
+async function finalizeReset(userId) {
+    const lockdownService = require("../services/lockdownService");
+    lockdownService.unlock({ userId: userId, reason: "multi_factor_verified" });
+
+    try {
+        const user = db.prepare("SELECT email FROM users WHERE id = ?").get(userId);
+        const notificationService = require("../services/notificationService");
+        const emailService = require("../services/emailService");
+
+        notificationService.create({
+            userId: userId,
+            type: "system",
+            title: "Account unlocked",
+            message: "Your identity was verified and your account is unlocked. You can sign in again."
+        });
+
+        if (user && user.email) {
+            emailService.send({
+                userId: userId,
+                to: user.email,
+                subject: "Your Crevio account has been restored",
+                text:
+                    "Hi,\n\n" +
+                    "Your Crevio account has been unlocked and is ready to use.\n\n" +
+                    "If this wasn't you, please contact our security team immediately:\n\n" +
+                    "    security@crevio.indevs.in\n\n" +
+                    "Or simply reply to this email - our security team monitors replies and will respond as soon as possible.\n\n" +
+                    "The Crevio Team",
+                category: "security_account_restored"
+            }).catch(function () {});
+        }
+    } catch (e) { console.error("finalizeReset notify error:", e.message); }
+}
+

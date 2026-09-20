@@ -830,6 +830,38 @@
         "otpForm",
         "reset-verify-otp"
       ]
+    },
+    {
+      "id": "phase-D6c-totp-endpoint",
+      "desc": "verifyResetTotp endpoint + TOTP third factor",
+      "type": "fileContains",
+      "file": "backend/controllers/securityController.js",
+      "patterns": [
+        "verifyResetTotp",
+        "finalizeReset",
+        "requires_totp"
+      ]
+    },
+    {
+      "id": "phase-D6c-totp-route",
+      "desc": "Route for reset-verify-totp",
+      "type": "fileContains",
+      "file": "backend/routes/securityRoutes.js",
+      "patterns": [
+        "reset-verify-totp",
+        "verifyResetTotp"
+      ]
+    },
+    {
+      "id": "phase-D6c-totp-page",
+      "desc": "Reset page has TOTP screen (conditional third step)",
+      "type": "fileContains",
+      "file": "admin/pages/reset-password.html",
+      "patterns": [
+        "totpState",
+        "totpForm",
+        "reset-verify-totp"
+      ]
     }
   ]
 }
