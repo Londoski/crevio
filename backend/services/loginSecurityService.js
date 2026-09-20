@@ -1,14 +1,14 @@
 // =========================================================
 // CREVIO — LOGIN SECURITY SERVICE
 // File: backend/services/loginSecurityService.js
-// Called once per successful login. Never blocks — everything
-// after the session insert is fire-and-forget.
+// Called once per successful login. Never blocks.
 //
-// Device trust behavior:
-//   rememberDevice = true  → device added to trusted_devices
-//                            (30 days), no notify on repeat
-//   rememberDevice = false → device NOT persisted, notification
-//                            fires every login
+// When a new device is detected (and it isn't the user's very
+// first login), we:
+//   1. Create a signed lockdown token
+//   2. Send the notification + email
+//   3. Email includes a "This wasn't me" button pointing at
+//      /api/security/report-compromise?token=...
 // =========================================================
 const crypto = require("crypto");
 const db = require("../../database/db");
@@ -16,9 +16,10 @@ const deviceService = require("./deviceService");
 const geoService = require("./geoService");
 const notificationService = require("./notificationService");
 const emailService = require("./emailService");
+const lockdownService = require("./lockdownService");
 
-const DEVICE_TTL_MS  = 30 * 24 * 60 * 60 * 1000; // 30 days when trusted
-const SESSION_TTL_MS =  7 * 24 * 60 * 60 * 1000; // 7 days — matches JWT
+const DEVICE_TTL_MS  = 30 * 24 * 60 * 60 * 1000;
+const SESSION_TTL_MS =  7 * 24 * 60 * 60 * 1000;
 
 function sha256(s) {
     return crypto.createHash("sha256").update(String(s)).digest("hex");
@@ -48,9 +49,9 @@ async function recordLogin({ userId, userEmail, token, userAgent, ipAddress, acc
 
     try {
         const tokenHash = sha256(token);
-        const remember = rememberDevice !== false; // default true
+        const remember = rememberDevice !== false;
 
-        // ---------- 1. Record session ----------
+        // 1. Record session
         try {
             db.prepare(`
                 INSERT INTO sessions
@@ -59,11 +60,11 @@ async function recordLogin({ userId, userEmail, token, userAgent, ipAddress, acc
             `).run(userId, tokenHash, userAgent || null, ipAddress || null, futureIso(SESSION_TTL_MS));
         } catch (e) { console.error("[loginSecurity] session insert failed:", e.message); }
 
-        // ---------- 2. Device fingerprint ----------
+        // 2. Device fingerprint
         const parsed = deviceService.parse(userAgent || "");
         const fp = deviceService.fingerprint({ userAgent, ipAddress: null, acceptLanguage });
 
-        // ---------- 3. First-ever login? ----------
+        // 3. First-ever login?
         let priorSessions = 1;
         try {
             const row = db.prepare("SELECT COUNT(*) AS c FROM sessions WHERE user_id = ?").get(userId);
@@ -71,7 +72,7 @@ async function recordLogin({ userId, userEmail, token, userAgent, ipAddress, acc
         } catch (e) { priorSessions = 1; }
         const isFirstEver = priorSessions <= 1;
 
-        // ---------- 4. Existing trusted device? ----------
+        // 4. Existing trusted device?
         let existingDevice = null;
         if (remember) {
             try {
@@ -89,7 +90,7 @@ async function recordLogin({ userId, userEmail, token, userAgent, ipAddress, acc
             return { success: true, isNewDevice: false, device: parsed.friendly };
         }
 
-        // ---------- 5. New device → record it (only if remember=true) ----------
+        // 5. New device → record it (only if remember=true)
         if (remember) {
             try {
                 db.prepare(`
@@ -100,12 +101,12 @@ async function recordLogin({ userId, userEmail, token, userAgent, ipAddress, acc
             } catch (e) { console.error("[loginSecurity] device insert failed:", e.message); }
         }
 
-        // ---------- 6. First-ever login: silent, no notification ----------
+        // 6. First-ever login: silent trust
         if (isFirstEver) {
             return { success: true, isNewDevice: true, firstEver: true, device: parsed.friendly };
         }
 
-        // ---------- 7. GeoIP ----------
+        // 7. GeoIP
         let loc = { private: true };
         try {
             loc = await geoService.lookup(ipAddress);
@@ -113,9 +114,10 @@ async function recordLogin({ userId, userEmail, token, userAgent, ipAddress, acc
         const locationText = geoService.friendly(loc);
         const timestamp = formatDateTime(nowIso());
 
-        // ---------- 8. Notification ----------
+        // 8. Notification
+        let notificationId = null;
         try {
-            notificationService.create({
+            const r = notificationService.create({
                 userId: userId,
                 type: "alert",
                 title: "New sign-in on " + parsed.friendly,
@@ -126,22 +128,38 @@ async function recordLogin({ userId, userEmail, token, userAgent, ipAddress, acc
                     "**Time:** " + timestamp + "\n\n" +
                     "If this wasn't you, secure your account immediately by changing your password."
             });
+            if (r && r.success) notificationId = r.id;
         } catch (e) { console.error("[loginSecurity] notification failed:", e.message); }
 
-        // ---------- 9. Email ----------
+        // 9. Create lockdown token for the "This wasn't me" button
+        let lockdownLink = null;
+        try {
+            const t = lockdownService.createToken({ userId, notificationId });
+            if (t && t.success) {
+                lockdownLink = appUrl() + "/api/security/report-compromise?token=" + t.token;
+            }
+        } catch (e) { console.warn("[loginSecurity] lockdown token failed:", e.message); }
+
+        // 10. Email
         if (userEmail) {
             const subject = "Security alert: New sign-in to your Crevio account";
-            const text =
+            let text =
                 "Hi there,\n\n" +
                 "We noticed a new sign-in to your Crevio account from a device we don't recognize.\n\n" +
-                "Device:    " + parsed.friendly + "\n" +
-                "Location:  " + locationText + "\n" +
+                "Device:     " + parsed.friendly + "\n" +
+                "Location:   " + locationText + "\n" +
                 "IP Address: " + (ipAddress || "unknown") + "\n" +
-                "Time:      " + timestamp + "\n\n" +
+                "Time:       " + timestamp + "\n\n" +
                 "If this was you, no action is needed.\n\n" +
-                "If this wasn't you, please secure your account immediately by signing in and changing your password:\n" +
-                appUrl() + "/admin/pages/login.html\n\n" +
-                "The Crevio Team";
+                "If this wasn't you, secure your account immediately:\n";
+
+            if (lockdownLink) {
+                text += lockdownLink + "\n\n";
+            } else {
+                text += appUrl() + "/admin/pages/login.html\n\n";
+            }
+
+            text += "The Crevio Team";
 
             emailService.send({
                 userId: userId,
@@ -152,7 +170,13 @@ async function recordLogin({ userId, userEmail, token, userAgent, ipAddress, acc
             }).catch(function () {});
         }
 
-        return { success: true, isNewDevice: true, device: parsed.friendly, location: locationText };
+        return {
+            success: true,
+            isNewDevice: true,
+            device: parsed.friendly,
+            location: locationText,
+            lockdownLink: !!lockdownLink
+        };
 
     } catch (err) {
         console.error("[loginSecurity] failed:", err.message);

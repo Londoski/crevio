@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Account secured - Crevio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Inter',system-ui,sans-serif; background:#0F172A; color:#F1F5F9; min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px; }
+.card { background:#1E293B; border:1px solid #334155; border-radius:16px; padding:32px 28px; max-width:500px; width:100%; box-shadow:0 24px 60px rgba(0,0,0,0.5); }
+.logo { text-align:center; margin-bottom:24px; }
+.logo h1 { font-size:22px; font-weight:700; }
+.logo span { display:block; font-size:11px; font-weight:500; text-transform:uppercase; letter-spacing:0.08em; color:#64748B; margin-top:2px; }
+.icon-wrap { display:flex; justify-content:center; margin-bottom:20px; }
+.icon-circle { width:64px; height:64px; border-radius:50%; display:flex; align-items:center; justify-content:center; }
+.icon-circle.success { background:rgba(34,197,94,0.14); color:#22C55E; }
+.icon-circle.error { background:rgba(239,68,68,0.14); color:#EF4444; }
+h2 { font-size:20px; font-weight:700; line-height:1.3; margin-bottom:12px; text-align:center; }
+.body-text { font-size:14px; color:#94A3B8; line-height:1.65; margin-bottom:20px; text-align:center; }
+.body-text strong { color:#F1F5F9; font-weight:600; }
+.steps { background:#0F172A; border:1px solid #334155; border-radius:10px; padding:16px 18px; margin-bottom:20px; }
+.steps ol { list-style:none; counter-reset:step; padding:0; }
+.steps li { display:flex; align-items:flex-start; gap:12px; font-size:13px; color:#94A3B8; line-height:1.5; margin-bottom:10px; }
+.steps li:last-child { margin-bottom:0; }
+.steps li::before { counter-increment:step; content:counter(step); flex-shrink:0; width:22px; height:22px; border-radius:50%; background:rgba(37,99,235,0.15); color:#60A5FA; font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center; margin-top:1px; }
+.actions { display:flex; flex-direction:column; gap:10px; }
+.btn { display:flex; align-items:center; justify-content:center; gap:8px; width:100%; padding:13px 20px; border-radius:10px; font-size:14px; font-weight:600; font-family:inherit; cursor:pointer; border:none; text-decoration:none; transition:background 0.12s; }
+.btn-primary { background:#2563EB; color:#fff; }
+.btn-primary:hover { background:#1D4ED8; }
+.btn svg { width:16px; height:16px; }
+.footer-note { font-size:12px; color:#64748B; text-align:center; margin-top:20px; line-height:1.5; }
+.hidden { display:none !important; }
+</style>
+    <link rel="stylesheet" href="/dashboard/css/mobile.css">
+</head>
+<body>
+<div class="card">
+<div class="logo"><h1>Crevio</h1><span>Account Security</span></div>
+<div class="icon-wrap">
+<div class="icon-circle success" id="iconWrap">
+<svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
+</div>
+</div>
+<div id="successState">
+<h2>Your account has been secured</h2>
+<p class="body-text">We received your report. Here's what we did:</p>
+<div class="steps">
+<ol>
+<li>Signed out every device from your Crevio account</li>
+<li>Revoked all trusted devices</li>
+<li>Locked your account to prevent further access</li>
+<li>Sent you a password reset link by email</li>
+</ol>
+</div>
+<p class="body-text" style="margin-bottom:24px;">To regain access, check your email and follow the reset link. You'll need to <strong>set a new password</strong>, <strong>verify your phone</strong>, and <strong>confirm your two-factor code</strong> (if enabled).</p>
+<div class="actions">
+<a class="btn btn-primary" href="/admin/pages/login.html">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+Go to login
+</a>
+</div>
+<p class="footer-note">If you did NOT report a compromise, please contact Crevio support immediately.</p>
+</div>
+<div id="errorState" class="hidden">
+<h2>We couldn't process this link</h2>
+<p class="body-text">This link may have expired or already been used. If your account was compromised, please log in and change your password from Security settings, or contact Crevio support.</p>
+<div class="actions">
+<a class="btn btn-primary" href="/admin/pages/login.html">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+Go to login
+</a>
+</div>
+</div>
+</div>
+<script>
+(function () {
+var params = new URLSearchParams(window.location.search);
+var success = params.get("success") === "1";
+if (!success) {
+    document.getElementById("successState").classList.add("hidden");
+    document.getElementById("errorState").classList.remove("hidden");
+    document.getElementById("iconWrap").classList.remove("success");
+    document.getElementById("iconWrap").classList.add("error");
+    document.getElementById("iconWrap").innerHTML =
+        '<svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>';
+}
+})();
+</script>
+    <script src="/dashboard/js/mobile-menu.js"></script>
+</body>
+</html>

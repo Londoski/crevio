@@ -122,8 +122,8 @@ async function retryQueued(limit = 20) {
                     "Authorization": "Bearer " + apiKey(),
                     "Content-Type": "application/json"
                 },
-                body: JSON.stringify({
-                    from: row.from_email || defaultFromEmail(),
+                                body: JSON.stringify({
+                    from: defaultFromEmail(),
                     to: [row.to_email],
                     subject: row.subject,
                     html: row.html_body || undefined,

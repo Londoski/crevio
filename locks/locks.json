@@ -713,6 +713,26 @@
         "reportCompromisePost",
         "lockdownService"
       ]
+    },
+    {
+      "id": "titles-ascii-only",
+      "desc": "All HTML page titles use ASCII-only characters (no em/en dash, no curly quotes) — prevents mojibake",
+      "type": "fileContains",
+      "file": "dashboard/pages/notifications.html",
+      "patterns": [
+        "<title>Notifications - Crevio</title>"
+      ]
+    },
+    {
+      "id": "email-retry-uses-current-from",
+      "desc": "retryQueued uses current RESEND_FROM_EMAIL from env, not stale saved row value",
+      "type": "fileContains",
+      "file": "backend/services/emailService.js",
+      "patterns": [
+        "retryQueued",
+        "defaultFromEmail()",
+        "RESEND_FROM_EMAIL"
+      ]
     }
   ]
 }
