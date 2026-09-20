@@ -264,6 +264,14 @@ document.addEventListener("DOMContentLoaded", function () {
 // TOTP (Authenticator App) 2FA
 // =========================================================
 (function () {
+    // __totpInitDeferred — wait for DOM if the modal isn't loaded yet
+    if (!window.__totpWired && !document.getElementById("totpModal")) {
+        document.addEventListener("DOMContentLoaded", function () {
+            // re-trigger this same IIFE by re-running the script body
+            if (typeof window.__totpRetry === "function") window.__totpRetry();
+        }, { once: true });
+        return;
+    }
     if (window.__totpWired) return;
     window.__totpWired = true;
 
@@ -449,4 +457,162 @@ document.addEventListener("DOMContentLoaded", function () {
     } else {
         loadState();
     }
+})();
+// Retry hook for deferred TOTP init (fires when modal HTML is ready)
+(function () {
+    window.__totpRetry = function () {
+        if (window.__totpWired) return;
+        window.__totpWired = true;
+        const $ = (id) => document.getElementById(id);
+        const enableBtn = $("enableTotpBtn");
+        const disableBtn = $("disableTotpBtn");
+        const enabledBadge = $("totpEnabledBadge");
+        const modal = $("totpModal");
+        const qrImg = $("totpQr");
+        const secretEl = $("totpSecret");
+        const codeInput = $("totpVerifyCode");
+        const verifyBtn = $("totpVerifyBtn");
+        const cancelBtn = $("totpCancelBtn");
+        const errEl = $("totpError");
+        const disModal = $("totpDisableModal");
+        const disPass = $("totpDisablePassword");
+        const disConfirmBtn = $("totpDisableConfirmBtn");
+        const disCancelBtn = $("totpDisableCancelBtn");
+        const disErr = $("totpDisableError");
+
+        if (!enableBtn || !modal || !errEl) return;
+
+        function toast(msg, isErr) {
+            if (typeof window.showToast === "function") return window.showToast(msg, !!isErr);
+            if (window.crevioAlert) return window.crevioAlert(msg, { kind: isErr ? "error" : "success" });
+            console.log(msg);
+        }
+
+        async function refreshStatus() {
+            try {
+                const res = await window.apiFetch("/api/2fa/totp/status");
+                const data = await res.json();
+                if (!data.success) return;
+                if (data.enabled && data.hasMethod) {
+                    if (enableBtn) enableBtn.classList.add("hidden");
+                    if (disableBtn) disableBtn.classList.remove("hidden");
+                    if (enabledBadge) enabledBadge.classList.remove("hidden");
+                } else {
+                    if (enableBtn) enableBtn.classList.remove("hidden");
+                    if (disableBtn) disableBtn.classList.add("hidden");
+                    if (enabledBadge) enabledBadge.classList.add("hidden");
+                }
+            } catch (e) {}
+        }
+
+        enableBtn.addEventListener("click", async () => {
+            enableBtn.disabled = true;
+            enableBtn.textContent = "Loading…";
+            if (errEl) errEl.classList.remove("show");
+            if (codeInput) codeInput.value = "";
+            if (verifyBtn) verifyBtn.disabled = true;
+
+            try {
+                const res = await window.apiFetch("/api/2fa/totp/setup", { method: "POST" });
+                const data = await res.json();
+                if (!data.success) { toast(data.message || "Could not start 2FA setup", true); return; }
+                if (qrImg) qrImg.src = data.qr || "";
+                if (secretEl) secretEl.textContent = data.secret || "";
+                if (modal) modal.classList.add("open");
+                setTimeout(() => { if (codeInput) codeInput.focus(); }, 100);
+            } catch (e) { toast("Network error", true); }
+            finally {
+                enableBtn.disabled = false;
+                enableBtn.textContent = "Enable";
+            }
+        });
+
+        if (codeInput) {
+            codeInput.addEventListener("input", function () {
+                this.value = this.value.replace(/\D/g, "").slice(0, 6);
+                if (verifyBtn) verifyBtn.disabled = this.value.length !== 6;
+            });
+            codeInput.addEventListener("keydown", function (e) {
+                if (e.key === "Enter" && this.value.length === 6 && verifyBtn) verifyBtn.click();
+            });
+        }
+
+        if (verifyBtn) {
+            verifyBtn.addEventListener("click", async () => {
+                const code = codeInput.value.trim();
+                if (code.length !== 6) return;
+                verifyBtn.disabled = true;
+                verifyBtn.textContent = "Verifying…";
+                if (errEl) errEl.classList.remove("show");
+                try {
+                    const res = await window.apiFetch("/api/2fa/totp/verify-setup", {
+                        method: "POST",
+                        body: JSON.stringify({ code: code })
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        if (modal) modal.classList.remove("open");
+                        toast("Two-factor authentication enabled");
+                        await refreshStatus();
+                    } else {
+                        if (errEl) { errEl.textContent = data.message || "Incorrect code."; errEl.classList.add("show"); }
+                        verifyBtn.disabled = false;
+                        verifyBtn.textContent = "Verify & enable";
+                        codeInput.focus();
+                        codeInput.select();
+                    }
+                } catch (e) {
+                    if (errEl) { errEl.textContent = "Network error."; errEl.classList.add("show"); }
+                    verifyBtn.disabled = false;
+                    verifyBtn.textContent = "Verify & enable";
+                }
+            });
+        }
+
+        if (cancelBtn) cancelBtn.addEventListener("click", () => { if (modal) modal.classList.remove("open"); });
+        if (modal) modal.addEventListener("click", (e) => { if (e.target === modal) modal.classList.remove("open"); });
+
+        if (disableBtn) {
+            disableBtn.addEventListener("click", () => {
+                if (disPass) disPass.value = "";
+                if (disErr) disErr.classList.remove("show");
+                if (disModal) disModal.classList.add("open");
+                setTimeout(() => { if (disPass) disPass.focus(); }, 100);
+            });
+        }
+        if (disCancelBtn) disCancelBtn.addEventListener("click", () => { if (disModal) disModal.classList.remove("open"); });
+        if (disModal) disModal.addEventListener("click", (e) => { if (e.target === disModal) disModal.classList.remove("open"); });
+        if (disPass) disPass.addEventListener("keydown", (e) => { if (e.key === "Enter" && disConfirmBtn) disConfirmBtn.click(); });
+
+        if (disConfirmBtn) {
+            disConfirmBtn.addEventListener("click", async () => {
+                const password = disPass.value;
+                if (!password) { if (disErr) { disErr.textContent = "Enter your password."; disErr.classList.add("show"); } return; }
+                disConfirmBtn.disabled = true;
+                disConfirmBtn.textContent = "Disabling…";
+                if (disErr) disErr.classList.remove("show");
+                try {
+                    const res = await window.apiFetch("/api/2fa/totp/disable", {
+                        method: "POST",
+                        body: JSON.stringify({ password: password })
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        if (disModal) disModal.classList.remove("open");
+                        toast("Two-factor authentication disabled");
+                        await refreshStatus();
+                    } else {
+                        if (disErr) { disErr.textContent = data.message || "Failed."; disErr.classList.add("show"); }
+                    }
+                } catch (e) {
+                    if (disErr) { disErr.textContent = "Network error."; disErr.classList.add("show"); }
+                } finally {
+                    disConfirmBtn.disabled = false;
+                    disConfirmBtn.textContent = "Disable 2FA";
+                }
+            });
+        }
+
+        refreshStatus();
+    };
 })();
