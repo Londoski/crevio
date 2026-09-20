@@ -249,3 +249,102 @@ function generateCode() {
     }
     return out;
 }
+
+
+// =========================================================
+// GET /api/security/reset-password?token=xyz
+// Public. Verifies the reset token WITHOUT consuming it.
+// =========================================================
+exports.verifyResetTokenGet = (req, res) => {
+    try {
+        const token = String(req.query.token || "").trim();
+        if (!token) return res.status(400).json({ success: false, message: "Token required" });
+
+        const crypto = require("crypto");
+        const hash = crypto.createHash("sha256").update(token).digest("hex");
+        const row = db.prepare(`
+            SELECT id, user_id FROM verification_tokens
+            WHERE token_hash = ?
+              AND token_type = 'password_reset_compromise'
+              AND used_at IS NULL
+              AND expires_at > CURRENT_TIMESTAMP
+        `).get(hash);
+
+        if (!row) return res.status(404).json({ success: false, message: "This link is invalid or has expired." });
+
+        res.json({ success: true, userId: row.user_id });
+    } catch (err) {
+        res.status(500).json({ success: false, message: "Failed", error: err.message });
+    }
+};
+
+// =========================================================
+// POST /api/security/reset-password
+// Public. Body: { token, newPassword }
+// Consumes the token, sets the new password, unlocks the account.
+// =========================================================
+exports.resetPasswordPost = async (req, res) => {
+    try {
+        const token = String((req.body && req.body.token) || "").trim();
+        const newPassword = String((req.body && req.body.newPassword) || "");
+
+        if (!token) return res.status(400).json({ success: false, message: "Token required" });
+        if (!newPassword || newPassword.length < 8) {
+            return res.status(400).json({ success: false, message: "Password must be at least 8 characters" });
+        }
+        if (!/[A-Za-z]/.test(newPassword) || !/[0-9]/.test(newPassword)) {
+            return res.status(400).json({ success: false, message: "Password must contain letters and numbers" });
+        }
+
+        // Consume token via verificationService
+        const verificationService = require("../services/verificationService");
+        const row = verificationService.consumeVerificationToken(token);
+        if (!row || row.token_type !== "password_reset_compromise") {
+            return res.status(400).json({ success: false, message: "This link is invalid or has expired." });
+        }
+
+        // Update password
+        const user = db.prepare("SELECT * FROM users WHERE id = ?").get(row.user_id);
+        if (!user) return res.status(404).json({ success: false, message: "User not found" });
+
+        const newHash = await bcrypt.hash(newPassword, 12);
+        const userCols = cols("users");
+        const passwordCol = userCols.includes("password_hash") ? "password_hash" : "password";
+        let sql = `UPDATE users SET ${passwordCol} = ?`;
+        if (userCols.includes("updated_at")) sql += ", updated_at = CURRENT_TIMESTAMP";
+        sql += " WHERE id = ?";
+        db.prepare(sql).run(newHash, row.user_id);
+
+        // Unlock account via lockdownService
+        const lockdownService = require("../services/lockdownService");
+        lockdownService.unlock({ userId: row.user_id, reason: "password_reset_after_compromise" });
+
+        // Notify + email confirmation
+        try {
+            const notificationService = require("../services/notificationService");
+            notificationService.create({
+                userId: row.user_id,
+                type: "system",
+                title: "Account unlocked",
+                message: "Your password was reset and your account is unlocked. You can sign in again."
+            });
+        } catch (e) {}
+
+        try {
+            const emailService = require("../services/emailService");
+            emailService.send({
+                userId: row.user_id,
+                to: user.email,
+                subject: "Your Crevio password was reset",
+                text: "Hi,\n\nYour Crevio password was just reset and your account has been unlocked.\n\nIf you did NOT do this, contact support immediately.\n\nThe Crevio Team",
+                category: "security_password_reset"
+            }).catch(function () {});
+        } catch (e) {}
+
+        res.json({ success: true, message: "Password reset complete. Your account is unlocked." });
+    } catch (err) {
+        console.error("resetPasswordPost error:", err);
+        res.status(500).json({ success: false, message: "Failed", error: err.message });
+    }
+};
+

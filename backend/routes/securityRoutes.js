@@ -10,6 +10,9 @@ const securityController = require("../controllers/securityController");
 
 // PUBLIC — the compromise-report endpoints (no auth middleware; the token IS the auth)
 router.get("/report-compromise",  securityController.reportCompromiseGet);
+router.get("/reset-password", securityController.verifyResetTokenGet);
+router.post("/reset-password", securityController.resetPasswordPost);
+
 router.post("/report-compromise", securityController.reportCompromisePost);
 router.post("/change-password",  auth, securityController.changePassword);
 router.get("/sessions",          auth, securityController.getSessions);

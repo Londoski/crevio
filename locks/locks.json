@@ -733,6 +733,28 @@
         "defaultFromEmail()",
         "RESEND_FROM_EMAIL"
       ]
+    },
+    {
+      "id": "phase-D6-reset-page",
+      "desc": "Reset-password page + endpoints",
+      "type": "fileContains",
+      "file": "admin/pages/reset-password.html",
+      "patterns": [
+        "reset-password",
+        "Set a new password",
+        "token"
+      ]
+    },
+    {
+      "id": "phase-D6-reset-endpoints",
+      "desc": "Reset endpoints in controller + routes",
+      "type": "fileContains",
+      "file": "backend/controllers/securityController.js",
+      "patterns": [
+        "verifyResetTokenGet",
+        "resetPasswordPost",
+        "password_reset_compromise"
+      ]
     }
   ]
 }
