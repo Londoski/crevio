@@ -1132,6 +1132,40 @@
         "verifyRecoveryCode",
         "used_at"
       ]
+    },
+    {
+      "id": "phase-W1-email-layout",
+      "desc": "Shared HTML email layout — table-based, inline styles, Crevio branded",
+      "type": "fileContains",
+      "file": "backend/emails/layout.js",
+      "patterns": [
+        "renderEmail",
+        "BRAND_DARK",
+        "escapeHtml"
+      ]
+    },
+    {
+      "id": "phase-W1-payment-confirmation-template",
+      "desc": "Payment confirmation email template pulls features dynamically from config/plans.js",
+      "type": "fileContains",
+      "file": "backend/emails/templates/paymentConfirmation.js",
+      "patterns": [
+        "generateTransactionId",
+        "pickDisplayFeatures",
+        "require(\"../../../config/plans\")",
+        "Payment confirmed"
+      ]
+    },
+    {
+      "id": "phase-W1-payment-email-wired",
+      "desc": "onPaymentSucceeded sends HTML email via template, text fallback retained",
+      "type": "fileContains",
+      "file": "backend/services/planNotificationService.js",
+      "patterns": [
+        "paymentConfirmation",
+        "html:",
+        "text:"
+      ]
     }
   ]
 }

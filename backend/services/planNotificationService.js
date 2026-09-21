@@ -154,35 +154,56 @@ async function onPlanChanged({ userId, userEmail, fromPlan, toPlan }) {
 // =========================================================
 // onPaymentSucceeded
 // =========================================================
-async function onPaymentSucceeded({ userId, userEmail, amount, currency, invoiceUrl, planName }) {
-    try {
-        const amt = ((amount || 0) / 100).toFixed(2);
-        const cur = (currency || "USD").toUpperCase();
+async function onPaymentSucceeded(opts) {
+    opts = opts || {};
+    const userId = opts.userId;
+    const userEmail = opts.userEmail;
+    const amount = opts.amount || 0;
+    const currency = opts.currency || "USD";
+    const planId = opts.planId || "pro";
+    const planName = opts.planName;
+    const interval = opts.interval;
+    const firstName = opts.firstName || null;
 
+    try {
+        const amt = (amount / 100).toFixed(2);
+        const cur = String(currency).toUpperCase();
+        const displayPlan = planName || (PLANS.get(planId) ? PLANS.get(planId).name : "Crevio");
+
+        // In-app notification (unchanged structure)
         notificationService.create({
             userId: userId,
             type: "payment",
             title: "Payment received",
-            message: "**Payment received** for " + (planName ? "Crevio " + planName : "your Crevio subscription") + ".\n\n" +
-                     "**Amount:** " + cur + " " + amt + "\n\n" +
-                     (invoiceUrl ? ("You can view the invoice here: " + invoiceUrl) : "")
+            message: "**Payment received** for Crevio " + displayPlan + ".\n\n" +
+                     "**Amount:** " + cur + " " + amt
         });
 
-        if (userEmail) {
-            emailService.send({
-                userId: userId,
-                to: userEmail,
-                subject: "Payment confirmation — Crevio",
-                text:
-                    "Hi,\n\n" +
-                    "We received your payment of " + cur + " " + amt + " for " + (planName ? "Crevio " + planName : "your Crevio subscription") + ".\n\n" +
-                    (invoiceUrl ? ("View your invoice: " + invoiceUrl + "\n\n") : "") +
-                    "Thank you for being a Crevio customer.\n\n" +
-                    "The Crevio Team",
-                category: "plan_payment_succeeded"
-            }).catch(function () {});
-        }
-    } catch (e) { console.error("[planNotification] onPaymentSucceeded failed:", e.message); }
+        if (!userEmail) return;
+
+        // Premium HTML email
+        const tpl = require("../emails/templates/paymentConfirmation");
+        const rendered = tpl.render({
+            firstName: firstName,
+            userId: userId,
+            planId: planId,
+            planName: displayPlan,
+            amount: amount,
+            currency: currency,
+            interval: interval
+        });
+
+        emailService.send({
+            userId: userId,
+            to: userEmail,
+            subject: rendered.subject,
+            html: rendered.html,
+            text: rendered.text,
+            category: "plan_payment_succeeded"
+        }).catch(function () {});
+    } catch (e) {
+        console.error("[planNotification] onPaymentSucceeded failed:", e.message);
+    }
 }
 
 // =========================================================
