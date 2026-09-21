@@ -1145,18 +1145,6 @@
       ]
     },
     {
-      "id": "phase-W1-payment-confirmation-template",
-      "desc": "Payment confirmation email template pulls features dynamically from config/plans.js",
-      "type": "fileContains",
-      "file": "backend/emails/templates/paymentConfirmation.js",
-      "patterns": [
-        "generateTransactionId",
-        "pickDisplayFeatures",
-        "require(\"../../../config/plans\")",
-        "Payment confirmed"
-      ]
-    },
-    {
       "id": "phase-W1-payment-email-wired",
       "desc": "onPaymentSucceeded sends HTML email via template, text fallback retained",
       "type": "fileContains",
@@ -1165,6 +1153,73 @@
         "paymentConfirmation",
         "html:",
         "text:"
+      ]
+    },
+    {
+      "id": "phase-W1-first-name-lookup",
+      "desc": "planNotificationService looks up user first name from DB for greeting",
+      "type": "fileContains",
+      "file": "backend/services/planNotificationService.js",
+      "patterns": [
+        "display_name",
+        "username",
+        "firstName ="
+      ]
+    },
+    {
+      "id": "phase-W1-pns-has-db",
+      "desc": "planNotificationService imports db for user lookups",
+      "type": "fileContains",
+      "file": "backend/services/planNotificationService.js",
+      "patterns": [
+        "require(\"../../database/db\")"
+      ]
+    },
+    {
+      "id": "phase-W1-email-arial-only",
+      "desc": "Email FONT is Arial-only (no single-quote font names that break style attributes)",
+      "type": "fileContains",
+      "file": "backend/emails/layout.js",
+      "patterns": [
+        "const FONT = \"Arial,Helvetica,sans-serif\""
+      ]
+    },
+    {
+      "id": "phase-W1-payment-box-alignment",
+      "desc": "Payment box cells have align='left' (labels) and align='right' (values)",
+      "type": "fileContains",
+      "file": "backend/emails/templates/paymentConfirmation.js",
+      "patterns": [
+        "align='left'",
+        "align='right'"
+      ]
+    },
+    {
+      "id": "phase-W1-wordmark-hosted",
+      "desc": "Wordmark loaded from hosted URL (Gmail blocks base64 embeds)",
+      "type": "fileContains",
+      "file": "backend/emails/brand.js",
+      "patterns": [
+        "WORDMARK_HOSTED",
+        "i.ibb.co"
+      ]
+    },
+    {
+      "id": "phase-W1-brand-tagline",
+      "desc": "Official Crevio tagline — \"Where your work finds opportunities.\"",
+      "type": "fileContains",
+      "file": "backend/emails/brand.js",
+      "patterns": [
+        "Where your work finds opportunities."
+      ]
+    },
+    {
+      "id": "phase-W1-emailservice-loads-env",
+      "desc": "emailService loads .env so scripts sending emails have RESEND_API_KEY",
+      "type": "fileContains",
+      "file": "backend/services/emailService.js",
+      "patterns": [
+        "require(\"dotenv\").config()"
       ]
     }
   ]

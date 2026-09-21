@@ -6,6 +6,7 @@
 // any future upgrade flow. Never invoked from the frontend.
 // =========================================================
 const PLANS = require("../../config/plans");
+const db = require("../../database/db");
 const notificationService = require("./notificationService");
 const emailService = require("./emailService");
 
@@ -163,7 +164,22 @@ async function onPaymentSucceeded(opts) {
     const planId = opts.planId || "pro";
     const planName = opts.planName;
     const interval = opts.interval;
-    const firstName = opts.firstName || null;
+    let firstName = opts.firstName || null;
+        
+                // If caller didn't pass a name, look it up from the user record
+                if (!firstName && userId) {
+                    try {
+                        const u = db.prepare("SELECT display_name, username, email FROM users WHERE id = ?").get(userId);
+                        if (u) {
+                            let raw = u.display_name || u.username || (u.email ? u.email.split("@")[0] : null);
+                            if (raw) {
+                                // Take first word, capitalize it
+                                raw = String(raw).trim().split(/\s+/)[0];
+                                firstName = raw.charAt(0).toUpperCase() + raw.slice(1);
+                            }
+                        }
+                    } catch (e) { /* silent */ }
+                }
 
     try {
         const amt = (amount / 100).toFixed(2);

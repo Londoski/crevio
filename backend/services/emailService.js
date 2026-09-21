@@ -1,3 +1,5 @@
+require("dotenv").config();
+
 // =========================================================
 // CREVIO — EMAIL SERVICE
 // File: backend/services/emailService.js

@@ -1,8 +1,6 @@
 // =========================================================
 // CREVIO — TEMPLATE: PAYMENT CONFIRMATION
 // File: backend/emails/templates/paymentConfirmation.js
-// Builds a premium HTML payment receipt.
-// Features list is pulled dynamically from config/plans.js.
 // =========================================================
 const crypto = require("crypto");
 const layout = require("../layout");
@@ -17,7 +15,6 @@ function generateTransactionId(userId, amount, currency) {
 function pickDisplayFeatures(planId) {
     const cfg = plans.get(planId);
     if (!cfg || !cfg.features) return [];
-    // Skip meta lines like "Everything in Free" — they aren't real features
     return cfg.features.filter(function (f) {
         return !/^Everything in /i.test(f);
     });
@@ -53,10 +50,7 @@ function render(opts) {
     const FONT = layout.FONT;
     const esc = layout.escapeHtml;
 
-    const rowStyle = "padding:8px 0;border-bottom:1px solid " + C.BORDER + ";";
-    const labelStyle = "font-size:13px;color:" + C.TEXT_MUTED + ";font-family:" + FONT + ";";
-    const valueStyle = "font-size:13px;color:" + C.TEXT_PRIMARY + ";font-weight:600;font-family:" + FONT + ";text-align:right;";
-
+    // ---- Payment box rows ----
     const rows = [
         ["Plan", planName],
         ["Amount paid", formatAmount(amount, currency)],
@@ -65,28 +59,42 @@ function render(opts) {
         ["Transaction ID", transactionId]
     ];
 
-    let paymentBox = "<table role='presentation' width='100%' cellpadding='0' cellspacing='0' border='0' style='background-color:#F8FAFC;border:1px solid " + C.BORDER + ";border-radius:12px;margin:20px 0;'>";
-    paymentBox += "<tr><td style='padding:16px 20px 6px 20px;'><div style='font-size:11px;font-weight:700;color:" + C.TEXT_MUTED + ";letter-spacing:0.08em;font-family:" + FONT + ";'>PAYMENT</div></td></tr>";
-    paymentBox += "<tr><td style='padding:6px 20px 18px 20px;'>";
-    paymentBox += "<table role='presentation' width='100%' cellpadding='0' cellspacing='0' border='0'>";
-    rows.forEach(function (r, i) {
-        const border = i === rows.length - 1 ? "" : "border-bottom:1px solid " + C.BORDER + ";";
-        paymentBox += "<tr><td style='padding:9px 0;" + border + "'>" +
-            "<table width='100%' cellpadding='0' cellspacing='0' border='0'><tr>" +
-            "<td style='" + labelStyle + "'>" + esc(r[0]) + "</td>" +
-            "<td style='" + valueStyle + "'>" + esc(r[1]) + "</td>" +
-            "</tr></table></td></tr>";
-    });
-    paymentBox += "<tr><td style='padding:10px 0 0 0;border-top:1px solid " + C.BORDER + "'>" +
-        "<table width='100%' cellpadding='0' cellspacing='0' border='0'><tr>" +
-        "<td style='" + labelStyle + "'>Status</td>" +
-        "<td style='text-align:right;'><span style='display:inline-block;padding:3px 10px;background-color:#DCFCE7;color:#166534;border-radius:999px;font-size:11px;font-weight:700;font-family:" + FONT + ";'>PAID</span></td>" +
-        "</tr></table></td></tr>";
-    paymentBox += "</table></td></tr></table>";
+    // ---- Build the payment box as a flat 2-column table ----
+    const labelCell = "padding:11px 22px;font-size:13px;color:" + C.TEXT_MUTED + ";font-family:" + FONT + ";text-align:left;vertical-align:middle;";
+    const valueCell = "padding:11px 22px;font-size:13px;color:" + C.TEXT_PRIMARY + ";font-weight:600;font-family:" + FONT + ";text-align:right;vertical-align:middle;white-space:nowrap;";
 
+    let paymentBox = "<table role='presentation' width='100%' cellpadding='0' cellspacing='0' border='0' " +
+        "style='background-color:#F8FAFC;border:1px solid " + C.BORDER + ";border-radius:12px;margin:20px 0;width:100%;'>";
+
+    // Header row
+    paymentBox += "<tr><td colspan='2' style='padding:16px 22px 4px 22px;text-align:left;'>" +
+        "<div style='font-size:11px;font-weight:700;color:" + C.TEXT_MUTED + ";letter-spacing:0.08em;font-family:" + FONT + ";'>PAYMENT</div>" +
+        "</td></tr>";
+
+    // Data rows
+    rows.forEach(function (r, i) {
+        const borderStyle = i === rows.length - 1 ? "" : "border-bottom:1px solid " + C.BORDER + ";";
+        paymentBox += "<tr>";
+        paymentBox += "<td width='55%' align='left' valign='middle' style='" + labelCell + borderStyle + "'>" + esc(r[0]) + "</td>";
+        paymentBox += "<td width='45%' align='right' valign='middle' style='" + valueCell + borderStyle + "'>" + esc(r[1]) + "</td>";
+        paymentBox += "</tr>";
+    });
+
+    // Status row (last, no bottom border)
+    paymentBox += "<tr>";
+    paymentBox += "<td width='55%' align='left' valign='middle' style='" + labelCell + "'>Status</td>";
+    paymentBox += "<td width='45%' align='right' valign='middle' style='padding:11px 22px;text-align:right;vertical-align:middle;'>" +
+        "<span style='display:inline-block;padding:3px 10px;background-color:#DCFCE7;color:#166534;border-radius:999px;font-size:11px;font-weight:700;font-family:" + FONT + ";'>PAID</span>" +
+        "</td>";
+    paymentBox += "</tr>";
+
+    paymentBox += "</table>";
+
+    // ---- Features block ----
     let featuresBox = "";
     if (features.length) {
-        featuresBox = "<div style='margin:24px 0 8px 0;'><div style='font-size:11px;font-weight:700;color:" + C.TEXT_MUTED + ";letter-spacing:0.08em;font-family:" + FONT + ";margin-bottom:10px;'>YOUR " + planName.toUpperCase() + " ACCESS INCLUDES</div>";
+        featuresBox = "<div style='margin:24px 0 8px 0;'>" +
+            "<div style='font-size:11px;font-weight:700;color:" + C.TEXT_MUTED + ";letter-spacing:0.08em;font-family:" + FONT + ";margin-bottom:10px;'>YOUR " + esc(planName.toUpperCase()) + " ACCESS INCLUDES</div>";
         featuresBox += "<ul style='margin:0;padding-left:20px;font-size:13px;line-height:1.7;color:" + C.TEXT_SECONDARY + ";font-family:" + FONT + ";'>";
         features.forEach(function (f) {
             featuresBox += "<li>" + esc(f) + "</li>";
@@ -94,6 +102,7 @@ function render(opts) {
         featuresBox += "</ul></div>";
     }
 
+    // ---- Body HTML ----
     const bodyHtml = [
         "<p style='margin:0 0 8px 0;'>Hi " + esc(firstName) + ",</p>",
         "<p style='margin:0 0 8px 0;'>Your payment has been successfully received. Thank you for choosing <strong style='color:" + C.TEXT_PRIMARY + ";'>Crevio " + esc(planName) + "</strong>.</p>",
@@ -103,15 +112,17 @@ function render(opts) {
         "<p style='margin:12px 0 0 0;font-size:13px;color:" + C.TEXT_MUTED + ";'>Your subscription will renew automatically according to your billing cycle.</p>"
     ].join("");
 
+    // ---- Full HTML ----
     const html = layout.renderEmail({
         preheader: "Payment of " + formatAmount(amount, currency) + " confirmed for Crevio " + planName,
         title: "Payment confirmed",
         bodyHtml: bodyHtml,
         ctaText: "Manage Subscription",
         ctaUrl: manageUrl,
-        footerNote: "Need help? Contact <a href='mailto:security@crevio.indevs.in' style='color:" + C.TEXT_SECONDARY + ";text-decoration:underline;'>Crevio Support</a>.<br>If you did not make this payment, please contact us immediately.<br><br><strong style='color:" + C.TEXT_SECONDARY + ";'>The Crevio Team</strong><br>A platform that actively helps your work find opportunities.."
+        footerNote: "Need help? Contact <a href='mailto:security@crevio.indevs.in' style='color:" + C.TEXT_SECONDARY + ";text-decoration:underline;'>Crevio Support</a>.<br>If you did not make this payment, please contact us immediately.<br><br><strong style='color:" + C.TEXT_SECONDARY + ";'>The Crevio Team</strong><br>" + layout.brandTagline
     });
 
+    // ---- Plain text fallback ----
     const text = [
         "Hi " + firstName + ",",
         "",
@@ -135,8 +146,7 @@ function render(opts) {
         "Need help? Contact security@crevio.indevs.in",
         "If you did not make this payment, please contact us immediately.",
         "",
-        "The Crevio Team",
-        "A platform that actively helps your work find opportunities.."
+        "The Crevio Team"
     ].join("\n");
 
     const subject = "Payment confirmed — Welcome to Crevio " + planName;
