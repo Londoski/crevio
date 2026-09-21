@@ -1120,6 +1120,18 @@
         "subscriptionCronService",
         "subCron.start"
       ]
+    },
+    {
+      "id": "phase-P3-recovery-codes-hashed",
+      "desc": "Recovery codes are bcrypt-hashed into code_hash, single-use, and verifiable",
+      "type": "fileContains",
+      "file": "backend/controllers/securityController.js",
+      "patterns": [
+        "code_hash",
+        "bcrypt.hash",
+        "verifyRecoveryCode",
+        "used_at"
+      ]
     }
   ]
 }
