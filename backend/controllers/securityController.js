@@ -304,7 +304,7 @@ exports.toggle2FA = (req, res) => {
 // =========================================================
 // POST /api/security/recovery-codes
 // =========================================================
-exports.generateRecoveryCodes = (req, res) => {
+exports.generateRecoveryCodes = async (req, res) => {
     try {
         const codes = [];
         for (let i = 0; i < 8; i++) codes.push(generateCode());
@@ -313,11 +313,15 @@ exports.generateRecoveryCodes = (req, res) => {
             try {
                 db.prepare("DELETE FROM two_factor_recovery_codes WHERE user_id = ?").run(req.user.id);
                 const stmt = db.prepare(
-                    "INSERT INTO two_factor_recovery_codes (user_id, code, created_at) VALUES (?, ?, CURRENT_TIMESTAMP)"
+                    "INSERT INTO two_factor_recovery_codes (user_id, code_hash, created_at) VALUES (?, ?, CURRENT_TIMESTAMP)"
                 );
-                for (const c of codes) stmt.run(req.user.id, c);
+                for (const c of codes) {
+                    const hash = await bcrypt.hash(c, 12);
+                    stmt.run(req.user.id, hash);
+                }
             } catch (e) {
                 console.warn("Could not store recovery codes:", e.message);
+                return res.status(500).json({ success: false, message: "Could not store codes" });
             }
         }
         res.json({ success: true, codes });
@@ -630,6 +634,35 @@ exports.get2FAStatus = (req, res) => {
             email_2fa: email2FA,
             totp_enabled: totpEnabled
         });
+    } catch (err) {
+        res.status(500).json({ success: false, message: "Failed", error: err.message });
+    }
+};
+// =========================================================
+// POST /api/security/recovery-codes/verify
+// Consumes a single recovery code (marks it used).
+// =========================================================
+exports.verifyRecoveryCode = async (req, res) => {
+    try {
+        const code = String(req.body.code || "").trim().toUpperCase();
+        if (!code) return res.status(400).json({ success: false, message: "Code required" });
+
+        const rows = db.prepare(
+            "SELECT id, code_hash FROM two_factor_recovery_codes WHERE user_id = ? AND used_at IS NULL"
+        ).all(req.user.id);
+
+        let matchedId = null;
+        for (const row of rows) {
+            const ok = await bcrypt.compare(code, row.code_hash);
+            if (ok) { matchedId = row.id; break; }
+        }
+
+        if (!matchedId) {
+            return res.status(400).json({ success: false, message: "Invalid or already-used code" });
+        }
+
+        db.prepare("UPDATE two_factor_recovery_codes SET used_at = CURRENT_TIMESTAMP WHERE id = ?").run(matchedId);
+        res.json({ success: true, message: "Recovery code accepted" });
     } catch (err) {
         res.status(500).json({ success: false, message: "Failed", error: err.message });
     }
