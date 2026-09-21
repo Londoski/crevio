@@ -9,6 +9,7 @@ const PLANS = require("../../config/plans");
 const db = require("../../database/db");
 const notificationService = require("./notificationService");
 const emailService = require("./emailService");
+const billingEmails = require("../emails/templates/billingEmails");
 
 function appUrl() {
     const u = process.env.APP_URL || process.env.SITE_URL || "http://localhost:3000";
@@ -78,83 +79,67 @@ async function onSignup({ userId, userEmail, userName }) {
 // =========================================================
 // onPlanChanged — upgrade / downgrade / change
 // =========================================================
-async function onPlanChanged({ userId, userEmail, fromPlan, toPlan }) {
+async function onPlanChanged(opts) {
+    opts = opts || {};
+    const userId = opts.userId;
+    const userEmail = opts.userEmail;
+    const fromPlan = opts.fromPlan;
+    const toPlan = opts.toPlan;
+    const firstName = opts.firstName || null;
+
     try {
-        const from = PLANS.get(fromPlan);
-        const to = PLANS.get(toPlan);
-        const next = to.upgradeTo ? PLANS.get(to.upgradeTo) : null;
-
+        const fromCfg = PLANS.get(fromPlan);
+        const toCfg = PLANS.get(toPlan);
         const isUpgrade = planRank(toPlan) > planRank(fromPlan);
-        const isDowngrade = planRank(toPlan) < planRank(fromPlan);
 
-        let title, message;
-
-        if (isUpgrade) {
-            title = "Welcome to " + to.name;
-            message =
-                "**You're now on Crevio " + to.name + "**\n\n" +
-                "Here's what you have:\n\n" +
-                planFeaturesText(toPlan) + "\n\n";
-            if (next) {
-                message +=
-                    "### Ready for even more?\n\n" +
-                    "Upgrade to **" + next.name + "** (" + next.priceLabel + ") for:\n\n" +
-                    planFeaturesText(next.id);
-            }
-        } else if (isDowngrade) {
-            title = "You're on " + to.name;
-            message =
-                "**Your plan is now " + to.name + ".**\n\n" +
-                "Here's what you have:\n\n" +
-                planFeaturesText(toPlan) + "\n\n" +
-                (to.upgradeTo
-                    ? ("You can upgrade again anytime to " + PLANS.get(to.upgradeTo).name + " from the Billing page.")
-                    : "");
-        } else {
-            title = "Your plan changed";
-            message = "Your subscription is now on **" + to.name + "**.";
+        // First name lookup
+        let resolvedName = firstName;
+        if (!resolvedName && userId) {
+            try {
+                const u = db.prepare("SELECT display_name, username, email FROM users WHERE id = ?").get(userId);
+                if (u) {
+                    let raw = u.display_name || u.username || (u.email ? u.email.split("@")[0] : null);
+                    if (raw) {
+                        raw = String(raw).trim().split(/\s+/)[0];
+                        resolvedName = raw.charAt(0).toUpperCase() + raw.slice(1);
+                    }
+                }
+            } catch (e) { /* silent */ }
         }
 
+        // In-app notification
+        const notifyTpl = require("./planNotificationTemplates");
+        const notifContent = notifyTpl.build(isUpgrade ? "plan_upgraded" : "plan_activated", {
+            planName: toCfg.name,
+            previousPlanName: fromCfg.name
+        });
         notificationService.create({
             userId: userId,
-            type: "system",
-            title: title,
-            message: message,
-            entityType: null,
-            entityId: null
+            type: notifContent.type,
+            title: notifContent.title,
+            message: notifContent.message
         });
 
+        // HTML email
         if (userEmail) {
-            const subject = isUpgrade
-                ? ("Welcome to Crevio " + to.name)
-                : (isDowngrade ? ("Your Crevio plan is now " + to.name) : "Your Crevio plan changed");
-
-            const text =
-                "Hi,\n\n" +
-                (isUpgrade
-                    ? ("You've upgraded from " + from.name + " to " + to.name + ".\n\n")
-                    : (isDowngrade
-                        ? ("Your plan has changed from " + from.name + " to " + to.name + ".\n\n")
-                        : ("Your Crevio plan is now " + to.name + ".\n\n"))) +
-                "What you have now:\n\n" +
-                planFeaturesText(toPlan) + "\n\n" +
-                (next ? ("Upgrade to " + next.name + " anytime: " + appUrl() + "/dashboard/pages/billing.html\n\n") : "") +
-                "The Crevio Team";
-
+            const rendered = billingEmails.renderPlanChanged({
+                firstName: resolvedName,
+                fromPlanId: fromPlan,
+                toPlanId: toPlan
+            });
             emailService.send({
                 userId: userId,
                 to: userEmail,
-                subject: subject,
-                text: text,
-                category: isUpgrade ? "plan_upgraded" : (isDowngrade ? "plan_downgraded" : "plan_changed")
+                subject: rendered.subject,
+                html: rendered.html,
+                text: rendered.text,
+                category: isUpgrade ? "plan_upgraded" : "plan_downgraded"
             }).catch(function () {});
         }
-    } catch (e) { console.error("[planNotification] onPlanChanged failed:", e.message); }
+    } catch (e) {
+        console.error("[planNotification] onPlanChanged failed:", e.message);
+    }
 }
-
-// =========================================================
-// onPaymentSucceeded
-// =========================================================
 async function onPaymentSucceeded(opts) {
     opts = opts || {};
     const userId = opts.userId;
@@ -299,9 +284,175 @@ function planRank(planId) {
     return order[planId] !== undefined ? order[planId] : 0;
 }
 
+
+// =========================================================
+// Additional billing lifecycle notifications
+// =========================================================
+
+function resolveFirstName(userId, firstName) {
+    let name = firstName;
+    if (!name && userId) {
+        try {
+            const u = db.prepare("SELECT display_name, username, email FROM users WHERE id = ?").get(userId);
+            if (u) {
+                let raw = u.display_name || u.username || (u.email ? u.email.split("@")[0] : null);
+                if (raw) {
+                    raw = String(raw).trim().split(/\s+/)[0];
+                    name = raw.charAt(0).toUpperCase() + raw.slice(1);
+                }
+            }
+        } catch (e) { /* silent */ }
+    }
+    return name;
+}
+
+async function onSubscriptionRenewed(opts) {
+    opts = opts || {};
+    const userId = opts.userId, userEmail = opts.userEmail;
+    const planId = String(opts.planId || "pro").toLowerCase();
+    const amount = opts.amount || 0, currency = opts.currency || "USD";
+    const nextRenewalDate = opts.nextRenewalDate || null;
+    try {
+        const name = resolveFirstName(userId, opts.firstName);
+        const cfg = PLANS.get(planId);
+        notificationService.create({
+            userId: userId,
+            type: "system",
+            title: "Subscription renewed",
+            message: "Your **Crevio " + cfg.name + "** subscription has been renewed."
+        });
+        if (!userEmail) return;
+        const rendered = billingEmails.renderSubscriptionRenewed({
+            firstName: name, planId: planId, amount: amount, currency: currency,
+            nextRenewalDate: nextRenewalDate
+        });
+        emailService.send({
+            userId: userId, to: userEmail,
+            subject: rendered.subject, html: rendered.html, text: rendered.text,
+            category: "plan_renewed"
+        }).catch(function () {});
+    } catch (e) { console.error("[planNotification] onSubscriptionRenewed failed:", e.message); }
+}
+
+async function onSubscriptionCancelled(opts) {
+    opts = opts || {};
+    const userId = opts.userId, userEmail = opts.userEmail;
+    const planId = String(opts.planId || "pro").toLowerCase();
+    const accessEnds = opts.accessEnds || null;
+    try {
+        const name = resolveFirstName(userId, opts.firstName);
+        const cfg = PLANS.get(planId);
+        notificationService.create({
+            userId: userId,
+            type: "system",
+            title: "Subscription cancelled",
+            message: "Your **Crevio " + cfg.name + "** subscription has been cancelled." +
+                (accessEnds ? ("\n\nAccess continues until **" + accessEnds + "**.") : "")
+        });
+        if (!userEmail) return;
+        const rendered = billingEmails.renderSubscriptionCancelled({
+            firstName: name, planId: planId, accessEnds: accessEnds
+        });
+        emailService.send({
+            userId: userId, to: userEmail,
+            subject: rendered.subject, html: rendered.html, text: rendered.text,
+            category: "plan_cancelled"
+        }).catch(function () {});
+    } catch (e) { console.error("[planNotification] onSubscriptionCancelled failed:", e.message); }
+}
+
+async function onRefundProcessed(opts) {
+    opts = opts || {};
+    const userId = opts.userId, userEmail = opts.userEmail;
+    const amount = opts.amount || 0, currency = opts.currency || "USD";
+    const planName = opts.planName || "Crevio";
+    const transactionId = opts.transactionId || null;
+    const date = opts.date || null;
+    try {
+        const name = resolveFirstName(userId, opts.firstName);
+        const amt = (amount / 100).toFixed(2);
+        notificationService.create({
+            userId: userId,
+            type: "system",
+            title: "Refund processed",
+            message: "Your refund of **" + String(currency).toUpperCase() + " " + amt + "** has been processed."
+        });
+        if (!userEmail) return;
+        const rendered = billingEmails.renderRefundProcessed({
+            firstName: name, amount: amount, currency: currency,
+            planName: planName, transactionId: transactionId, date: date
+        });
+        emailService.send({
+            userId: userId, to: userEmail,
+            subject: rendered.subject, html: rendered.html, text: rendered.text,
+            category: "plan_refund_processed"
+        }).catch(function () {});
+    } catch (e) { console.error("[planNotification] onRefundProcessed failed:", e.message); }
+}
+
+async function onTrialStarted(opts) {
+    opts = opts || {};
+    const userId = opts.userId, userEmail = opts.userEmail;
+    const planId = String(opts.planId || "business").toLowerCase();
+    const trialEnds = opts.trialEnds || null;
+    try {
+        const name = resolveFirstName(userId, opts.firstName);
+        const cfg = PLANS.get(planId);
+        notificationService.create({
+            userId: userId,
+            type: "system",
+            title: "Your " + cfg.name + " trial has started",
+            message: "Your **Crevio " + cfg.name + "** trial has started." +
+                (trialEnds ? ("\n\n**Trial ends:** " + trialEnds) : "")
+        });
+        if (!userEmail) return;
+        const rendered = billingEmails.renderTrialStarted({
+            firstName: name, planId: planId, trialEnds: trialEnds
+        });
+        emailService.send({
+            userId: userId, to: userEmail,
+            subject: rendered.subject, html: rendered.html, text: rendered.text,
+            category: "plan_trial_started"
+        }).catch(function () {});
+    } catch (e) { console.error("[planNotification] onTrialStarted failed:", e.message); }
+}
+
+async function onTrialEndingSoon(opts) {
+    opts = opts || {};
+    const userId = opts.userId, userEmail = opts.userEmail;
+    const planId = String(opts.planId || "business").toLowerCase();
+    const daysLeft = opts.daysLeft || 3;
+    const trialEnds = opts.trialEnds || null;
+    try {
+        const name = resolveFirstName(userId, opts.firstName);
+        const cfg = PLANS.get(planId);
+        notificationService.create({
+            userId: userId,
+            type: "system",
+            title: "Trial ending soon",
+            message: "Your **Crevio " + cfg.name + "** trial ends in **" + daysLeft + " day(s)**." +
+                (trialEnds ? ("\n\n**Ends:** " + trialEnds) : "")
+        });
+        if (!userEmail) return;
+        const rendered = billingEmails.renderTrialEndingSoon({
+            firstName: name, planId: planId, daysLeft: daysLeft, trialEnds: trialEnds
+        });
+        emailService.send({
+            userId: userId, to: userEmail,
+            subject: rendered.subject, html: rendered.html, text: rendered.text,
+            category: "plan_trial_ending_soon"
+        }).catch(function () {});
+    } catch (e) { console.error("[planNotification] onTrialEndingSoon failed:", e.message); }
+}
+
 module.exports = {
     onSignup,
     onPlanChanged,
+    onSubscriptionRenewed,
+    onSubscriptionCancelled,
+    onRefundProcessed,
+    onTrialStarted,
+    onTrialEndingSoon,
     onPaymentSucceeded,
     onPaymentFailed,
     onSubscriptionExpiringSoon

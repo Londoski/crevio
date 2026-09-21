@@ -251,3 +251,93 @@ exports.devRunExpiryCheck = async (req, res) => {
         res.status(500).json({ success: false, message: e.message });
     }
 };
+// =========================================================
+// DEV-ONLY: test remaining billing lifecycle emails
+// =========================================================
+exports.devSubscriptionRenewed = async (req, res) => {
+    if (!devGuard(req, res)) return;
+    try {
+        const userId = Number(req.body.user_id || 1);
+        const planId = String(req.body.plan || 'pro').toLowerCase();
+        const amount = Number(req.body.amount || 1900);
+        const userRow = db.prepare('SELECT id, email FROM users WHERE id = ?').get(userId);
+        if (!userRow) return res.status(404).json({ success: false, message: 'user not found' });
+        const pns = require('../services/planNotificationService');
+        await pns.onSubscriptionRenewed({
+            userId: userId, userEmail: userRow.email,
+            planId: planId, amount: amount, currency: 'USD',
+            nextRenewalDate: req.body.next_renewal || null
+        });
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ success: false, message: e.message }); }
+};
+
+exports.devSubscriptionCancelled = async (req, res) => {
+    if (!devGuard(req, res)) return;
+    try {
+        const userId = Number(req.body.user_id || 1);
+        const planId = String(req.body.plan || 'pro').toLowerCase();
+        const userRow = db.prepare('SELECT id, email FROM users WHERE id = ?').get(userId);
+        if (!userRow) return res.status(404).json({ success: false, message: 'user not found' });
+        const pns = require('../services/planNotificationService');
+        await pns.onSubscriptionCancelled({
+            userId: userId, userEmail: userRow.email,
+            planId: planId,
+            accessEnds: req.body.access_ends || null
+        });
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ success: false, message: e.message }); }
+};
+
+exports.devRefundProcessed = async (req, res) => {
+    if (!devGuard(req, res)) return;
+    try {
+        const userId = Number(req.body.user_id || 1);
+        const amount = Number(req.body.amount || 1900);
+        const userRow = db.prepare('SELECT id, email FROM users WHERE id = ?').get(userId);
+        if (!userRow) return res.status(404).json({ success: false, message: 'user not found' });
+        const pns = require('../services/planNotificationService');
+        await pns.onRefundProcessed({
+            userId: userId, userEmail: userRow.email,
+            amount: amount, currency: 'USD',
+            planName: req.body.plan_name || 'Pro',
+            transactionId: req.body.transaction_id || null
+        });
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ success: false, message: e.message }); }
+};
+
+exports.devTrialStarted = async (req, res) => {
+    if (!devGuard(req, res)) return;
+    try {
+        const userId = Number(req.body.user_id || 1);
+        const planId = String(req.body.plan || 'business').toLowerCase();
+        const userRow = db.prepare('SELECT id, email FROM users WHERE id = ?').get(userId);
+        if (!userRow) return res.status(404).json({ success: false, message: 'user not found' });
+        const pns = require('../services/planNotificationService');
+        await pns.onTrialStarted({
+            userId: userId, userEmail: userRow.email,
+            planId: planId,
+            trialEnds: req.body.trial_ends || null
+        });
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ success: false, message: e.message }); }
+};
+
+exports.devTrialEndingSoon = async (req, res) => {
+    if (!devGuard(req, res)) return;
+    try {
+        const userId = Number(req.body.user_id || 1);
+        const planId = String(req.body.plan || 'business').toLowerCase();
+        const daysLeft = Number(req.body.days_left || 3);
+        const userRow = db.prepare('SELECT id, email FROM users WHERE id = ?').get(userId);
+        if (!userRow) return res.status(404).json({ success: false, message: 'user not found' });
+        const pns = require('../services/planNotificationService');
+        await pns.onTrialEndingSoon({
+            userId: userId, userEmail: userRow.email,
+            planId: planId, daysLeft: daysLeft,
+            trialEnds: req.body.trial_ends || null
+        });
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ success: false, message: e.message }); }
+};

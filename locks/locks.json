@@ -1273,6 +1273,46 @@
         "capture phase",
         "e.stopPropagation()"
       ]
+    },
+    {
+      "id": "phase-W2-billing-emails",
+      "desc": "Wave 2 — 6 billing lifecycle email templates (plan changed, renewed, cancelled, refund, trial started, trial ending)",
+      "type": "fileContains",
+      "file": "backend/emails/templates/billingEmails.js",
+      "patterns": [
+        "renderPlanChanged",
+        "renderSubscriptionRenewed",
+        "renderSubscriptionCancelled",
+        "renderRefundProcessed",
+        "renderTrialStarted",
+        "renderTrialEndingSoon"
+      ]
+    },
+    {
+      "id": "phase-W2-pns-billing-functions",
+      "desc": "planNotificationService wires all 6 billing lifecycle notifications",
+      "type": "fileContains",
+      "file": "backend/services/planNotificationService.js",
+      "patterns": [
+        "onSubscriptionRenewed",
+        "onSubscriptionCancelled",
+        "onRefundProcessed",
+        "onTrialStarted",
+        "onTrialEndingSoon"
+      ]
+    },
+    {
+      "id": "phase-W2-dev-endpoints",
+      "desc": "Dev endpoints for testing billing lifecycle emails",
+      "type": "fileContains",
+      "file": "backend/controllers/billingController.js",
+      "patterns": [
+        "devSubscriptionRenewed",
+        "devSubscriptionCancelled",
+        "devRefundProcessed",
+        "devTrialStarted",
+        "devTrialEndingSoon"
+      ]
     }
   ]
 }
