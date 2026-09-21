@@ -1,3 +1,4 @@
+const brand = require("./brand");
 // =========================================================
 // CREVIO — EMAIL LAYOUT
 // File: backend/emails/layout.js
@@ -13,7 +14,7 @@ const BORDER = "#E2E8F0";
 const TEXT_PRIMARY = "#0F172A";
 const TEXT_SECONDARY = "#475569";
 const TEXT_MUTED = "#94A3B8";
-const FONT = "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
+const FONT = "Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
 
 function renderEmail(opts) {
     opts = opts || {};
@@ -43,8 +44,8 @@ function renderEmail(opts) {
         "<tr><td align='center'>",
         "<table role='presentation' width='600' cellpadding='0' cellspacing='0' border='0' style='max-width:600px;width:100%;background-color:" + BG_CARD + ";border-radius:14px;overflow:hidden;box-shadow:0 4px 20px rgba(15,23,42,0.06);'>",
         "<tr><td style='background-color:" + BRAND_DARK + ";padding:28px 40px;text-align:center;'>",
-        "<div style='color:#FFFFFF;font-size:22px;font-weight:700;letter-spacing:0.08em;font-family:" + FONT + ";'>CREVIO</div>",
-        "<div style='color:#94A3B8;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;margin-top:4px;font-family:" + FONT + ";'>Your work deserves a better home</div>",
+        brand.wordmarkHtml({ height: 34 }),
+        "<div style='color:#94A3B8;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;margin-top:4px;font-family:" + FONT + ";'>A platform that actively helps your work find opportunities.</div>",
         "</td></tr>",
         "<tr><td style='padding:36px 40px 8px 40px;'>",
         "<div style='font-size:22px;font-weight:700;color:" + TEXT_PRIMARY + ";font-family:" + FONT + ";line-height:1.3;'>" + title + "</div>",

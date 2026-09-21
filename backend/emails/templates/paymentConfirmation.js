@@ -109,7 +109,7 @@ function render(opts) {
         bodyHtml: bodyHtml,
         ctaText: "Manage Subscription",
         ctaUrl: manageUrl,
-        footerNote: "Need help? Contact <a href='mailto:security@crevio.indevs.in' style='color:" + C.TEXT_SECONDARY + ";text-decoration:underline;'>Crevio Support</a>.<br>If you did not make this payment, please contact us immediately.<br><br><strong style='color:" + C.TEXT_SECONDARY + ";'>The Crevio Team</strong><br>Your work deserves a better home."
+        footerNote: "Need help? Contact <a href='mailto:security@crevio.indevs.in' style='color:" + C.TEXT_SECONDARY + ";text-decoration:underline;'>Crevio Support</a>.<br>If you did not make this payment, please contact us immediately.<br><br><strong style='color:" + C.TEXT_SECONDARY + ";'>The Crevio Team</strong><br>A platform that actively helps your work find opportunities.."
     });
 
     const text = [
@@ -136,7 +136,7 @@ function render(opts) {
         "If you did not make this payment, please contact us immediately.",
         "",
         "The Crevio Team",
-        "Your work deserves a better home."
+        "A platform that actively helps your work find opportunities.."
     ].join("\n");
 
     const subject = "Payment confirmed — Welcome to Crevio " + planName;
