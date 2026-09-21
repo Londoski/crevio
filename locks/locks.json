@@ -1087,6 +1087,39 @@
         "rc-grid",
         "__rcCheckbox"
       ]
+    },
+    {
+      "id": "phase-P2-cron-service",
+      "desc": "Subscription expiry cron — daily check + notification + idempotency marker",
+      "type": "fileContains",
+      "file": "backend/services/subscriptionCronService.js",
+      "patterns": [
+        "runExpiryCheck",
+        "onSubscriptionExpiringSoon",
+        "subscription_reminders_sent"
+      ]
+    },
+    {
+      "id": "phase-P2-dev-triggers",
+      "desc": "Dev-only endpoints for plan change + payment events + expiry dry run",
+      "type": "fileContains",
+      "file": "backend/controllers/billingController.js",
+      "patterns": [
+        "devChangePlan",
+        "devPaymentSucceeded",
+        "devPaymentFailed",
+        "devRunExpiryCheck"
+      ]
+    },
+    {
+      "id": "phase-P2-cron-wired",
+      "desc": "server.js starts the subscription cron on boot",
+      "type": "fileContains",
+      "file": "backend/server.js",
+      "patterns": [
+        "subscriptionCronService",
+        "subCron.start"
+      ]
     }
   ]
 }

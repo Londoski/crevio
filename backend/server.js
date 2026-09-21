@@ -133,3 +133,8 @@ app.listen(PORT, "0.0.0.0", () => {
         }
     } catch (e) { /* ignore */ }
 });
+// Start subscription expiry cron
+try {
+    const subCron = require("./services/subscriptionCronService");
+    subCron.start();
+} catch (e) { console.error("[server] subCron start failed:", e.message); }

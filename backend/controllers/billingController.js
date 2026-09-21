@@ -131,3 +131,123 @@ exports.getEntitlements = (req, res) => {
         return res.status(500).json({ success: false, message: "Could not load entitlements" });
     }
 };
+// =========================================================
+// DEV-ONLY endpoints — replace with real Stripe when ready
+// Gated by DEV_MODE=true in .env, or non-production NODE_ENV
+// =========================================================
+function devAllowed() {
+    if (process.env.DEV_MODE === 'true') return true;
+    if ((process.env.NODE_ENV || 'development') !== 'production') return true;
+    return false;
+}
+
+function devGuard(req, res) {
+    if (!devAllowed()) {
+        res.status(404).json({ success: false, message: 'Not found' });
+        return false;
+    }
+    return true;
+}
+
+exports.devChangePlan = async (req, res) => {
+    if (!devGuard(req, res)) return;
+    try {
+        const userId = Number(req.body.user_id);
+        const toPlan = String(req.body.plan || '').toLowerCase();
+        if (!userId || !['free','pro','business'].includes(toPlan)) {
+            return res.status(400).json({ success: false, message: 'user_id and plan (free|pro|business) required' });
+        }
+
+        const sub = db.prepare('SELECT id, plan FROM subscriptions WHERE user_id = ? ORDER BY created_at DESC LIMIT 1').get(userId);
+        const fromPlan = sub ? sub.plan : 'free';
+        if (fromPlan === toPlan) {
+            return res.json({ success: true, message: 'already on ' + toPlan, changed: false });
+        }
+
+        if (sub) {
+            db.prepare('UPDATE subscriptions SET plan = ?, previous_plan = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(toPlan, fromPlan, sub.id);
+        } else {
+            db.prepare('INSERT INTO subscriptions (user_id, plan, status) VALUES (?, ?, \'active\')').run(userId, toPlan);
+        }
+        try { db.prepare('UPDATE users SET plan = ? WHERE id = ?').run(toPlan, userId); } catch (e) {}
+
+        const userRow = db.prepare('SELECT id, email FROM users WHERE id = ?').get(userId);
+        const planNotificationService = require('../services/planNotificationService');
+        await planNotificationService.onPlanChanged({
+            userId: userId,
+            userEmail: userRow ? userRow.email : null,
+            fromPlan: fromPlan,
+            toPlan: toPlan
+        });
+
+        res.json({ success: true, changed: true, from: fromPlan, to: toPlan });
+    } catch (e) {
+        console.error('[devChangePlan]', e.message);
+        res.status(500).json({ success: false, message: e.message });
+    }
+};
+
+exports.devPaymentSucceeded = async (req, res) => {
+    if (!devGuard(req, res)) return;
+    try {
+        const userId = Number(req.body.user_id);
+        const amount = Number(req.body.amount || 1900);
+        const currency = String(req.body.currency || 'USD');
+        const planName = String(req.body.plan_name || 'Pro');
+        const userRow = db.prepare('SELECT id, email FROM users WHERE id = ?').get(userId);
+        if (!userRow) return res.status(404).json({ success: false, message: 'user not found' });
+
+        const planNotificationService = require('../services/planNotificationService');
+        await planNotificationService.onPaymentSucceeded({
+            userId: userId,
+            userEmail: userRow.email,
+            amount: amount,
+            currency: currency,
+            invoiceUrl: null,
+            planName: planName
+        });
+
+        res.json({ success: true });
+    } catch (e) {
+        console.error('[devPaymentSucceeded]', e.message);
+        res.status(500).json({ success: false, message: e.message });
+    }
+};
+
+exports.devPaymentFailed = async (req, res) => {
+    if (!devGuard(req, res)) return;
+    try {
+        const userId = Number(req.body.user_id);
+        const amount = Number(req.body.amount || 1900);
+        const currency = String(req.body.currency || 'USD');
+        const planName = String(req.body.plan_name || 'Pro');
+        const userRow = db.prepare('SELECT id, email FROM users WHERE id = ?').get(userId);
+        if (!userRow) return res.status(404).json({ success: false, message: 'user not found' });
+
+        const planNotificationService = require('../services/planNotificationService');
+        await planNotificationService.onPaymentFailed({
+            userId: userId,
+            userEmail: userRow.email,
+            amount: amount,
+            currency: currency,
+            updateUrl: null,
+            planName: planName
+        });
+
+        res.json({ success: true });
+    } catch (e) {
+        console.error('[devPaymentFailed]', e.message);
+        res.status(500).json({ success: false, message: e.message });
+    }
+};
+
+exports.devRunExpiryCheck = async (req, res) => {
+    if (!devGuard(req, res)) return;
+    try {
+        const cron = require('../services/subscriptionCronService');
+        const result = await cron.runExpiryCheck();
+        res.json({ success: true, result: result });
+    } catch (e) {
+        res.status(500).json({ success: false, message: e.message });
+    }
+};
