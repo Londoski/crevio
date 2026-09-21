@@ -1263,6 +1263,16 @@
       "patterns": [
         "notifications-select.js"
       ]
+    },
+    {
+      "id": "phase-notif-select-click-intercept",
+      "desc": "Selection mode blocks item-open via capture-phase click intercept",
+      "type": "fileContains",
+      "file": "dashboard/js/notifications-select.js",
+      "patterns": [
+        "capture phase",
+        "e.stopPropagation()"
+      ]
     }
   ]
 }

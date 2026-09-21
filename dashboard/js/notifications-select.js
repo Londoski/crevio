@@ -381,12 +381,7 @@
             item.dataset.nsBound = "1";
 
             // Click toggle (only in selection mode)
-            item.addEventListener("click", function (e) {
-                if (!selectionMode) return;
-                if (e.target.closest("[data-delete]")) return;
-                if (e.target.closest(".icon-btn")) return;
-                toggleItem(item);
-            });
+            // click handled by capture listener above
 
             // Right-click context menu
             item.addEventListener("contextmenu", function (e) {
@@ -598,6 +593,29 @@
     })();
 
         console.log("[NotifSelect] installed");
+
+    // =========================================================
+    // SELECTION MODE CLICK INTERCEPT
+    // Capture-phase listener — fires BEFORE notifications.js
+    // so clicking an item in select mode does NOT open it.
+    // =========================================================
+    document.addEventListener("click", function (e) {
+        if (!selectionMode) return;
+        const item = e.target.closest && e.target.closest(".notif-item");
+        if (!item) return;
+        if (e.target.closest("[data-delete]")) return;
+        if (e.target.closest(".icon-btn")) return;
+        if (e.target.closest(".ns-check")) {
+            e.stopPropagation();
+            e.preventDefault();
+            toggleItem(item);
+            return;
+        }
+        // Anywhere else on the item — swallow so notifications.js doesn't open it
+        e.stopPropagation();
+        e.preventDefault();
+        toggleItem(item);
+    }, true);  // capture phase
 
     // =========================================================
     // SELF-HEALING LAYOUT — guarantees count + buttons stay right
