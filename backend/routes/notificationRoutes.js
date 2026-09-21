@@ -13,6 +13,7 @@ router.post("/",             auth, notificationController.createNotification);
 router.get("/unread-count", auth, notificationController.unreadCount);
 router.patch("/read-all",    auth, notificationController.markAllRead);
 router.patch("/:id/read",    auth, notificationController.markRead);
+router.delete("/bulk",          auth, notificationController.bulkDelete);
 router.delete("/:id",        auth, notificationController.deleteNotification);
 
 module.exports = router;

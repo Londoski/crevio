@@ -1221,6 +1221,48 @@
       "patterns": [
         "require(\"dotenv\").config()"
       ]
+    },
+    {
+      "id": "phase-notif-select-mode",
+      "desc": "Notifications select mode — Select/Select all/Delete (N)/Cancel in mark-all-row",
+      "type": "fileContains",
+      "file": "dashboard/js/notifications-select.js",
+      "patterns": [
+        "nsSelectBtn",
+        "nsDeleteBtn",
+        "nsCancelBtn",
+        "nsCountMirror"
+      ]
+    },
+    {
+      "id": "phase-notif-bulk-delete-endpoint",
+      "desc": "Bulk delete endpoint for notifications",
+      "type": "fileContains",
+      "file": "backend/controllers/notificationController.js",
+      "patterns": [
+        "exports.bulkDelete",
+        "req.body.ids"
+      ]
+    },
+    {
+      "id": "phase-notif-context-menu",
+      "desc": "Right-click + double-tap context menu on notifications",
+      "type": "fileContains",
+      "file": "dashboard/js/notifications-select.js",
+      "patterns": [
+        "contextmenu",
+        "touchend",
+        "ns-menu"
+      ]
+    },
+    {
+      "id": "phase-notif-select-loaded",
+      "desc": "notifications.html loads notifications-select.js",
+      "type": "fileContains",
+      "file": "dashboard/pages/notifications.html",
+      "patterns": [
+        "notifications-select.js"
+      ]
     }
   ]
 }

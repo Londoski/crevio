@@ -133,3 +133,35 @@ exports.unreadCount = (req, res) => {
         res.status(500).json({ success: false, message: "Failed", error: err.message });
     }
 };
+// =========================================================
+// DELETE /api/notifications/bulk
+// Body: { ids: [1,2,3] }  OR  { all: true }
+// =========================================================
+exports.bulkDelete = (req, res) => {
+    try {
+        const ids = Array.isArray(req.body.ids)
+            ? req.body.ids.map(function (n) { return Number(n); }).filter(function (n) { return Number.isInteger(n) && n > 0; })
+            : [];
+        const all = req.body.all === true;
+
+        if (!all && !ids.length) {
+            return res.status(400).json({ success: false, message: "ids or all required" });
+        }
+
+        let result;
+        if (all) {
+            result = db.prepare("DELETE FROM notifications WHERE user_id = ?").run(req.user.id);
+        } else {
+            const placeholders = ids.map(function () { return "?"; }).join(",");
+            result = db.prepare("DELETE FROM notifications WHERE user_id = ? AND id IN (" + placeholders + ")").run.apply(
+                db.prepare("DELETE FROM notifications WHERE user_id = ? AND id IN (" + placeholders + ")"),
+                [req.user.id].concat(ids)
+            );
+        }
+
+        res.json({ success: true, deleted: result.changes });
+    } catch (e) {
+        console.error("[notifications] bulkDelete:", e.message);
+        res.status(500).json({ success: false, message: e.message });
+    }
+};

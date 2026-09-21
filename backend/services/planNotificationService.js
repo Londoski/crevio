@@ -187,12 +187,17 @@ async function onPaymentSucceeded(opts) {
         const displayPlan = planName || (PLANS.get(planId) ? PLANS.get(planId).name : "Crevio");
 
         // In-app notification (unchanged structure)
+        const notifyTpl = require("./planNotificationTemplates");
+        const notifContent = notifyTpl.build("payment_successful", {
+            planName: displayPlan,
+            amount: amount,
+            currency: currency
+        });
         notificationService.create({
             userId: userId,
-            type: "payment",
-            title: "Payment received",
-            message: "**Payment received** for Crevio " + displayPlan + ".\n\n" +
-                     "**Amount:** " + cur + " " + amt
+            type: notifContent.type,
+            title: notifContent.title,
+            message: notifContent.message
         });
 
         if (!userEmail) return;
