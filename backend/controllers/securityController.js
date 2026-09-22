@@ -459,11 +459,18 @@ exports.resetPasswordPost = async (req, res) => {
 
         try {
             const emailService = require("../services/emailService");
+            const securityEmails = require("../emails/templates/securityEmails");
+            const rendered = securityEmails.renderPasswordChanged({
+                firstName: null,
+                timestamp: new Date().toISOString(),
+                ipAddress: req.ip || "Unknown"
+            });
             emailService.send({
                 userId: row.user_id,
                 to: user.email,
                 subject: "Your Crevio password was reset",
-                text: "Hi,\n\nYour Crevio password was just reset and your account has been unlocked.\n\nIf you did NOT do this, please contact our security team immediately:\n\n    security@crevio.indevs.in\n\nOr simply reply to this email — our security team monitors replies and will respond as soon as possible.\n\nThe Crevio Team",
+                html: rendered.html,
+                text: rendered.text,
                 category: "security_password_reset"
             }).catch(function () {});
         } catch (e) {}
@@ -590,17 +597,17 @@ async function finalizeReset(userId) {
         });
 
         if (user && user.email) {
+            const securityEmails = require("../emails/templates/securityEmails");
+            const rendered = securityEmails.renderAccountUnlocked({
+                firstName: null,
+                timestamp: new Date().toISOString()
+            });
             emailService.send({
                 userId: userId,
                 to: user.email,
-                subject: "Your Crevio account has been restored",
-                text:
-                    "Hi,\n\n" +
-                    "Your Crevio account has been unlocked and is ready to use.\n\n" +
-                    "If this wasn't you, please contact our security team immediately:\n\n" +
-                    "    security@crevio.indevs.in\n\n" +
-                    "Or simply reply to this email - our security team monitors replies and will respond as soon as possible.\n\n" +
-                    "The Crevio Team",
+                subject: rendered.subject,
+                html: rendered.html,
+                text: rendered.text,
                 category: "security_account_restored"
             }).catch(function () {});
         }

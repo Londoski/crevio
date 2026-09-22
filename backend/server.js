@@ -137,4 +137,6 @@ app.listen(PORT, "0.0.0.0", () => {
 try {
     const subCron = require("./services/subscriptionCronService");
     subCron.start();
+    const lifecycleCron = require("./services/subscriptionLifecycleCron");
+    lifecycleCron.start();
 } catch (e) { console.error("[server] subCron start failed:", e.message); }

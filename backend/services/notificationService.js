@@ -43,7 +43,7 @@ function safeString(v, max) {
  * @param {string} [opts.entityType] — 'project' | 'portfolio' | 'conversation' | ...
  * @param {number} [opts.entityId]   — id of the referenced record
  */
-function create({ userId, type, title, message, entityType, entityId, ctaUrl, ctaText } = {}) {
+function create({ userId, type, title, message, entityType, entityId, ctaUrl, ctaText, ctaUrl2, ctaText2 } = {}) {
     try {
         if (!userId) return { success: false, reason: "userId required" };
         if (!title)  return { success: false, reason: "title required" };
@@ -84,6 +84,18 @@ function create({ userId, type, title, message, entityType, entityId, ctaUrl, ct
             fields.push("cta_text");
             placeholders.push("?");
             values.push(ctaText ? safeString(ctaText, 100) : null);
+        }
+        const hasCtaUrl2  = hasColumn("cta_url_2");
+        const hasCtaText2 = hasColumn("cta_text_2");
+        if (hasCtaUrl2) {
+            fields.push("cta_url_2");
+            placeholders.push("?");
+            values.push(ctaUrl2 ? safeString(ctaUrl2, 500) : null);
+        }
+        if (hasCtaText2) {
+            fields.push("cta_text_2");
+            placeholders.push("?");
+            values.push(ctaText2 ? safeString(ctaText2, 100) : null);
         }
 
         const stmt = db.prepare(

@@ -11,6 +11,7 @@
 //      /api/security/report-compromise?token=...
 // =========================================================
 const crypto = require("crypto");
+const securityEmails = require("../emails/templates/securityEmails");
 const db = require("../../database/db");
 const deviceService = require("./deviceService");
 const geoService = require("./geoService");
@@ -159,11 +160,21 @@ async function recordLogin({ userId, userEmail, token, userAgent, ipAddress, acc
 
             text += "If this wasn't you, please contact our security team:\n\n    security@crevio.indevs.in\n\nOr simply reply to this email - our security team monitors replies and will respond as soon as possible.\n\nThe Crevio Team";
 
+            const securityEmails = require("../emails/templates/securityEmails");
+            const rendered = securityEmails.renderNewDeviceSignIn({
+                firstName: null,
+                device: parsed.friendly,
+                location: locationText,
+                ipAddress: ipAddress || "Unknown",
+                timestamp: timestamp,
+                lockdownUrl: lockdownLink || null
+            });
             emailService.send({
                 userId: userId,
                 to: userEmail,
-                subject: subject,
-                text: text,
+                subject: rendered.subject,
+                html: rendered.html,
+                text: rendered.text,
                 category: "security_new_device"
             }).catch(function () {});
         }

@@ -49,6 +49,11 @@ async function onSignup({ userId, userEmail, userName }) {
             message: message,
             entityType: null,
             entityId: null
+        ,
+            ctaUrl: notifContent.ctaUrl || null,
+            ctaText: notifContent.ctaText || null,
+            ctaUrl2: notifContent.ctaUrl2 || null,
+            ctaText2: notifContent.ctaText2 || null
         });
 
         if (userEmail) {
@@ -91,6 +96,13 @@ async function onPlanChanged(opts) {
         const fromCfg = PLANS.get(fromPlan);
         const toCfg = PLANS.get(toPlan);
         const isUpgrade = planRank(toPlan) > planRank(fromPlan);
+        // Reset grace-period state when user changes plans
+        if (isUpgrade) {
+            try {
+                db.prepare("UPDATE subscriptions SET grace_ends_at = NULL, downgraded_at = NULL, data_removal_warned_at = NULL WHERE user_id = ? AND plan != 'free'").run(userId);
+                db.prepare("DELETE FROM subscription_reminders_sent WHERE subscription_id IN (SELECT id FROM subscriptions WHERE user_id = ?)").run(userId);
+            } catch (e) { /* silent */ }
+        }
 
         // First name lookup
         let resolvedName = firstName;
@@ -118,6 +130,11 @@ async function onPlanChanged(opts) {
             type: notifContent.type,
             title: notifContent.title,
             message: notifContent.message
+        ,
+            ctaUrl: notifContent.ctaUrl || null,
+            ctaText: notifContent.ctaText || null,
+            ctaUrl2: notifContent.ctaUrl2 || null,
+            ctaText2: notifContent.ctaText2 || null
         });
 
         // HTML email
@@ -215,42 +232,59 @@ async function onPaymentSucceeded(opts) {
 // =========================================================
 // onPaymentFailed
 // =========================================================
-async function onPaymentFailed({ userId, userEmail, amount, currency, updateUrl, planName }) {
+async function onPaymentFailed(opts) {
+    opts = opts || {};
+    const userId = opts.userId;
+    const userEmail = opts.userEmail;
+    const amount = opts.amount || 0;
+    const currency = opts.currency || "USD";
+    const planId = String(opts.planId || "pro").toLowerCase();
+    const billingState = opts.billingState || "retry_pending";
+    const graceUntil = opts.graceUntil || null;
+
     try {
-        const amt = ((amount || 0) / 100).toFixed(2);
-        const cur = (currency || "USD").toUpperCase();
-        const updateLink = updateUrl || (appUrl() + "/dashboard/pages/billing.html");
+        const cfg = PLANS.get(planId);
+        const planName = cfg.name;
+        const amt = (amount / 100).toFixed(2);
+        const cur = String(currency).toUpperCase();
+
+        const notifyTpl = require("./planNotificationTemplates");
+        const notifContent = notifyTpl.build("payment_failed", {
+            planName: planName,
+            amount: amount,
+            currency: currency,
+            billingState: billingState,
+            graceUntil: graceUntil
+        });
 
         notificationService.create({
             userId: userId,
-            type: "alert",
-            title: "Payment failed",
-            message: "**Action required:** We couldn't process your Crevio payment.\n\n" +
-                     "**Amount:** " + cur + " " + amt + "\n\n" +
-                     "Please update your payment method to keep your subscription active."
+            type: notifContent.type || "alert",
+            title: notifContent.title,
+            message: notifContent.message,
+            ctaUrl: notifContent.ctaUrl || null,
+            ctaText: notifContent.ctaText || null,
+            ctaUrl2: notifContent.ctaUrl2 || null,
+            ctaText2: notifContent.ctaText2 || null
         });
 
         if (userEmail) {
+            const updateLink = opts.updateUrl || (appUrl() + "/dashboard/pages/billing.html");
             emailService.send({
                 userId: userId,
                 to: userEmail,
-                subject: "Action required: Crevio payment didn't go through",
+                subject: "Action required: Crevio payment did not go through",
                 text:
-                    "Hi,\n\n" +
-                    "We tried to process your Crevio subscription payment of " + cur + " " + amt + " but it didn't go through.\n\n" +
-                    "To keep your subscription active, please update your payment method:\n\n" +
+                    "Hi," + "\n\n" +
+                    "We could not process your Crevio " + planName + " payment of " + cur + " " + amt + "." + "\n\n" +
+                    "Update your payment method to keep your subscription active:" + "\n\n" +
                     "    " + updateLink + "\n\n" +
-                    "If you need help, just reply to this email.\n\n" +
                     "The Crevio Team",
                 category: "plan_payment_failed"
             }).catch(function () {});
         }
     } catch (e) { console.error("[planNotification] onPaymentFailed failed:", e.message); }
 }
-
-// =========================================================
-// onSubscriptionExpiringSoon
-// =========================================================
 async function onSubscriptionExpiringSoon({ userId, userEmail, planName, daysLeft, renewDate }) {
     try {
         notificationService.create({
@@ -320,6 +354,9 @@ async function onSubscriptionRenewed(opts) {
             type: "system",
             title: "Subscription renewed",
             message: "Your **Crevio " + cfg.name + "** subscription has been renewed."
+        ,
+            ctaUrl: require("./planNotificationTemplates").build("plan_renewed", { planName: cfg.name, renewalDate: nextRenewalDate }).ctaUrl,
+            ctaText: "Manage Subscription"
         });
         if (!userEmail) return;
         const rendered = billingEmails.renderSubscriptionRenewed({
@@ -348,6 +385,11 @@ async function onSubscriptionCancelled(opts) {
             title: "Subscription cancelled",
             message: "Your **Crevio " + cfg.name + "** subscription has been cancelled." +
                 (accessEnds ? ("\n\nAccess continues until **" + accessEnds + "**.") : "")
+        ,
+            ctaUrl: require("./planNotificationTemplates").build("subscription_cancelled", { planName: cfg.name, renewalDate: accessEnds }).ctaUrl,
+            ctaText: "Reactivate " + cfg.name,
+            ctaUrl2: require("./planNotificationTemplates").build("subscription_cancelled", { planName: cfg.name }).ctaUrl2,
+            ctaText2: "View Plans"
         });
         if (!userEmail) return;
         const rendered = billingEmails.renderSubscriptionCancelled({
@@ -376,6 +418,9 @@ async function onRefundProcessed(opts) {
             type: "system",
             title: "Refund processed",
             message: "Your refund of **" + String(currency).toUpperCase() + " " + amt + "** has been processed."
+        ,
+            ctaUrl: require("./planNotificationTemplates").build("refund_completed", {}).ctaUrl,
+            ctaText: "View Billing History"
         });
         if (!userEmail) return;
         const rendered = billingEmails.renderRefundProcessed({
@@ -404,6 +449,11 @@ async function onTrialStarted(opts) {
             title: "Your " + cfg.name + " trial has started",
             message: "Your **Crevio " + cfg.name + "** trial has started." +
                 (trialEnds ? ("\n\n**Trial ends:** " + trialEnds) : "")
+        ,
+            ctaUrl: require("./planNotificationTemplates").build("trial_started", { planName: cfg.name }).ctaUrl,
+            ctaText: "Start Exploring",
+            ctaUrl2: require("./planNotificationTemplates").build("trial_started", { planName: cfg.name }).ctaUrl2,
+            ctaText2: "View Plans"
         });
         if (!userEmail) return;
         const rendered = billingEmails.renderTrialStarted({
@@ -432,6 +482,11 @@ async function onTrialEndingSoon(opts) {
             title: "Trial ending soon",
             message: "Your **Crevio " + cfg.name + "** trial ends in **" + daysLeft + " day(s)**." +
                 (trialEnds ? ("\n\n**Ends:** " + trialEnds) : "")
+        ,
+            ctaUrl: opts.upgradeUrl || null,
+            ctaText: "Continue with " + cfg.name,
+            ctaUrl2: opts.plansUrl || null,
+            ctaText2: "View Plans"
         });
         if (!userEmail) return;
         const rendered = billingEmails.renderTrialEndingSoon({
@@ -445,6 +500,74 @@ async function onTrialEndingSoon(opts) {
     } catch (e) { console.error("[planNotification] onTrialEndingSoon failed:", e.message); }
 }
 
+async function onSubscriptionExpiring(opts) {
+    opts = opts || {};
+    const userId = opts.userId, userEmail = opts.userEmail;
+    const planId = String(opts.planId || "pro").toLowerCase();
+    const renewalDate = opts.renewalDate || null;
+    try {
+        const cfg = PLANS.get(planId);
+        const notifyTpl = require("./planNotificationTemplates");
+        const notifContent = notifyTpl.build("subscription_expiring", { planName: cfg.name, renewalDate: renewalDate });
+        notificationService.create({
+            userId: userId, type: notifContent.type, title: notifContent.title, message: notifContent.message,
+            ctaUrl: notifContent.ctaUrl, ctaText: notifContent.ctaText,
+            ctaUrl2: notifContent.ctaUrl2, ctaText2: notifContent.ctaText2
+        });
+    } catch (e) { console.error("[planNotification] onSubscriptionExpiring failed:", e.message); }
+}
+
+async function onSubscriptionExpired(opts) {
+    opts = opts || {};
+    const userId = opts.userId, userEmail = opts.userEmail;
+    const planId = String(opts.planId || "pro").toLowerCase();
+    const graceUntil = opts.graceUntil || null;
+    const renewalDate = opts.renewalDate || null;
+    try {
+        const cfg = PLANS.get(planId);
+        const notifyTpl = require("./planNotificationTemplates");
+        const notifContent = notifyTpl.build("subscription_expired", { planName: cfg.name, graceUntil: graceUntil, renewalDate: renewalDate });
+        notificationService.create({
+            userId: userId, type: notifContent.type, title: notifContent.title, message: notifContent.message,
+            ctaUrl: notifContent.ctaUrl, ctaText: notifContent.ctaText,
+            ctaUrl2: notifContent.ctaUrl2, ctaText2: notifContent.ctaText2
+        });
+    } catch (e) { console.error("[planNotification] onSubscriptionExpired failed:", e.message); }
+}
+
+async function onSubscriptionDowngraded(opts) {
+    opts = opts || {};
+    const userId = opts.userId, userEmail = opts.userEmail;
+    const planId = String(opts.planId || "pro").toLowerCase();
+    try {
+        const cfg = PLANS.get(planId);
+        const notifyTpl = require("./planNotificationTemplates");
+        const notifContent = notifyTpl.build("subscription_downgraded", { planName: cfg.name });
+        notificationService.create({
+            userId: userId, type: notifContent.type, title: notifContent.title, message: notifContent.message,
+            ctaUrl: notifContent.ctaUrl, ctaText: notifContent.ctaText,
+            ctaUrl2: notifContent.ctaUrl2, ctaText2: notifContent.ctaText2
+        });
+    } catch (e) { console.error("[planNotification] onSubscriptionDowngraded failed:", e.message); }
+}
+
+async function onSubscriptionDataRemovalWarning(opts) {
+    opts = opts || {};
+    const userId = opts.userId, userEmail = opts.userEmail;
+    const planId = String(opts.planId || "pro").toLowerCase();
+    const daysUntilRemoval = opts.daysUntilRemoval || 7;
+    try {
+        const cfg = PLANS.get(planId);
+        const notifyTpl = require("./planNotificationTemplates");
+        const notifContent = notifyTpl.build("subscription_data_removal_warning", { planName: cfg.name, daysUntilRemoval: daysUntilRemoval });
+        notificationService.create({
+            userId: userId, type: notifContent.type, title: notifContent.title, message: notifContent.message,
+            ctaUrl: notifContent.ctaUrl, ctaText: notifContent.ctaText,
+            ctaUrl2: notifContent.ctaUrl2, ctaText2: notifContent.ctaText2
+        });
+    } catch (e) { console.error("[planNotification] onSubscriptionDataRemovalWarning failed:", e.message); }
+}
+
 module.exports = {
     onSignup,
     onPlanChanged,
@@ -453,6 +576,10 @@ module.exports = {
     onRefundProcessed,
     onTrialStarted,
     onTrialEndingSoon,
+    onSubscriptionExpiring,
+    onSubscriptionExpired,
+    onSubscriptionDowngraded,
+    onSubscriptionDataRemovalWarning,
     onPaymentSucceeded,
     onPaymentFailed,
     onSubscriptionExpiringSoon

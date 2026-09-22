@@ -6,6 +6,7 @@
 // + queues email. Never blocks the primary action.
 // =========================================================
 const notificationService = require("./notificationService");
+const securityEmails = require("../emails/templates/securityEmails");
 const emailService = require("./emailService");
 const deviceService = require("./deviceService");
 const geoService = require("./geoService");
@@ -59,23 +60,19 @@ async function notifyPasswordChanged({ userId, userEmail, ipAddress, userAgent }
         });
 
         if (userEmail) {
-            emailService.send({
-                userId,
-                to: userEmail,
-                subject: "Your Crevio password was updated",
-                text:
-                    "Hi,\n\n" +
-                    "The password on your Crevio account was just changed.\n\n" +
-                    "Time:      " + timestamp + "\n" +
-                    "Device:    " + ctx.deviceFriendly + "\n" +
-                    "Location:  " + ctx.locationText + "\n" +
-                    "IP:        " + (ipAddress || "unknown") + "\n\n" +
-                    "If you made this change, no action is needed.\n\n" +
-                    "If you did NOT make this change, secure your account immediately:\n" +
-                    appUrl() + "/admin/pages/login.html\n\n" +
-                    "If this wasn't you, please contact our security team:\n\n    security@crevio.indevs.in\n\nOr simply reply to this email - our security team monitors replies and will respond as soon as possible.\n\nThe Crevio Team",
-                category: "security_password_changed"
-            }).catch(function () {});
+            const rendered = securityEmails.renderPasswordChanged({
+                    firstName: null,
+                    timestamp: timestamp,
+                    ipAddress: ipAddress || "Unknown"
+                });
+                emailService.send({
+                    userId: userId,
+                    to: userEmail,
+                    subject: rendered.subject,
+                    html: rendered.html,
+                    text: rendered.text,
+                    category: "security_password_changed"
+                }).catch(function () {});
         }
     } catch (e) { console.error("[accountSecurity] password notify failed:", e.message); }
 }
@@ -103,23 +100,20 @@ async function notifyEmailChanged({ userId, oldEmail, newEmail, ipAddress, userA
         // Send to BOTH emails so both addresses are alerted
         const targets = [oldEmail, newEmail].filter(Boolean);
         for (const to of targets) {
-            emailService.send({
-                userId,
-                to,
-                subject: "Your Crevio email address was updated",
-                text:
-                    "Hi,\n\n" +
-                    "The email address on a Crevio account " +
-                    (oldEmail && newEmail ? ("was changed from " + oldEmail + " to " + newEmail) : "was updated") +
-                    ".\n\n" +
-                    "Time:      " + timestamp + "\n" +
-                    "Device:    " + ctx.deviceFriendly + "\n" +
-                    "Location:  " + ctx.locationText + "\n" +
-                    "IP:        " + (ipAddress || "unknown") + "\n\n" +
-                    "If this wasn't you, contact support immediately.\n\n" +
-                    "If this wasn't you, please contact our security team:\n\n    security@crevio.indevs.in\n\nOr simply reply to this email - our security team monitors replies and will respond as soon as possible.\n\nThe Crevio Team",
-                category: "security_email_changed"
-            }).catch(function () {});
+            const rendered = securityEmails.renderEmailChanged({
+                    firstName: null,
+                    oldEmail: oldEmail,
+                    newEmail: newEmail,
+                    timestamp: timestamp
+                });
+                emailService.send({
+                    userId: userId,
+                    to: to,
+                    subject: rendered.subject,
+                    html: rendered.html,
+                    text: rendered.text,
+                    category: "security_email_changed"
+                }).catch(function () {});
         }
     } catch (e) { console.error("[accountSecurity] email notify failed:", e.message); }
 }
@@ -142,22 +136,20 @@ async function notify2FAEnabled({ userId, userEmail, ipAddress, userAgent }) {
         });
 
         if (userEmail) {
-            emailService.send({
-                userId,
-                to: userEmail,
-                subject: "Two-factor authentication is now protecting your Crevio account",
-                text:
-                    "Hi,\n\n" +
-                    "Two-factor authentication (2FA) was just enabled on your Crevio account.\n\n" +
-                    "Time:      " + timestamp + "\n" +
-                    "Device:    " + ctx.deviceFriendly + "\n" +
-                    "Location:  " + ctx.locationText + "\n\n" +
-                    "If you made this change, no action is needed.\n\n" +
-                    "If you did NOT enable 2FA, secure your account immediately:\n" +
-                    appUrl() + "/admin/pages/login.html\n\n" +
-                    "If this wasn't you, please contact our security team:\n\n    security@crevio.indevs.in\n\nOr simply reply to this email - our security team monitors replies and will respond as soon as possible.\n\nThe Crevio Team",
-                category: "security_2fa_enabled"
-            }).catch(function () {});
+            const rendered = securityEmails.renderTwoFactorChanged({
+                    firstName: null,
+                    enabled: true,
+                    method: "authenticator",
+                    timestamp: timestamp
+                });
+                emailService.send({
+                    userId: userId,
+                    to: userEmail,
+                    subject: rendered.subject,
+                    html: rendered.html,
+                    text: rendered.text,
+                    category: "security_2fa_enabled"
+                }).catch(function () {});
         }
     } catch (e) { console.error("[accountSecurity] 2fa enable notify failed:", e.message); }
 }
@@ -181,23 +173,20 @@ async function notify2FADisabled({ userId, userEmail, ipAddress, userAgent }) {
         });
 
         if (userEmail) {
-            emailService.send({
-                userId,
-                to: userEmail,
-                subject: "Two-factor authentication was turned off on your Crevio account",
-                text:
-                    "Hi,\n\n" +
-                    "Two-factor authentication (2FA) was just DISABLED on your Crevio account.\n\n" +
-                    "Time:      " + timestamp + "\n" +
-                    "Device:    " + ctx.deviceFriendly + "\n" +
-                    "Location:  " + ctx.locationText + "\n" +
-                    "IP:        " + (ipAddress || "unknown") + "\n\n" +
-                    "If you made this change, no action is needed.\n\n" +
-                    "If you did NOT disable 2FA, secure your account immediately:\n" +
-                    appUrl() + "/admin/pages/login.html\n\n" +
-                    "If this wasn't you, please contact our security team:\n\n    security@crevio.indevs.in\n\nOr simply reply to this email - our security team monitors replies and will respond as soon as possible.\n\nThe Crevio Team",
-                category: "security_2fa_disabled"
-            }).catch(function () {});
+            const rendered = securityEmails.renderTwoFactorChanged({
+                    firstName: null,
+                    enabled: false,
+                    method: "authenticator",
+                    timestamp: timestamp
+                });
+                emailService.send({
+                    userId: userId,
+                    to: userEmail,
+                    subject: rendered.subject,
+                    html: rendered.html,
+                    text: rendered.text,
+                    category: "security_2fa_disabled"
+                }).catch(function () {});
         }
     } catch (e) { console.error("[accountSecurity] 2fa disable notify failed:", e.message); }
 }

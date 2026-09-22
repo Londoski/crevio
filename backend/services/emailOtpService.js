@@ -4,6 +4,7 @@
 // sends it by email. Verifies by comparing hash + enforcing expiry
 // and max attempts.
 const crypto = require("crypto");
+const securityEmails = require("../emails/templates/securityEmails");
 const db = require("../../database/db");
 const emailService = require("./emailService");
 
@@ -58,22 +59,21 @@ async function createAndSend({ userId, userEmail, challengeType }) {
         : "You requested a verification code.";
 
     try {
-        await emailService.send({
-            userId,
-            to: userEmail,
-            subject: subject,
-            text:
-                "Hi,\n\n" +
-                intro + "\n\n" +
-                "Your Crevio verification code is:\n\n" +
-                "    " + code + "\n\n" +
-                "This code expires in " + OTP_EXPIRY_MIN + " minutes.\n\n" +
-                "If you didn't request this, someone may be trying to access your account. Please contact our security team immediately:\n\n" +
-                "    security@crevio.indevs.in\n\n" +
-                "Or simply reply to this email - our security team monitors replies and will respond as soon as possible.\n\n" +
-                "The Crevio Team",
-            category: isLogin ? "security_login_otp" : "security_reset_otp"
-        });
+        const securityEmails = require("../emails/templates/securityEmails");
+            const rendered = securityEmails.renderOtpCode({
+                firstName: null,
+                code: code,
+                purpose: isLogin ? "login" : "reset",
+                expiresIn: OTP_EXPIRY_MIN + " minutes"
+            });
+            await emailService.send({
+                userId: userId,
+                to: userEmail,
+                subject: rendered.subject,
+                html: rendered.html,
+                text: rendered.text,
+                category: isLogin ? "security_login_otp" : "security_reset_otp"
+            });
     } catch (e) { console.error("[emailOtp] email failed:", e.message); }
 
     return { success: true, expiresAt, codeLength: OTP_LENGTH };

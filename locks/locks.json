@@ -780,12 +780,13 @@
     },
     {
       "id": "security-emails-support-footer",
-      "desc": "All security emails include reply-to-this-email + support contact footer",
+      "desc": "All security emails include reply-to-this-email + support contact footer (via defaultFooter in securityEmails.js)",
       "type": "fileContains",
-      "file": "backend/services/accountSecurityService.js",
+      "file": "backend/emails/templates/securityEmails.js",
       "patterns": [
-        "please contact our security team",
-        "security@crevio.indevs.in"
+        "security@crevio.indevs.in",
+        "Crevio Support",
+        "defaultFooter"
       ]
     },
     {
@@ -1312,6 +1313,77 @@
         "devRefundProcessed",
         "devTrialStarted",
         "devTrialEndingSoon"
+      ]
+    },
+    {
+      "id": "phase-lifecycle-cron",
+      "desc": "Subscription lifecycle cron — Day-3 warning, Day-0 grace, Day+3 downgrade, Day+30 data warning",
+      "type": "fileContains",
+      "file": "backend/services/subscriptionLifecycleCron.js",
+      "patterns": [
+        "onSubscriptionExpiring",
+        "onSubscriptionExpired",
+        "onSubscriptionDowngraded",
+        "onSubscriptionDataRemovalWarning",
+        "GRACE_DAYS = 3"
+      ]
+    },
+    {
+      "id": "phase-lifecycle-grace-columns",
+      "desc": "subscriptions has grace_ends_at, downgraded_at, data_removal_warned_at columns",
+      "type": "fileContains",
+      "file": "backend/services/subscriptionLifecycleCron.js",
+      "patterns": [
+        "grace_ends_at",
+        "downgraded_at",
+        "data_removal_warned_at"
+      ]
+    },
+    {
+      "id": "phase-lifecycle-wired",
+      "desc": "server.js starts the lifecycle cron on boot",
+      "type": "fileContains",
+      "file": "backend/server.js",
+      "patterns": [
+        "subscriptionLifecycleCron",
+        "lifecycleCron.start"
+      ]
+    },
+    {
+      "id": "phase-lifecycle-templates",
+      "desc": "Plan notification templates include the 4 lifecycle cases + Free/Pro active",
+      "type": "fileContains",
+      "file": "backend/services/planNotificationTemplates.js",
+      "patterns": [
+        "subscription_expiring",
+        "subscription_expired",
+        "subscription_downgraded",
+        "subscription_data_removal_warning",
+        "free_plan_reminder",
+        "plan_active"
+      ]
+    },
+    {
+      "id": "phase-lifecycle-service-functions",
+      "desc": "planNotificationService exports the 4 lifecycle functions",
+      "type": "fileContains",
+      "file": "backend/services/planNotificationService.js",
+      "patterns": [
+        "onSubscriptionExpiring",
+        "onSubscriptionExpired",
+        "onSubscriptionDowngraded",
+        "onSubscriptionDataRemovalWarning"
+      ]
+    },
+    {
+      "id": "phase-lifecycle-reset-on-upgrade",
+      "desc": "Upgrading mid-grace resets all grace state and reminder markers",
+      "type": "fileContains",
+      "file": "backend/services/planNotificationService.js",
+      "patterns": [
+        "grace_ends_at = NULL",
+        "downgraded_at = NULL",
+        "subscription_reminders_sent"
       ]
     }
   ]

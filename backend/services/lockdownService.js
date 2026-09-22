@@ -14,6 +14,7 @@
 // { success: bool, reason?: string, ... } so the caller can decide.
 // =========================================================
 const crypto = require("crypto");
+const securityEmails = require("../emails/templates/securityEmails");
 const db = require("../../database/db");
 const verificationService = require("./verificationService");
 const emailService = require("./emailService");
@@ -179,22 +180,18 @@ async function lockdown({ userId, reason = "reported_compromise", ipAddress = nu
 
         if (user.email && resetLink) {
             try {
+                const securityEmails = require("../emails/templates/securityEmails");
+                const rendered = securityEmails.renderAccountLocked({
+                    firstName: null,
+                    sessionsRevoked: sessionsRevoked,
+                    devicesRevoked: devicesRevoked
+                });
                 await emailService.send({
-                    userId,
+                    userId: userId,
                     to: user.email,
-                    subject: "Your Crevio account has been secured",
-                    text:
-                        "Hi,\n\n" +
-                        "We received a report that a recent sign-in to your Crevio account wasn't you.\n\n" +
-                        "We've taken immediate steps to protect your account:\n" +
-                        "  • Signed out every device\n" +
-                        "  • Locked your account\n" +
-                        "  • Started the password-reset process\n\n" +
-                        "To regain access, click the link below and follow the steps:\n\n" +
-                        resetLink + "\n\n" +
-                        "This link expires in 24 hours. If it expires, you can request a new one from the login page.\n\n" +
-                        "If you did NOT report this compromise, please contact support immediately.\n\n" +
-                        "The Crevio Team",
+                    subject: rendered.subject,
+                    html: rendered.html,
+                    text: rendered.text + "\n\nReset your password: " + resetLink,
                     category: "security_lockdown"
                 });
             } catch (e) { console.warn("[lockdownService] reset email failed:", e.message); }
