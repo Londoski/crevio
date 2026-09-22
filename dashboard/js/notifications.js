@@ -245,7 +245,7 @@ document.addEventListener("DOMContentLoaded", function () {
             </div>
             <h2 class="reading-title">${escapeHtml(n.title || "Notification")}</h2>
             <div class="reading-body">${renderMarkdown(n.message || "")}</div>
-              ${n.cta_url ? `<div style="margin-top:22px;padding-top:18px;border-top:1px solid var(--border-color,#E2E8F0);"><a href="${n.cta_url}" style="display:inline-block;padding:11px 22px;background:var(--accent,#2563EB);color:#FFFFFF;text-decoration:none;border-radius:8px;font-size:14px;font-weight:600;">${n.cta_text || "Open"}</a>${n.cta_url_2 ? `<a href="${n.cta_url_2}" style="display:inline-block;padding:11px 22px;background:transparent;color:var(--text-primary,#0F172A);text-decoration:none;border:1px solid var(--border-color,#E2E8F0);border-radius:8px;font-size:14px;font-weight:600;">${n.cta_text_2 || "View"}</a>` : ""}</div>` : ""}
+              ${n.cta_url ? `<div style="margin-top:22px;padding-top:18px;border-top:1px solid var(--border-color,#E2E8F0);"><a href="${n.cta_url}" style="display:inline-block;padding:11px 22px;background:var(--accent,#2563EB);color:#FFFFFF;text-decoration:none;border-radius:8px;font-size:14px;font-weight:600;margin-right:4px;">${n.cta_text || "Open"}</a>${n.cta_url_2 ? `<a href="${n.cta_url_2}" style="display:inline-block;padding:11px 22px;background:transparent;color:var(--text-primary,#0F172A);text-decoration:none;border:1px solid var(--border-color,#E2E8F0);border-radius:8px;font-size:14px;font-weight:600;">${n.cta_text_2 || "View"}</a>` : ""}</div>` : ""}
         `;
 
         if (typeof lucide !== "undefined") lucide.createIcons();

@@ -1385,6 +1385,24 @@
         "downgraded_at = NULL",
         "subscription_reminders_sent"
       ]
+    },
+    {
+      "id": "phase-notif-sort-deterministic",
+      "desc": "Notifications ordered by created_at DESC, id DESC (deterministic tiebreaker for same-second events)",
+      "type": "fileContains",
+      "file": "backend/controllers/notificationController.js",
+      "patterns": [
+        "ORDER BY created_at DESC, id DESC"
+      ]
+    },
+    {
+      "id": "phase-notif-index-fast",
+      "desc": "Notifications list query uses a covering index for fast pagination",
+      "type": "fileContains",
+      "file": "backend/controllers/notificationController.js",
+      "patterns": [
+        "ORDER BY created_at DESC, id DESC"
+      ]
     }
   ]
 }

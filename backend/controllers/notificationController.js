@@ -43,7 +43,7 @@ exports.getNotifications = (req, res) => {
         const notifications = db.prepare(`
             SELECT * FROM notifications
             WHERE user_id = ?
-            ORDER BY created_at DESC
+            ORDER BY created_at DESC, id DESC
             LIMIT 100
         `).all(req.user.id);
 
