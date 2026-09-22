@@ -8,6 +8,7 @@
 // =========================================================
 
 const db = require("../../database/db");
+const entitlementService = require("../services/entitlementService");
 const notificationService = require("../services/notificationService");
 
 function cols(table) {
@@ -292,8 +293,12 @@ exports.getPublicPortfolio = (req, res) => {
             catch (e) { return []; }
         };
 
-        const projects = safeAll("SELECT * FROM projects WHERE user_id = ? AND published = 1 ORDER BY created_at DESC LIMIT 20", user.id);
-        const services = safeAll("SELECT * FROM services WHERE user_id = ? AND status = 'published' LIMIT 10", user.id);
+        const ownerPlanProjects = entitlementService.limitFor(user.id, "projects");
+                const projectCap = entitlementService.isUnlimited(ownerPlanProjects) ? 9999 : ownerPlanProjects;
+                const projects = safeAll("SELECT * FROM projects WHERE user_id = ? AND published = 1 ORDER BY created_at DESC LIMIT ?", user.id, projectCap);
+        const ownerPlanServices = entitlementService.limitFor(user.id, "services");
+                const serviceCap = entitlementService.isUnlimited(ownerPlanServices) ? 9999 : ownerPlanServices;
+                const services = safeAll("SELECT * FROM services WHERE user_id = ? AND status = 'published' LIMIT ?", user.id, serviceCap);
         const socials  = safeAll("SELECT * FROM social_links WHERE user_id = ? AND is_visible = 1 ORDER BY display_order LIMIT 20", user.id);
 
         const normalizedConfig = {

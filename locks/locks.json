@@ -1449,6 +1449,28 @@
         "subscription_downgraded",
         "subscription_data_removal_warning"
       ]
+    },
+    {
+      "id": "phase-portfolio-plan-aware",
+      "desc": "Public portfolio caps projects/services by owner plan via entitlementService (no hardcoded limits)",
+      "type": "fileContains",
+      "file": "backend/controllers/portfolioController.js",
+      "patterns": [
+        "entitlementService",
+        "ownerPlanProjects",
+        "ownerPlanServices"
+      ]
+    },
+    {
+      "id": "phase-portfolio-preserves-data",
+      "desc": "Downgraded users keep all data — public portfolio only shows what the current plan allows",
+      "type": "fileContains",
+      "file": "backend/controllers/portfolioController.js",
+      "patterns": [
+        "LIMIT ?",
+        "projectCap",
+        "serviceCap"
+      ]
     }
   ]
 }
