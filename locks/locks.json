@@ -1403,6 +1403,52 @@
       "patterns": [
         "ORDER BY created_at DESC, id DESC"
       ]
+    },
+    {
+      "id": "phase-management-hooks",
+      "desc": "Management System hooks — getDowngradedUsers, getUserDowngradeHistory, restoreUserPlan, permanentlyDeleteUser (with safety token)",
+      "type": "fileContains",
+      "file": "backend/services/managementHooks.js",
+      "patterns": [
+        "getDowngradedUsers",
+        "getUserDowngradeHistory",
+        "restoreUserPlan",
+        "permanentlyDeleteUser",
+        "DELETE_USER_"
+      ]
+    },
+    {
+      "id": "phase-no-auto-data-deletion",
+      "desc": "Crevio never auto-deletes user data. Only Management System can delete (via permanentlyDeleteUser).",
+      "type": "fileContains",
+      "file": "backend/services/planNotificationTemplates.js",
+      "patterns": [
+        "Your data is safe.",
+        "preserved indefinitely"
+      ]
+    },
+    {
+      "id": "phase-all-15-lifecycle-events",
+      "desc": "All 15 plan notification events are wired and render with dynamic planName",
+      "type": "fileContains",
+      "file": "backend/services/planNotificationTemplates.js",
+      "patterns": [
+        "payment_successful",
+        "plan_activated",
+        "plan_upgraded",
+        "plan_renewed",
+        "payment_failed",
+        "subscription_cancelled",
+        "refund_completed",
+        "trial_started",
+        "trial_ending_soon",
+        "free_plan_reminder",
+        "plan_active",
+        "subscription_expiring",
+        "subscription_expired",
+        "subscription_downgraded",
+        "subscription_data_removal_warning"
+      ]
     }
   ]
 }

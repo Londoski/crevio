@@ -271,22 +271,26 @@ case "subscription_downgraded":
                 { text: "Contact Support", url: "mailto:security@crevio.indevs.in" }
             );
 
+        // Day +30 retention nudge — Crevio NEVER deletes data automatically.
+        // Premium features remain locked via the entitlement system
+        // until the user upgrades. Data is preserved indefinitely.
+        // Only the Crevio Management System can permanently remove data.
         case "subscription_data_removal_warning": {
-            const daysUntilRemoval = data.daysUntilRemoval || 7;
             return withCtas({
-                type: "alert",
-                title: "Your Data Will Be Removed in " + daysUntilRemoval + " Days",
+                type: "system",
+                title: "Your " + planName + " Features Are Still Locked",
                 message:
                     "It has been 30 days since your **Crevio " + planName + "** account was moved to the Free plan.\n\n" +
-                    "Unless you upgrade within **" + daysUntilRemoval + " days**, your " + planName + "-tier data (extra projects, custom domain, and other plan-specific content) will be permanently removed.\n\n" +
-                    "Upgrade now to keep everything."
+                    "**Your data is safe.** Extra projects, custom domain settings, advanced analytics, and every " + planName + "-tier feature are preserved and waiting.\n\n" +
+                    "**Current plan:** Free\n\n" +
+                    "Nothing has been lost. Upgrade whenever you are ready to restore full access."
             },
                 { text: "Upgrade Now", url: plansUrl },
-                { text: "Contact Support", url: "mailto:security@crevio.indevs.in" }
+                { text: "View Plans", url: manageUrl }
             );
         }
 
-                default:
+        default:
             return withCtas({
                 type: "system",
                 title: "Crevio update",
