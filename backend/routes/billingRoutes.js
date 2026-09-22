@@ -23,4 +23,10 @@ router.get("/usage",             auth, billingController.getUsage);
 router.get("/payments",          auth, billingController.getPayments);
 router.get("/payments/:id/invoice", auth, billingController.getInvoice);
 
+// =========================================================
+// PAYSTACK INTEGRATION
+// =========================================================
+router.post("/checkout",              auth, billingController.checkout);
+router.get("/verify/:reference",      auth, billingController.verifyCheckout);
+router.post("/portal",                auth, billingController.portal);
 module.exports = router;

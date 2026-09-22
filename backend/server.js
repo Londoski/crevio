@@ -16,7 +16,19 @@ const PORT = process.env.PORT || 3000;
 
 // 2. Core middleware
 app.use(cors());
+// =========================================================
+// Paystack webhook — MUST receive the raw body for HMAC
+// signature verification. Mounted BEFORE express.json()
+// because express.json() would consume the raw buffer.
+// =========================================================
+app.post(
+    "/api/billing/webhook",
+    express.raw({ type: "application/json" }),
+    require("./controllers/billingController").paystackWebhook
+);
+
 app.use(express.json({ limit: "10mb" }));
+
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 // 2b. Ensure upload folders exist

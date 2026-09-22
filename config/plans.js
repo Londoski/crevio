@@ -1,19 +1,30 @@
 // =========================================================
 // CREVIO — PLAN DEFINITIONS
 // File: config/plans.js
-// Single source of truth for plans, capabilities, limits.
-// Extend by adding a new key + rules. Never hardcode in
-// controllers or frontend — always call entitlementService.
+// Single source of truth for plans, pricing, capabilities.
 // =========================================================
+// Prices are stored in the smallest currency unit:
+//   NGN uses kobo (1 Naira = 100 kobo)
+//   ₦5,000    = 500000 kobo
+//   ₦50,000   = 5000000 kobo
+// =========================================================
+
+const CURRENCY = "NGN";
+const CURRENCY_SYMBOL = "\u20A6"; // ₦
 
 const PLANS = {
     free: {
         id: "free",
         name: "Free",
-        tagline: "Start building your professional presence.",
-        price: 0,
+        tagline: "Get started.",
+        priceMonthly: 0,
+        priceAnnual: 0,
+        price: 0,                    // backward compat
         priceLabel: "Free forever",
+        priceLabelMonthly: "Free",
+        priceLabelAnnual: "Free",
         interval: null,
+        currency: CURRENCY,
         upgradeTo: "pro",
 
         capabilities: {
@@ -22,17 +33,13 @@ const PLANS = {
             "portfolio.remove_branding": false,
             "portfolio.advanced_customization": false,
             "portfolio.advanced_templates": false,
-
             "analytics.basic": true,
             "analytics.advanced": false,
-
             "bot.basic": true,
             "bot.advanced": false,
-
             "ai.basic": true,
             "ai.advanced": false,
             "ai.full": false,
-
             "messages.basic": true,
             "messages.advanced": false,
             "messages.unlimited_length": false,
@@ -42,11 +49,9 @@ const PLANS = {
             "messages.reactions.basic": true,
             "messages.reactions.premium_packs": false,
             "messages.reactions.full_library": false,
-
             "security.standard": true,
             "security.advanced": false,
             "security.full": false,
-
             "opportunities.discover": false,
             "opportunities.outreach": false,
             "calls.client": false
@@ -83,10 +88,15 @@ const PLANS = {
     pro: {
         id: "pro",
         name: "Pro",
-        tagline: "Take your professional workspace further.",
-        price: 19,
-        priceLabel: "$19/month",
+        tagline: "Build professionally.",
+        priceMonthly: 500000,        // ₦5,000
+        priceAnnual: 5000000,        // ₦50,000
+        price: 500000,               // backward compat (monthly)
+        priceLabel: "\u20A65,000/month",
+        priceLabelMonthly: "\u20A65,000/month",
+        priceLabelAnnual: "\u20A650,000/year",
         interval: "month",
+        currency: CURRENCY,
         upgradeTo: "business",
 
         capabilities: {
@@ -95,17 +105,13 @@ const PLANS = {
             "portfolio.remove_branding": true,
             "portfolio.advanced_customization": true,
             "portfolio.advanced_templates": true,
-
             "analytics.basic": true,
             "analytics.advanced": true,
-
             "bot.basic": true,
             "bot.advanced": true,
-
             "ai.basic": true,
             "ai.advanced": true,
             "ai.full": false,
-
             "messages.basic": true,
             "messages.advanced": true,
             "messages.unlimited_length": false,
@@ -115,11 +121,9 @@ const PLANS = {
             "messages.reactions.basic": true,
             "messages.reactions.premium_packs": true,
             "messages.reactions.full_library": false,
-
             "security.standard": true,
             "security.advanced": true,
             "security.full": false,
-
             "opportunities.discover": false,
             "opportunities.outreach": false,
             "calls.client": false
@@ -158,10 +162,15 @@ const PLANS = {
     business: {
         id: "business",
         name: "Business",
-        tagline: "Unlock the full power of Crevio.",
-        price: 49,
-        priceLabel: "$49/month",
+        tagline: "Full professional control.",
+        priceMonthly: 2000000,       // ₦20,000
+        priceAnnual: 20000000,       // ₦200,000
+        price: 2000000,              // backward compat (monthly)
+        priceLabel: "\u20A620,000/month",
+        priceLabelMonthly: "\u20A620,000/month",
+        priceLabelAnnual: "\u20A6200,000/year",
         interval: "month",
+        currency: CURRENCY,
         upgradeTo: null,
 
         capabilities: {
@@ -170,17 +179,13 @@ const PLANS = {
             "portfolio.remove_branding": true,
             "portfolio.advanced_customization": true,
             "portfolio.advanced_templates": true,
-
             "analytics.basic": true,
             "analytics.advanced": true,
-
             "bot.basic": true,
             "bot.advanced": true,
-
             "ai.basic": true,
             "ai.advanced": true,
             "ai.full": true,
-
             "messages.basic": true,
             "messages.advanced": true,
             "messages.unlimited_length": true,
@@ -190,11 +195,9 @@ const PLANS = {
             "messages.reactions.basic": true,
             "messages.reactions.premium_packs": true,
             "messages.reactions.full_library": true,
-
             "security.standard": true,
             "security.advanced": true,
             "security.full": true,
-
             "opportunities.discover": true,
             "opportunities.outreach": true,
             "calls.client": true
@@ -231,13 +234,22 @@ const PLANS = {
     }
 };
 
-// Sentinel for unlimited values
 const UNLIMITED = -1;
 
-// Technical safety caps (server-side, not a subscription restriction)
 const TECHNICAL_CAPS = {
     message_length: 10000
 };
+
+// ---------- format helpers ----------
+// Formats a kobo amount as a display string.
+// 500000 → "₦5,000.00"
+function formatKobo(amountKobo, currency) {
+    const cur = (currency || CURRENCY).toUpperCase();
+    const symbol = cur === "NGN" ? CURRENCY_SYMBOL : (cur === "USD" ? "$" : cur + " ");
+    const major = (Number(amountKobo) || 0) / 100;
+    const withSeparators = major.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    return symbol + withSeparators;
+}
 
 function get(planId) {
     return PLANS[planId] || PLANS.free;
@@ -247,4 +259,13 @@ function listAll() {
     return ["free", "pro", "business"].map(function (id) { return PLANS[id]; });
 }
 
-module.exports = { PLANS, UNLIMITED, TECHNICAL_CAPS, get, listAll };
+module.exports = {
+    PLANS: PLANS,
+    UNLIMITED: UNLIMITED,
+    TECHNICAL_CAPS: TECHNICAL_CAPS,
+    CURRENCY: CURRENCY,
+    CURRENCY_SYMBOL: CURRENCY_SYMBOL,
+    formatKobo: formatKobo,
+    get: get,
+    listAll: listAll
+};

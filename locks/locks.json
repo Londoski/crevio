@@ -1503,6 +1503,72 @@
         "flagUserDormant",
         "unflagUserDormant"
       ]
+    },
+    {
+      "id": "phase-paystack-config",
+      "desc": "Paystack config — 4 plan codes (Pro/Business × monthly/annual)",
+      "type": "fileContains",
+      "file": "config/paystack.js",
+      "patterns": [
+        "getPlanCode",
+        "PAYSTACK_PLAN_PRO_MONTHLY",
+        "PAYSTACK_PLAN_BUSINESS_ANNUAL"
+      ]
+    },
+    {
+      "id": "phase-paystack-service",
+      "desc": "Paystack service — initialize transaction + verify + webhook signature",
+      "type": "fileContains",
+      "file": "backend/services/paystackService.js",
+      "patterns": [
+        "initializeTransaction",
+        "verifyTransaction",
+        "verifyWebhookSignature"
+      ]
+    },
+    {
+      "id": "phase-paystack-webhook-handler",
+      "desc": "Paystack webhook handler — routes charge.success, subscription.*, invoice.* to planNotificationService",
+      "type": "fileContains",
+      "file": "backend/services/paystackWebhookHandler.js",
+      "patterns": [
+        "charge.success",
+        "subscription.disable",
+        "invoice.payment_failed",
+        "onPaymentSucceeded"
+      ]
+    },
+    {
+      "id": "phase-paystack-webhook-before-json",
+      "desc": "Webhook route mounted with express.raw BEFORE express.json (raw body for signature)",
+      "type": "fileContains",
+      "file": "backend/server.js",
+      "patterns": [
+        "/api/billing/webhook",
+        "express.raw"
+      ]
+    },
+    {
+      "id": "phase-paystack-checkout-endpoint",
+      "desc": "Checkout endpoint creates Paystack transaction with plan + cycle metadata",
+      "type": "fileContains",
+      "file": "backend/controllers/billingController.js",
+      "patterns": [
+        "exports.checkout",
+        "authorizationUrl",
+        "PAYSTACK"
+      ]
+    },
+    {
+      "id": "phase-paystack-billing-interval-column",
+      "desc": "subscriptions.billing_interval tracks monthly vs annual",
+      "type": "fileContains",
+      "file": "backend/services/paystackWebhookHandler.js",
+      "patterns": [
+        "billing_interval",
+        "paystack_subscription_code",
+        "paystack_email_token"
+      ]
     }
   ]
 }
