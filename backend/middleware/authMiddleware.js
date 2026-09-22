@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const userActivityService = require("../services/userActivityService");
 
 module.exports = (req, res, next) => {
     const authHeader = req.headers.authorization;
@@ -25,6 +26,7 @@ module.exports = (req, res, next) => {
         ,
             token: token
         };
+        try { userActivityService.trackActivity(req.user && req.user.id); } catch (e) {}
         next();
     } catch (err) {
         console.error('JWT verification error:', err.message);

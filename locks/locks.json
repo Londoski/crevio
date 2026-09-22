@@ -1471,6 +1471,38 @@
         "projectCap",
         "serviceCap"
       ]
+    },
+    {
+      "id": "phase-user-activity-tracking",
+      "desc": "User activity tracked with 1-hour throttle — every authed request updates last_activity_at",
+      "type": "fileContains",
+      "file": "backend/services/userActivityService.js",
+      "patterns": [
+        "trackActivity",
+        "THROTTLE_MS",
+        "last_activity_at"
+      ]
+    },
+    {
+      "id": "phase-user-activity-mw-wired",
+      "desc": "authMiddleware calls trackActivity after req.user is set",
+      "type": "fileContains",
+      "file": "backend/middleware/authMiddleware.js",
+      "patterns": [
+        "userActivityService",
+        "trackActivity"
+      ]
+    },
+    {
+      "id": "phase-dormant-flag-hooks",
+      "desc": "MS hooks to query inactive users + flag/unflag dormant (Crevio NEVER auto-locks)",
+      "type": "fileContains",
+      "file": "backend/services/userActivityService.js",
+      "patterns": [
+        "getInactiveUsers",
+        "flagUserDormant",
+        "unflagUserDormant"
+      ]
     }
   ]
 }
