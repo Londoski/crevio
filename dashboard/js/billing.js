@@ -350,7 +350,7 @@ document.addEventListener("DOMContentLoaded", function () {
         if (cancelling) {
             const endsOn = currentPlanData.currentPeriodEnd
                 ? new Date(currentPlanData.currentPeriodEnd.replace(' ', 'T') + 'Z').toLocaleDateString()
-                : 'your next billing date';
+                : 'your next renewal date';
             const badge = document.createElement('span');
             badge.className = 'cancel-badge';
             badge.textContent = 'Cancels ' + endsOn;

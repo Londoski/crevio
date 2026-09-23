@@ -95,7 +95,7 @@ function renderPlanChanged(opts) {
     const rows = [
         ["Previous plan", fromCfg.name],
         ["New plan", toCfg.name],
-        ["Billing", toCfg.priceLabel || "Free"],
+        ["Price", toCfg.priceLabel || "Free"],
         ["Effective", "Immediately"]
     ];
 
@@ -138,7 +138,7 @@ function renderPlanChanged(opts) {
         "PLAN",
         "  Previous:  " + fromCfg.name,
         "  New:       " + toCfg.name,
-        "  Billing:   " + (toCfg.priceLabel || "Free"),
+        "  Price:     " + (toCfg.priceLabel || "Free"),
         "  Effective: Immediately",
         "",
         "Manage your subscription: " + manageUrl,
@@ -313,7 +313,7 @@ function renderRefundProcessed(opts) {
         preheader: "Your refund of " + formatAmount(amount, currency) + " has been processed",
         title: "Refund processed",
         bodyHtml: bodyHtml,
-        ctaText: "View Billing",
+        ctaText: "View Subscription",
         ctaUrl: manageUrl,
         footerNote: defaultFooter(C, layout.brandTagline)
     });

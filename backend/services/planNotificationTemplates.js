@@ -56,7 +56,7 @@ function build(eventType, data) {
                     "**Plan:** " + planName + "\n" +
                     "**Amount:** " + amountText + "\n" +
                     "**Status:** Paid\n\n" +
-                    "Thanks for choosing Crevio " + planName + ". You can manage your subscription anytime from your Billing page."
+                    "Thanks for choosing Crevio " + planName + ". You can manage your subscription anytime from your Subscription page."
             },
                 { text: "Manage Subscription", url: manageUrl }
             );
@@ -123,7 +123,7 @@ function build(eventType, data) {
                 primary = { text: "Reactivate " + planName, url: manageUrl };
                 secondary = { text: "Contact Support", url: supportUrl };
             } else if (state === "cancelled") {
-                stateLine = "Your " + planName + " subscription has ended. You can resubscribe anytime from your Billing page.";
+                stateLine = "Your " + planName + " subscription has ended. You can resubscribe anytime from your Subscription page.";
                 primary = { text: "Resubscribe", url: manageUrl };
             } else {
                 stateLine = "Please update your payment method to keep your " + planName + " subscription active.";
@@ -166,7 +166,7 @@ function build(eventType, data) {
                     "The amount will appear back on your original payment method within **5-10 business days**, depending on your bank.\n\n" +
                     "If you don't see it after 10 business days, contact your bank or reach out to our support team."
             },
-                { text: "View Billing History", url: manageUrl }
+                { text: "Manage Subscription", url: manageUrl }
             );
 
         case "trial_started":

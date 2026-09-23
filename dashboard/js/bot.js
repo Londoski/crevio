@@ -885,7 +885,7 @@ document.addEventListener("DOMContentLoaded", function () {
             msg = "You are currently trialing " + (d.trial_plan || "a higher plan") + ". It ends " + formatRel(d.trial_ends_at) + ".";
         } else if (d.reason === "already_used") {
             $("offerSubtitle").textContent = "You've already used your free trial.";
-            msg = "Each account can claim one free trial. To upgrade, visit Billing.";
+            msg = "Each account can claim one free trial. To upgrade, visit Subscription.";
         } else {
             $("offerSubtitle").textContent = "No offer is available right now.";
             msg = "Check back later or explore the plans page.";

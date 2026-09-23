@@ -653,7 +653,7 @@ exports.cancelSubscription = async (req, res) => {
             success: true,
             cancelAtPeriodEnd: true,
             accessEnds: sub.current_period_end,
-            message: "Subscription will end on " + (sub.current_period_end || "your next billing date") + ". You'll keep access until then."
+            message: "Subscription will end on " + (sub.current_period_end || "your next renewal date") + ". You'll keep access until then."
         });
     } catch (e) {
         console.error("[billing:cancel] crashed:", e.message);

@@ -54,7 +54,7 @@ function render(opts) {
     const rows = [
         ["Plan", planName],
         ["Amount paid", formatAmount(amount, currency)],
-        ["Billing period", interval.charAt(0).toUpperCase() + interval.slice(1) + "ly"],
+        ["Renewal", interval.charAt(0).toUpperCase() + interval.slice(1) + "ly"],
         ["Payment date", date],
         ["Transaction ID", transactionId]
     ];
@@ -131,7 +131,7 @@ function render(opts) {
         "PAYMENT",
         "  Plan:            " + planName,
         "  Amount paid:     " + formatAmount(amount, currency),
-        "  Billing period:  " + interval.charAt(0).toUpperCase() + interval.slice(1) + "ly",
+        "  Renewal:         " + interval.charAt(0).toUpperCase() + interval.slice(1) + "ly",
         "  Payment date:    " + date,
         "  Transaction ID:  " + transactionId,
         "  Status:          PAID",

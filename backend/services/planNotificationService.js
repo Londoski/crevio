@@ -420,7 +420,7 @@ async function onRefundProcessed(opts) {
             message: "Your refund of **" + String(currency).toUpperCase() + " " + amt + "** has been processed."
         ,
             ctaUrl: require("./planNotificationTemplates").build("refund_completed", {}).ctaUrl,
-            ctaText: "View Billing History"
+            ctaText: "Manage Subscription"
         });
         if (!userEmail) return;
         const rendered = billingEmails.renderRefundProcessed({
