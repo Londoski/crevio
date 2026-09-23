@@ -1569,6 +1569,59 @@
         "paystack_subscription_code",
         "paystack_email_token"
       ]
+    },
+    {
+      "id": "phase-billing-page-v2",
+      "desc": "Billing page v2 — real plan prices, cycle toggle, upgrade cards, manage subscription",
+      "type": "fileContains",
+      "file": "dashboard/pages/billing.html",
+      "patterns": [
+        "planCards",
+        "cycle-toggle",
+        "manageSubBtn"
+      ]
+    },
+    {
+      "id": "phase-billing-js-entitlements",
+      "desc": "billing.js reads from /api/billing/entitlements + usage, formats in Naira",
+      "type": "fileContains",
+      "file": "dashboard/js/billing.js",
+      "patterns": [
+        "loadEntitlements",
+        "formatKobo",
+        "startCheckout"
+      ]
+    },
+    {
+      "id": "phase-billing-usage-real",
+      "desc": "getUsage reads real counts from projects/services/skills/media tables",
+      "type": "fileContains",
+      "file": "backend/controllers/billingController.js",
+      "patterns": [
+        "projects_used",
+        "services_used",
+        "creator_skills"
+      ]
+    },
+    {
+      "id": "phase-billing-plan-prices",
+      "desc": "getAllPlansPublic returns priceMonthly + priceAnnual",
+      "type": "fileContains",
+      "file": "backend/services/entitlementService.js",
+      "patterns": [
+        "priceMonthly: p.priceMonthly",
+        "priceAnnual: p.priceAnnual"
+      ]
+    },
+    {
+      "id": "phase-billing-portal-fallback",
+      "desc": "Portal fetches subscription live from Paystack if not cached",
+      "type": "fileContains",
+      "file": "backend/controllers/billingController.js",
+      "patterns": [
+        "api.paystack.co/subscription?customer",
+        "manage-subscription"
+      ]
     }
   ]
 }

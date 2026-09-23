@@ -110,8 +110,13 @@ function getAllPlansPublic() {
             name: p.name,
             tagline: p.tagline,
             price: p.price,
+            priceMonthly: p.priceMonthly,
+            priceAnnual: p.priceAnnual,
             priceLabel: p.priceLabel,
+            priceLabelMonthly: p.priceLabelMonthly,
+            priceLabelAnnual: p.priceLabelAnnual,
             interval: p.interval,
+            currency: p.currency,
             features: p.features
         };
     });

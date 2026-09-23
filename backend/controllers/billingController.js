@@ -13,60 +13,98 @@ function safeCount(sql, ...params) {
 // GET /api/billing/plan
 exports.getPlan = (req, res) => {
     try {
-        let plan = null;
-        try {
-            plan = db.prepare(
-                "SELECT * FROM subscriptions WHERE user_id = ? ORDER BY created_at DESC LIMIT 1"
-            ).get(req.user.id);
-        } catch (e) { /* ignore */ }
+        const entitlementService = require("../services/entitlementService");
+        const snapshot = entitlementService.getEntitlements(req.user.id);
+        const PLANS = require("../../config/plans");
 
-        if (!plan) {
-            return res.json({
-                success: true,
-                plan: {
-                    name: "Free Plan",
-                    description: "Basic features to get you started",
-                    price: 0,
-                    interval: "mo",
-                    status: "Active"
-                }
-            });
-        }
+        // Provider info if on a paid plan
+        let provider = null, interval = "monthly", periodEnd = null, renewsOn = null;
+        try {
+            const sub = db.prepare(
+                "SELECT provider, billing_interval, current_period_end FROM subscriptions WHERE user_id = ? ORDER BY id DESC LIMIT 1"
+            ).get(req.user.id);
+            if (sub) {
+                provider = sub.provider || null;
+                interval = sub.billing_interval || "monthly";
+                periodEnd = sub.current_period_end || null;
+                renewsOn = periodEnd;
+            }
+        } catch (e) { /* silent */ }
 
         res.json({
             success: true,
             plan: {
-                name:        plan.plan_name || plan.name || (plan.plan ? (plan.plan.charAt(0).toUpperCase() + plan.plan.slice(1) + " Plan") : "Free Plan"),
-                description: plan.description || "Your current plan",
-                price:       plan.price || 0,
-                interval:    plan.interval || "mo",
-                status:      plan.status || "active"
-            }
+                id: snapshot.plan.id,
+                name: snapshot.plan.name,
+                status: "Active",
+                description: snapshot.plan.tagline || "",
+                price: snapshot.plan.price,             // legacy compat (kobo)
+                priceMonthly: PLANS.get(snapshot.plan.id).priceMonthly,
+                priceAnnual:  PLANS.get(snapshot.plan.id).priceAnnual,
+                priceLabel:   snapshot.plan.priceLabel,
+                interval:     interval,
+                provider:     provider,
+                currentPeriodEnd: periodEnd
+            },
+            entitlements: snapshot,
+            plans: entitlementService.getAllPlansPublic()
         });
-    } catch (err) {
-        res.status(500).json({ success: false, message: "Failed", error: err.message });
+    } catch (e) {
+        console.error("[billing] getPlan failed:", e.message);
+        res.status(500).json({ success: false, message: "Could not load plan" });
     }
 };
 
 // GET /api/billing/usage
 exports.getUsage = (req, res) => {
     try {
+        const entitlementService = require("../services/entitlementService");
         const userId = req.user.id;
+
+        // Safe count helper — returns 0 if the table/column doesn't exist
+        const safeCount = function (sql, ...params) {
+            try { return db.prepare(sql).get(...params).c || 0; }
+            catch (e) { return 0; }
+        };
+
+        // Real counts from actual tables
+        const projectsUsed = safeCount("SELECT COUNT(*) AS c FROM projects WHERE user_id = ?", userId);
+        const servicesUsed = safeCount("SELECT COUNT(*) AS c FROM services WHERE user_id = ?", userId);
+        const skillsUsed   = safeCount("SELECT COUNT(*) AS c FROM creator_skills WHERE user_id = ?", userId)
+                          || safeCount("SELECT COUNT(*) AS c FROM skills WHERE user_id = ?", userId);
+        const mediaUsed    = safeCount("SELECT COUNT(*) AS c FROM project_media WHERE project_id IN (SELECT id FROM projects WHERE user_id = ?)", userId);
+
+        // Message count: messages linked to conversations the creator owns
+        const messagesUsed = safeCount(
+            "SELECT COUNT(*) AS c FROM messages WHERE conversation_id IN (SELECT id FROM conversations WHERE creator_id = ?)",
+            userId
+        );
+
+        // Limits from entitlement service — no hardcoding
+        const limitFor = function (key) {
+            const v = entitlementService.limitFor(userId, key);
+            return entitlementService.isUnlimited(v) ? -1 : v;
+        };
+
         res.json({
             success: true,
             usage: {
-                projects_used: safeCount("SELECT COUNT(*) AS c FROM projects WHERE user_id = ?", userId),
-                projects_limit: 10,
-                media_used:    safeCount("SELECT COUNT(*) AS c FROM project_media WHERE user_id = ?", userId),
-                media_limit:   50,
-                services_used: safeCount("SELECT COUNT(*) AS c FROM services WHERE user_id = ?", userId),
-                services_limit: 5,
-                messages_used: safeCount("SELECT COUNT(*) AS c FROM creator_skills WHERE user_id = ?", userId),
-                messages_limit: 100
+                projects_used:     projectsUsed,
+                projects_limit:    limitFor("projects"),
+                services_used:     servicesUsed,
+                services_limit:    limitFor("services"),
+                skills_used:       skillsUsed,
+                skills_limit:      limitFor("skills"),
+                media_used:        mediaUsed,
+                media_limit:       limitFor("media"),
+                messages_used:     messagesUsed,
+                messages_limit:    limitFor("messages.max_daily"),
+                plan:              entitlementService.getUserPlan(userId)
             }
         });
-    } catch (err) {
-        res.status(500).json({ success: false, message: "Failed", error: err.message });
+    } catch (e) {
+        console.error("[billing] getUsage failed:", e.message);
+        res.status(500).json({ success: false, message: "Could not load usage" });
     }
 };
 
@@ -451,21 +489,66 @@ exports.verifyCheckout = async (req, res) => {
 
 // POST /api/billing/portal
 // Returns a Paystack manage-subscription link (email token generated by Paystack).
+// POST /api/billing/portal
+// Fetches the user's active Paystack subscription on-demand,
+// then builds the manage-subscription URL.
 exports.portal = async (req, res) => {
     try {
+        const user = db.prepare("SELECT id, email FROM users WHERE id = ?").get(req.user.id);
+        if (!user || !user.email) {
+            return res.status(400).json({ success: false, message: "User has no email" });
+        }
+
+        // 1. Check the stored row first — fast path
         const sub = db.prepare(
             "SELECT paystack_subscription_code, paystack_email_token FROM subscriptions " +
             "WHERE user_id = ? AND provider = 'paystack' ORDER BY id DESC LIMIT 1"
         ).get(req.user.id);
 
-        if (!sub || !sub.paystack_subscription_code || !sub.paystack_email_token) {
-            return res.status(400).json({ success: false, message: "No active Paystack subscription" });
+        let subCode = sub && sub.paystack_subscription_code;
+        let emailToken = sub && sub.paystack_email_token;
+
+        // 2. If missing, fetch from Paystack live
+        if (!subCode || !emailToken) {
+            try {
+                const sk = process.env.PAYSTACK_SECRET_KEY;
+                const resp = await fetch(
+                    "https://api.paystack.co/subscription?customer=" + encodeURIComponent(user.email),
+                    { headers: { "Authorization": "Bearer " + sk } }
+                );
+                const data = await resp.json();
+
+                if (data.status && Array.isArray(data.data) && data.data.length) {
+                    // Pick the most recent active one
+                    const active = data.data.find(function (s) { return s.status === "active"; }) || data.data[0];
+                    subCode = active.subscription_code || subCode;
+                    emailToken = active.email_token || emailToken;
+
+                    // Persist for next time
+                    if (subCode) {
+                        try {
+                            db.prepare(
+                                "UPDATE subscriptions SET paystack_subscription_code = ?, paystack_email_token = ?, " +
+                                "provider_subscription_id = ? WHERE user_id = ?"
+                            ).run(subCode, emailToken || null, subCode, req.user.id);
+                        } catch (e) { /* silent */ }
+                    }
+                }
+            } catch (e) {
+                console.warn("[billing:portal] Paystack lookup failed:", e.message);
+            }
         }
 
-        // Paystack exposes a hosted "manage subscription" page at:
+        if (!subCode) {
+            return res.status(400).json({
+                success: false,
+                message: "No active Paystack subscription found. If you just upgraded, wait a moment and try again."
+            });
+        }
+
         const manageUrl = "https://paystack.com/manage-subscription?subscription=" +
-            encodeURIComponent(sub.paystack_subscription_code) +
-            "&token=" + encodeURIComponent(sub.paystack_email_token);
+            encodeURIComponent(subCode) +
+            (emailToken ? "&token=" + encodeURIComponent(emailToken) : "");
 
         res.json({ success: true, manageUrl: manageUrl });
     } catch (e) {

@@ -1,14 +1,15 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Billing  Crevio</title>
+    <title>Billing - Crevio</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="/dashboard/js/auth.js?v=639252892257462073"></script>
+    <link rel="stylesheet" href="/dashboard/css/mobile.css">
+    <script src="/dashboard/js/auth.js"></script>
 
     <style>
         * { margin:0; padding:0; box-sizing:border-box; }
@@ -18,7 +19,7 @@
         [data-theme="dark"] { --bg-primary:#0F172A; --bg-secondary:#1E293B; --bg-card:#1E293B; --bg-input:#0F172A; --border-color:#334155; --text-primary:#F1F5F9; --text-secondary:#94A3B8; --text-muted:#64748B; --accent:#2563EB; --accent-hover:#1D4ED8; --accent-dim:rgba(37,99,235,0.15); --danger:#EF4444; --success:#22C55E; --warning:#F59E0B; }
         [data-theme="light"] { --bg-primary:#F1F5F9; --bg-secondary:#FFFFFF; --bg-card:#FFFFFF; --bg-input:#F8FAFC; --border-color:#E2E8F0; --text-primary:#0F172A; --text-secondary:#475569; --text-muted:#94A3B8; --accent:#2563EB; --accent-hover:#1D4ED8; --accent-dim:rgba(37,99,235,0.1); --danger:#EF4444; --success:#22C55E; --warning:#F59E0B; }
 
-        .sidebar { width:240px; background:var(--bg-secondary); border-right:1px solid var(--border-color); display:flex; flex-direction:column; padding:24px 16px; height:100vh; position:sticky; top:0; flex-shrink:0; overflow-y:auto; }
+        .sidebar { width:240px; background:var(--bg-secondary); border-right:1px solid var(--border-color); display:flex; flex-direction:column; padding:24px 14px; height:100vh; flex-shrink:0; overflow-y:auto; position:sticky; top:0; }
         .sidebar-brand { padding-bottom:20px; border-bottom:1px solid var(--border-color); margin-bottom:20px; }
         .sidebar-brand h1 { font-size:20px; font-weight:700; }
         .sidebar-brand span { font-size:11px; font-weight:500; text-transform:uppercase; color:var(--text-muted); }
@@ -31,8 +32,9 @@
         .sidebar-footer { padding-top:16px; border-top:1px solid var(--border-color); }
         .logout-button { background:transparent; border:none; color:var(--danger); font-size:13px; font-weight:500; padding:10px 12px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:12px; width:100%; font-family:inherit; }
         .logout-button:hover { background:rgba(239,68,68,0.1); }
+        .logout-button .icon { width:18px; height:18px; }
 
-        .main { flex:1; padding:28px 36px; background:var(--bg-primary); min-height:100vh; max-width:1000px; }
+        .main { flex:1; padding:28px 36px; background:var(--bg-primary); min-height:100vh; max-width:1100px; }
         .header { margin-bottom:28px; }
         .header h1 { font-size:24px; font-weight:700; }
         .header p { font-size:14px; color:var(--text-secondary); margin-top:2px; }
@@ -41,9 +43,8 @@
         .card h2 { font-size:16px; font-weight:600; margin-bottom:6px; }
         .card p.desc { font-size:13px; color:var(--text-secondary); margin-bottom:20px; }
 
-        /* Current plan banner */
         .plan-banner {
-            background:linear-gradient(135deg, rgba(37,99,235,0.15), rgba(139,92,246,0.1));
+            background:linear-gradient(135deg, rgba(37,99,235,0.12), rgba(139,92,246,0.08));
             border:1px solid var(--accent);
             border-radius:14px;
             padding:24px;
@@ -57,53 +58,75 @@
         .plan-info h2 { font-size:22px; font-weight:700; margin-bottom:6px; display:flex; align-items:center; gap:10px; }
         .plan-info p { font-size:14px; color:var(--text-secondary); }
         .plan-badge { background:var(--accent); color:#fff; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; padding:4px 10px; border-radius:999px; }
-        .plan-price { font-size:32px; font-weight:700; color:var(--accent); }
-        .plan-price small { font-size:14px; color:var(--text-muted); font-weight:500; }
+        .plan-price { font-size:32px; font-weight:700; color:var(--accent); line-height:1.1; text-align:right; }
+        .plan-price small { font-size:14px; font-weight:500; color:var(--text-secondary); }
+        .plan-banner-actions { display:flex; flex-direction:column; align-items:flex-end; gap:8px; }
 
-        /* Usage */
+        .btn-primary { background:var(--accent); color:#fff; border:none; padding:10px 18px; border-radius:9px; font-family:inherit; font-size:13px; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:6px; transition:background 0.15s; }
+        .btn-primary:hover:not(:disabled) { background:var(--accent-hover); }
+        .btn-primary:disabled { opacity:0.5; cursor:not-allowed; }
+        .btn-secondary { background:transparent; color:var(--text-primary); border:1px solid var(--border-color); padding:10px 18px; border-radius:9px; font-family:inherit; font-size:13px; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:6px; transition:all 0.15s; }
+        .btn-secondary:hover:not(:disabled) { border-color:var(--accent); color:var(--accent); }
+        .btn-secondary:disabled, .btn-disabled { opacity:0.5; cursor:not-allowed; }
+        .btn-disabled { background:transparent; color:var(--text-muted); border:1px solid var(--border-color); padding:10px 18px; border-radius:9px; font-family:inherit; font-size:13px; font-weight:600; }
+
+        .plans-header { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:14px; margin-bottom:22px; }
+        .plans-header h2 { font-size:18px; font-weight:700; }
+        .plans-header p { font-size:13px; color:var(--text-secondary); margin-top:2px; }
+        .cycle-toggle { display:inline-flex; background:var(--bg-input); border:1px solid var(--border-color); border-radius:999px; padding:4px; gap:2px; }
+        .cycle-toggle button { background:transparent; border:none; padding:8px 18px; border-radius:999px; font-family:inherit; font-size:13px; font-weight:600; color:var(--text-secondary); cursor:pointer; display:flex; align-items:center; gap:6px; transition:all 0.15s; }
+        .cycle-toggle button.active { background:var(--accent); color:#fff; }
+        .cycle-toggle .save-badge { background:rgba(34,197,94,0.15); color:#22C55E; font-size:10px; font-weight:700; padding:2px 8px; border-radius:999px; }
+        .cycle-toggle button.active .save-badge { background:rgba(255,255,255,0.25); color:#fff; }
+
+        .plan-cards-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:16px; }
+        .plan-card { position:relative; background:var(--bg-card); border:1px solid var(--border-color); border-radius:14px; padding:24px 22px; display:flex; flex-direction:column; gap:16px; transition:border-color 0.15s, transform 0.15s; }
+        .plan-card:hover { transform:translateY(-2px); }
+        .plan-card.featured { border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-dim); }
+        .plan-card.current { border-color:var(--success); background:rgba(34,197,94,0.04); }
+        .plan-ribbon { position:absolute; top:-10px; left:20px; background:var(--accent); color:#fff; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; padding:4px 12px; border-radius:999px; }
+        .plan-card-head h3 { font-size:18px; font-weight:700; }
+        .plan-card-tagline { font-size:13px; color:var(--text-secondary); margin-top:4px; }
+        .plan-card-price { display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; }
+        .plan-card-amount { font-size:26px; font-weight:700; }
+        .plan-card-save { background:rgba(34,197,94,0.15); color:#22C55E; font-size:11px; font-weight:700; padding:3px 8px; border-radius:6px; }
+        .plan-card-features { list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:8px; flex:1; }
+        .plan-card-features li { font-size:13px; color:var(--text-secondary); padding-left:22px; position:relative; line-height:1.5; }
+        .plan-card-features li::before { content:""; position:absolute; left:0; top:6px; width:14px; height:14px; background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2322C55E' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><polyline points='20 6 9 17 4 12'/></svg>"); background-size:contain; background-repeat:no-repeat; }
+        .plan-card button { width:100%; justify-content:center; }
+
         .usage-item { margin-bottom:16px; }
-        .usage-item:last-child { margin-bottom:0; }
-        .usage-head { display:flex; justify-content:space-between; font-size:13px; margin-bottom:6px; }
-        .usage-head span:first-child { color:var(--text-secondary); font-weight:500; }
-        .usage-head span:last-child { color:var(--text-muted); }
-        .usage-bar { height:6px; background:var(--bg-input); border-radius:999px; overflow:hidden; }
-        .usage-bar .fill { height:100%; background:var(--accent); border-radius:999px; transition:width 0.4s; }
+        .usage-head { display:flex; justify-content:space-between; font-size:13px; margin-bottom:6px; color:var(--text-secondary); }
+        .usage-bar { height:8px; background:var(--bg-input); border-radius:999px; overflow:hidden; }
+        .usage-bar .fill { height:100%; background:var(--accent); border-radius:999px; transition:width 0.3s; }
         .usage-bar .fill.warn { background:var(--warning); }
         .usage-bar .fill.danger { background:var(--danger); }
 
-        /* Table */
-        .table-wrap { overflow-x:auto; }
-        table { width:100%; border-collapse:collapse; font-size:13px; }
-        th { text-align:left; padding:12px 10px; color:var(--text-muted); font-weight:600; text-transform:uppercase; font-size:11px; letter-spacing:0.05em; border-bottom:1px solid var(--border-color); }
-        td { padding:14px 10px; border-bottom:1px solid var(--border-color); color:var(--text-secondary); }
-        tr:last-child td { border-bottom:none; }
-        td.amount { font-weight:600; color:var(--text-primary); }
-        td.status-ok { color:var(--success); font-weight:600; }
-        td.status-fail { color:var(--danger); font-weight:600; }
+        .empty-state, .loading { text-align:center; padding:32px 20px; color:var(--text-muted); font-size:13px; }
+        .empty-state .icon { width:40px; height:40px; margin-bottom:10px; opacity:0.5; }
 
-        /* Buttons */
-        .btn-primary { padding:10px 22px; border-radius:8px; border:none; background:var(--accent); color:#fff; font-size:14px; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:6px; transition:all 0.15s; font-family:inherit; }
-        .btn-primary:hover { background:var(--accent-hover); transform:translateY(-1px); }
-        .btn-secondary { padding:10px 22px; border-radius:8px; border:1px solid var(--border-color); background:transparent; color:var(--text-secondary); font-size:14px; font-weight:500; cursor:pointer; transition:all 0.15s; font-family:inherit; display:inline-flex; align-items:center; gap:6px; }
-        .btn-secondary:hover { background:var(--bg-input); color:var(--text-primary); }
-        .btn-danger { padding:8px 16px; border-radius:8px; border:1px solid rgba(239,68,68,0.4); background:transparent; color:var(--danger); font-size:13px; cursor:pointer; transition:all 0.15s; font-family:inherit; }
-        .btn-danger:hover { background:rgba(239,68,68,0.1); }
-        .btn-sm { padding:6px 12px; font-size:12px; }
+        .table-wrap { overflow-x:auto; margin:0 -4px; }
+        .table-wrap table { width:100%; border-collapse:collapse; font-size:13px; }
+        .table-wrap th { text-align:left; padding:10px 12px; color:var(--text-muted); font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:0.05em; border-bottom:1px solid var(--border-color); }
+        .table-wrap td { padding:12px; border-bottom:1px solid var(--border-color); color:var(--text-secondary); }
+        .table-wrap tr:last-child td { border-bottom:none; }
+        .status-ok { color:var(--success); font-weight:600; }
+        .status-fail { color:var(--danger); font-weight:600; }
+        .amount { color:var(--text-primary); font-weight:600; }
 
-        /* Empty state */
-        .empty-state { text-align:center; padding:40px 20px; color:var(--text-muted); font-size:13px; }
-        .empty-state .icon { width:36px; height:36px; opacity:0.4; margin-bottom:10px; }
-        .loading { text-align:center; padding:30px; color:var(--text-muted); font-size:13px; }
-
-        .toast { position:fixed; bottom:24px; right:24px; background:var(--bg-card); border:1px solid var(--border-color); border-left:4px solid var(--success); padding:14px 20px; border-radius:10px; font-size:14px; font-weight:500; box-shadow:0 8px 32px rgba(0,0,0,0.3); transform:translateY(120%); transition:transform 0.3s; z-index:1000; }
-        .toast.show { transform:translateY(0); }
+        .toast { position:fixed; bottom:24px; right:24px; background:var(--bg-card); border:1px solid var(--border-color); border-left:4px solid var(--success); padding:14px 20px; border-radius:10px; font-size:14px; font-weight:500; box-shadow:0 8px 32px rgba(0,0,0,0.3); transform:translateY(calc(100% + 40px)); opacity:0; visibility:hidden; transition:transform 0.3s, opacity 0.3s, visibility 0.3s; z-index:1000; max-width:340px; pointer-events:none; }
+        .toast.show { transform:translateY(0); opacity:1; visibility:visible; pointer-events:auto; }
         .toast.error { border-left-color:var(--danger); }
 
-        @media (max-width:768px) { .sidebar{display:none;} .main { padding: 0 20px 16px; } }
+        @media (max-width:900px) {
+            .main { padding:22px 18px; }
+            .plan-banner { flex-direction:column; align-items:stretch; }
+            .plan-banner-actions { align-items:stretch; }
+            .plan-price { text-align:left; }
+            .plans-header { flex-direction:column; align-items:flex-start; }
+            .sidebar { display:none; }
+        }
     </style>
-    <link rel="stylesheet" href="/dashboard/css/shared.css">
-    <link rel="stylesheet" href="/dashboard/css/mobile.css?v=639253624517313970">
-    <link rel="stylesheet" href="/dashboard/css/loader.css?v=639253269318409198">
 </head>
 <body>
 
@@ -142,56 +165,51 @@
             <p>Manage your plan, payment methods, and invoices</p>
         </div>
 
-        <!-- Current Plan -->
-        <div class="plan-banner" id="planBanner">
+        <div class="plan-banner">
             <div class="plan-info">
                 <h2>
-                    <span id="planName">Free Plan</span>
+                    <span id="planName">Loading...</span>
                     <span class="plan-badge" id="planStatus">Active</span>
                 </h2>
-                <p id="planDesc">Basic features to get you started</p>
+                <p id="planDesc"></p>
             </div>
-            <div style="text-align:right;">
-                <div class="plan-price" id="planPrice">$0<small>/mo</small></div>
-                <button class="btn-primary" id="upgradeBtn" style="margin-top:8px;">
-                    <i data-lucide="sparkles" class="icon" style="width:16px;height:16px;"></i>
-                    Upgrade Plan
+            <div class="plan-banner-actions">
+                <div class="plan-price" id="planPrice"></div>
+                <button class="btn-secondary" id="manageSubBtn" type="button">
+                    <i data-lucide="external-link" class="icon" style="width:14px;height:14px;"></i>
+                    Manage Subscription
                 </button>
             </div>
         </div>
 
-        <!-- Usage -->
+        <div class="card">
+            <div class="plans-header">
+                <div>
+                    <h2>Choose Your Plan</h2>
+                    <p>Switch or upgrade anytime - changes take effect immediately.</p>
+                </div>
+                <div class="cycle-toggle">
+                    <button data-cycle="monthly" class="active" type="button">Monthly</button>
+                    <button data-cycle="annual" type="button">Annual <span class="save-badge">Save 17%</span></button>
+                </div>
+            </div>
+
+            <div id="planCards" class="plan-cards-grid">
+                <div class="loading">Loading plans...</div>
+            </div>
+        </div>
+
         <div class="card">
             <h2>Usage This Month</h2>
             <p class="desc">Your current plan limits</p>
-
             <div id="usageContainer">
                 <div class="loading">Loading usage...</div>
             </div>
         </div>
 
-        <!-- Payment Methods -->
-        <div class="card">
-            <h2>Payment Methods</h2>
-            <p class="desc">Cards on file for subscription billing</p>
-
-            <div id="paymentMethodsContainer">
-                <div class="empty-state">
-                    <i data-lucide="credit-card" class="icon"></i>
-                    <p>No payment methods on file.</p>
-                    <button class="btn-secondary" id="addCardBtn" style="margin-top:12px;">
-                        <i data-lucide="plus" class="icon" style="width:14px;height:14px;"></i>
-                        Add Payment Method
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Payment History -->
         <div class="card">
             <h2>Payment History</h2>
             <p class="desc">Recent invoices and charges</p>
-
             <div id="paymentsContainer">
                 <div class="loading">Loading payment history...</div>
             </div>
@@ -200,7 +218,7 @@
 
     <div class="toast" id="toast"></div>
 
-    <script src="/dashboard/js/billing.js"></script>
+    <script src="/dashboard/js/billing.js?v=1790194746753"></script>
     <script>
         document.getElementById('logoutButton')?.addEventListener('click', () => {
             localStorage.removeItem('token');
@@ -209,9 +227,9 @@
         });
         if (typeof lucide !== 'undefined') lucide.createIcons();
     </script>
-    <script src="/dashboard/js/mobile-menu.js?v=639254548787733422"></script>
-    <script src="/dashboard/js/loader.js?v=639253269318409198"></script>
-    <script src="/dashboard/js/button-feedback.js?v=639253633627588411"></script>
+    <script src="/dashboard/js/mobile-menu.js"></script>
+    <script src="/dashboard/js/loader.js"></script>
+    <script src="/dashboard/js/button-feedback.js"></script>
     <script src="/dashboard/js/sidebar-badges.js"></script>
 </body>
 </html>
