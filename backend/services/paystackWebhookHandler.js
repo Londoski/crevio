@@ -34,6 +34,70 @@ function getUserById(userId) {
     catch (e) { return null; }
 }
 
+// ---------- idempotency + payment recording ----------
+function ensureWebhookEvents() {
+    try {
+        db.prepare(
+            "CREATE TABLE IF NOT EXISTS webhook_events (" +
+            "  id INTEGER PRIMARY KEY AUTOINCREMENT," +
+            "  event_type TEXT NOT NULL," +
+            "  event_key TEXT NOT NULL," +
+            "  received_at DATETIME DEFAULT CURRENT_TIMESTAMP," +
+            "  processed_at DATETIME," +
+            "  UNIQUE(event_type, event_key)" +
+            ")"
+        ).run();
+    } catch (e) {}
+}
+
+function eventKey(event) {
+    const d = event.data || {};
+    return String(d.id || d.reference || d.subscription_code || d.invoice_code || (JSON.stringify(d).substring(0, 100)));
+}
+
+function claimEvent(eventType, key) {
+    ensureWebhookEvents();
+    try {
+        const r = db.prepare("INSERT OR IGNORE INTO webhook_events (event_type, event_key) VALUES (?, ?)").run(eventType, key);
+        return r.changes > 0;
+    } catch (e) {
+        log("error", "claimEvent failed: " + e.message);
+        return true;
+    }
+}
+
+function markProcessed(eventType, key) {
+    try {
+        db.prepare("UPDATE webhook_events SET processed_at = CURRENT_TIMESTAMP WHERE event_type = ? AND event_key = ?").run(eventType, key);
+    } catch (e) {}
+}
+
+// Amounts in Paystack come as kobo (smallest unit). The payments schema
+// stores naira (DECIMAL(10,2)), so we divide by 100 here.
+function recordPayment(userId, opts) {
+    opts = opts || {};
+    try {
+        const kobo = Number(opts.amountKobo) || 0;
+        const naira = kobo / 100;
+        const sub = getSubscriptionByUserId(userId);
+        db.prepare(
+            "INSERT INTO payments (user_id, subscription_id, provider, provider_transaction_id, amount, currency, status, payment_date) " +
+            "VALUES (?, ?, 'paystack', ?, ?, ?, ?, CURRENT_TIMESTAMP)"
+        ).run(
+            userId,
+            sub ? sub.id : null,
+            opts.transactionId || null,
+            naira,
+            (opts.currency || "NGN").toUpperCase(),
+            opts.status || "succeeded"
+        );
+        return true;
+    } catch (e) {
+        log("error", "recordPayment failed: " + e.message);
+        return false;
+    }
+}
+
 function getSubscriptionByUserId(userId) {
     try { return db.prepare("SELECT * FROM subscriptions WHERE user_id = ? ORDER BY id DESC LIMIT 1").get(userId); }
     catch (e) { return null; }
@@ -125,6 +189,14 @@ async function handleChargeSuccess(event) {
         emailToken: data.email_token || null
     });
     if (!ok) return;
+
+    // Record the payment (naira in DB)
+    recordPayment(userId, {
+        amountKobo: amountKobo,
+        currency: currency,
+        transactionId: data.reference || data.id || null,
+        status: "succeeded"
+    });
 
     // Fire the notification + email (already built in Wave 1)
     try {
@@ -350,6 +422,12 @@ async function handle(req, res) {
 
     // 4. Process asynchronously
     setImmediate(async function () {
+        // Idempotency: skip duplicate events (Paystack retries on failure)
+        const _key = eventKey(event);
+        if (!claimEvent(eventType, _key)) {
+            log("info", "duplicate event ignored: " + eventType + " / " + _key);
+            return;
+        }
         try {
             switch (eventType) {
                 case "charge.success":            await handleChargeSuccess(event); break;

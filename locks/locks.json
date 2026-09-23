@@ -1693,6 +1693,56 @@
       "patterns": [
         "btn-accent-outline"
       ]
+    },
+    {
+      "id": "phase-p3-webhook-events-table",
+      "desc": "webhook_events table for idempotency",
+      "type": "fileContains",
+      "file": "backend/services/paystackWebhookHandler.js",
+      "patterns": [
+        "webhook_events",
+        "claimEvent",
+        "markProcessed"
+      ]
+    },
+    {
+      "id": "phase-p3-record-payment",
+      "desc": "Payment recorded in payments table on charge.success + renewal",
+      "type": "fileContains",
+      "file": "backend/services/paystackWebhookHandler.js",
+      "patterns": [
+        "recordPayment",
+        "INSERT INTO payments"
+      ]
+    },
+    {
+      "id": "phase-p3-idempotent-webhook",
+      "desc": "Duplicate webhook events ignored (retry-safe)",
+      "type": "fileContains",
+      "file": "backend/services/paystackWebhookHandler.js",
+      "patterns": [
+        "duplicate event ignored"
+      ]
+    },
+    {
+      "id": "phase-p3-naira-format",
+      "desc": "Payments displayed in naira (not kobo)",
+      "type": "fileContains",
+      "file": "dashboard/js/billing.js",
+      "patterns": [
+        "formatNaira",
+        "renderPaymentRow"
+      ]
+    },
+    {
+      "id": "phase-p3-callback-verify",
+      "desc": "Billing page verifies Paystack callback reference on load",
+      "type": "fileContains",
+      "file": "dashboard/js/billing.js",
+      "patterns": [
+        "handleCheckoutCallback",
+        "paystack=callback"
+      ]
     }
   ]
 }

@@ -16,6 +16,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // ---------- NAIRA FORMATTER ----------
     // kobo → "₦5,000" (no decimals for whole naira)
+    // Naira display for values already stored as naira (payments table)
+    function formatNaira(nairaAmount) {
+        const n = Number(nairaAmount) || 0;
+        return "\u20A6" + n.toLocaleString("en-NG", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+    }
+
     function formatKobo(kobo) {
         const n = Number(kobo) || 0;
         const naira = n / 100;
@@ -271,7 +277,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const date = p.created_at
             ? new Date(p.created_at.replace(" ", "T") + "Z").toLocaleDateString()
             : "\u2014";
-        const amountNaira = formatKobo(p.amount || 0);
+        const amountNaira = formatNaira(p.amount || 0);
         const status = (p.status || "succeeded").toLowerCase();
         const ok = status === "succeeded" || status === "paid" || status === "completed";
 
@@ -449,8 +455,38 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
+    // ---------- POST-CHECKOUT CALLBACK ----------
+    // When Paystack redirects back with ?paystack=callback&reference=...,
+    // verify the transaction server-side and reload with fresh plan data.
+    async function handleCheckoutCallback() {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('paystack') !== 'callback') return;
+        const reference = params.get('reference') || params.get('trxref');
+        if (!reference) return;
+
+        try {
+            const res = await window.apiFetch('/api/billing/verify/' + encodeURIComponent(reference));
+            const data = await res.json();
+            if (data.success && data.status === 'success') {
+                showToast('Payment confirmed — your plan is now active');
+            } else {
+                showToast(data.message || 'Could not confirm payment', true);
+            }
+        } catch (e) {
+            console.warn('Callback verify failed:', e);
+        }
+
+        // Strip query params and reload once, so the page reflects new state
+        setTimeout(function () {
+            const clean = window.location.origin + window.location.pathname;
+            window.history.replaceState({}, '', clean);
+            window.location.reload();
+        }, 1200);
+    }
+
     // ---------- INIT ----------
     (async function init() {
+        await handleCheckoutCallback();
         await loadEntitlements();
         renderCurrentPlan();
         renderPlanCards();
