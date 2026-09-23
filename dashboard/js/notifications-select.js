@@ -508,7 +508,11 @@
 
     async function onDeleteClick() {
         if (selectedIds.size === 0) return;
-        if (!confirm("Delete " + selectedIds.size + " notification(s)?")) return;
+        const _okBulk = await window.crevioConfirm(
+                    "Delete " + selectedIds.size + " notification(s)? This cannot be undone.",
+                    { title: "Delete notifications", confirmText: "Delete", danger: true }
+                );
+                if (!_okBulk) return;
 
         const ids = Array.from(selectedIds);
         try {
