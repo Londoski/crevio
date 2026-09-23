@@ -29,4 +29,11 @@ router.get("/payments/:id/invoice", auth, billingController.getInvoice);
 router.post("/checkout",              auth, billingController.checkout);
 router.get("/verify/:reference",      auth, billingController.verifyCheckout);
 router.post("/portal",                auth, billingController.portal);
+
+// =========================================================
+// Crevio-native subscription management
+// =========================================================
+router.post("/cancel",     auth, billingController.cancelSubscription);
+router.post("/reactivate", auth, billingController.reactivateSubscription);
+
 module.exports = router;

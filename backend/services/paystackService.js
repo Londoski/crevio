@@ -130,10 +130,38 @@ function verifyWebhookSignature(rawBody, signature) {
     }
 }
 
+
+// =========================================================
+// 6. List all subscriptions for a customer (by email)
+// =========================================================
+async function listSubscriptionsForCustomer(email) {
+    if (!email) return { success: false, reason: "email_required" };
+    const r = await request("GET", "/subscription?customer=" + encodeURIComponent(email));
+    if (!r.success) return r;
+    return { success: true, subscriptions: Array.isArray(r.data) ? r.data : [] };
+}
+
+// =========================================================
+// 7. Enable (reactivate) a disabled subscription
+// =========================================================
+async function enableSubscription(subscriptionCode, emailToken) {
+    if (!subscriptionCode || !emailToken) {
+        return { success: false, reason: "subscription_code_and_email_token_required" };
+    }
+    const r = await request("POST", "/subscription/enable", {
+        code: subscriptionCode,
+        token: emailToken
+    });
+    if (!r.success) return r;
+    return { success: true };
+}
+
 module.exports = {
     initializeTransaction: initializeTransaction,
     verifyTransaction: verifyTransaction,
     fetchSubscription: fetchSubscription,
     cancelSubscription: cancelSubscription,
-    verifyWebhookSignature: verifyWebhookSignature
+    verifyWebhookSignature: verifyWebhookSignature,
+    listSubscriptionsForCustomer: listSubscriptionsForCustomer,
+    enableSubscription: enableSubscription
 };

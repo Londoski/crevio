@@ -68,6 +68,24 @@ async function run() {
 
         for (const sub of subs) {
             const periodEnd = new Date(sub.current_period_end.replace(" ", "T") + "Z");
+
+            // Cancelled subscriptions: skip warning + grace, downgrade at period_end
+            if (sub.cancel_at_period_end === 1) {
+                if (diffDays <= 0 && !sub.downgraded_at) {
+                    try {
+                        db.prepare("UPDATE subscriptions SET plan = 'free', status = 'cancelled', cancel_at_period_end = 0, downgraded_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = ?").run(sub.id);
+                        try { db.prepare("UPDATE users SET plan = 'free' WHERE id = ?").run(sub.user_id); } catch (e) {}
+                        await planNotificationService.onSubscriptionDowngraded({
+                            userId: sub.user_id,
+                            userEmail: sub.email,
+                            planId: sub.plan
+                        });
+                        results.downgraded++;
+                        console.log("[lifecycle] cancelled sub → free for user " + sub.user_id);
+                    } catch (e) { console.error("[lifecycle] cancelled downgrade failed:", e.message); }
+                }
+                continue;
+            }
             const diffMs = periodEnd.getTime() - now.getTime();
             const diffDays = diffMs / (1000 * 60 * 60 * 24);
 

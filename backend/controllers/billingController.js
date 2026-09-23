@@ -21,7 +21,7 @@ exports.getPlan = (req, res) => {
         let provider = null, interval = "monthly", periodEnd = null, renewsOn = null;
         try {
             const sub = db.prepare(
-                "SELECT provider, billing_interval, current_period_end FROM subscriptions WHERE user_id = ? ORDER BY id DESC LIMIT 1"
+                "SELECT provider, billing_interval, current_period_end, cancel_at_period_end, canceled_at FROM subscriptions WHERE user_id = ? ORDER BY id DESC LIMIT 1"
             ).get(req.user.id);
             if (sub) {
                 provider = sub.provider || null;
@@ -44,7 +44,9 @@ exports.getPlan = (req, res) => {
                 priceLabel:   snapshot.plan.priceLabel,
                 interval:     interval,
                 provider:     provider,
-                currentPeriodEnd: periodEnd
+                currentPeriodEnd: periodEnd,
+                cancelAtPeriodEnd: !!(sub && sub.cancel_at_period_end),
+                canceledAt: sub ? sub.canceled_at : null
             },
             entitlements: snapshot,
             plans: entitlementService.getAllPlansPublic()
@@ -567,5 +569,138 @@ exports.paystackWebhook = (req, res) => {
     } catch (e) {
         console.error("[billing:webhook] crashed:", e.message);
         res.status(500).send("webhook error");
+    }
+};
+
+// =========================================================
+// CANCEL SUBSCRIPTION (Crevio-native, no Paystack redirect)
+// =========================================================
+async function resolveActiveSubscription(userId, email) {
+    const row = db.prepare(
+        "SELECT id, plan, paystack_subscription_code, paystack_email_token, " +
+        "       cancel_at_period_end, current_period_end " +
+        "FROM subscriptions WHERE user_id = ? AND provider = 'paystack' " +
+        "ORDER BY id DESC LIMIT 1"
+    ).get(userId);
+
+    if (row && row.paystack_subscription_code && row.paystack_email_token) {
+        return row;
+    }
+    if (!email) return row;
+
+    try {
+        const paystackService = require("../services/paystackService");
+        const r = await paystackService.listSubscriptionsForCustomer(email);
+        if (r.success && r.subscriptions.length) {
+            const active = r.subscriptions.find(function (x) { return x.status === "active"; }) || r.subscriptions[0];
+            try {
+                db.prepare(
+                    "UPDATE subscriptions SET paystack_subscription_code = ?, " +
+                    "paystack_email_token = ?, provider_subscription_id = ? " +
+                    "WHERE user_id = ?"
+                ).run(active.subscription_code, active.email_token, active.subscription_code, userId);
+            } catch (e) {}
+            return Object.assign({}, row, {
+                paystack_subscription_code: active.subscription_code,
+                paystack_email_token: active.email_token
+            });
+        }
+    } catch (e) { /* silent */ }
+
+    return row;
+}
+
+exports.cancelSubscription = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const user = db.prepare("SELECT email FROM users WHERE id = ?").get(userId);
+        const sub = await resolveActiveSubscription(userId, user ? user.email : null);
+
+        if (!sub || !sub.paystack_subscription_code || !sub.paystack_email_token) {
+            return res.status(400).json({ success: false, message: "No active subscription to cancel" });
+        }
+        if (sub.cancel_at_period_end === 1) {
+            return res.status(400).json({ success: false, message: "Subscription is already scheduled to cancel" });
+        }
+
+        const paystackService = require("../services/paystackService");
+        const disableResult = await paystackService.cancelSubscription(
+            sub.paystack_subscription_code,
+            sub.paystack_email_token
+        );
+
+        if (!disableResult.success) {
+            console.error("[billing:cancel] Paystack disable failed:", disableResult.reason);
+            return res.status(500).json({ success: false, message: "Could not cancel with Paystack: " + disableResult.reason });
+        }
+
+        db.prepare(
+            "UPDATE subscriptions SET cancel_at_period_end = 1, " +
+            "canceled_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?"
+        ).run(userId);
+
+        try {
+            const planNotificationService = require("../services/planNotificationService");
+            await planNotificationService.onSubscriptionCancelled({
+                userId: userId,
+                userEmail: user ? user.email : null,
+                planId: sub.plan,
+                accessEnds: sub.current_period_end
+            });
+        } catch (e) {}
+
+        res.json({
+            success: true,
+            cancelAtPeriodEnd: true,
+            accessEnds: sub.current_period_end,
+            message: "Subscription will end on " + (sub.current_period_end || "your next billing date") + ". You'll keep access until then."
+        });
+    } catch (e) {
+        console.error("[billing:cancel] crashed:", e.message);
+        res.status(500).json({ success: false, message: e.message });
+    }
+};
+
+exports.reactivateSubscription = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const user = db.prepare("SELECT email FROM users WHERE id = ?").get(userId);
+        const sub = await resolveActiveSubscription(userId, user ? user.email : null);
+
+        if (!sub) return res.status(400).json({ success: false, message: "No subscription found" });
+        if (sub.cancel_at_period_end !== 1) {
+            return res.status(400).json({ success: false, message: "Subscription is not scheduled to cancel" });
+        }
+
+        const paystackService = require("../services/paystackService");
+        const enableResult = await paystackService.enableSubscription(
+            sub.paystack_subscription_code,
+            sub.paystack_email_token
+        );
+
+        if (!enableResult.success) {
+            console.error("[billing:reactivate] Paystack enable failed:", enableResult.reason);
+            return res.status(500).json({ success: false, message: "Could not reactivate: " + enableResult.reason });
+        }
+
+        db.prepare(
+            "UPDATE subscriptions SET cancel_at_period_end = 0, " +
+            "canceled_at = NULL, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?"
+        ).run(userId);
+
+        try {
+            const notificationService = require("../services/notificationService");
+            notificationService.create({
+                userId: userId,
+                type: "system",
+                title: "Subscription reactivated",
+                message: "Your Crevio " + sub.plan + " subscription has been reactivated. Renewals continue as scheduled."
+            });
+        } catch (e) {}
+
+        res.json({ success: true, cancelAtPeriodEnd: false, message: "Subscription reactivated" });
+    } catch (e) {
+        console.error("[billing:reactivate] crashed:", e.message);
+        res.status(500).json({ success: false, message: e.message });
     }
 };

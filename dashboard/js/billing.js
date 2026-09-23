@@ -11,7 +11,8 @@ document.addEventListener("DOMContentLoaded", function () {
     const toast = document.getElementById("toast");
 
     let entitlements = null;      // from /api/billing/entitlements
-    let currentCycle = "monthly"; // "monthly" | "annual"
+    let currentCycle = "monthly";
+    let currentPlanData = null; // "monthly" | "annual"
 
     // ---------- NAIRA FORMATTER ----------
     // kobo → "₦5,000" (no decimals for whole naira)
@@ -41,6 +42,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // ---------- RENDER CURRENT PLAN BANNER ----------
     function renderCurrentPlan() {
+        currentPlanData = entitlements && entitlements.plan ? entitlements.plan : null;
         const nameEl = document.getElementById("planName");
         const statusEl = document.getElementById("planStatus");
         const descEl = document.getElementById("planDesc");
@@ -319,6 +321,118 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
+    
+    // ---------- CANCEL / REACTIVATE UI ----------
+    function renderSubscriptionActions() {
+        const banner = document.querySelector('.plan-banner-actions');
+        if (!banner || !currentPlanData) return;
+
+        // Remove any prior actions block
+        const old = banner.querySelector('.sub-actions');
+        if (old) old.remove();
+
+        const planId = currentPlanData.id;
+        const isPaid = planId && planId !== 'free';
+        const cancelling = !!currentPlanData.cancelAtPeriodEnd;
+
+        if (!isPaid) return;
+
+        const wrap = document.createElement('div');
+        wrap.className = 'sub-actions';
+        wrap.style.cssText = 'display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; margin-top:6px;';
+
+        if (cancelling) {
+            const endsOn = currentPlanData.currentPeriodEnd
+                ? new Date(currentPlanData.currentPeriodEnd.replace(' ', 'T') + 'Z').toLocaleDateString()
+                : 'your next billing date';
+            const badge = document.createElement('span');
+            badge.className = 'cancel-badge';
+            badge.textContent = 'Cancels ' + endsOn;
+            wrap.appendChild(badge);
+
+            const reactivateBtn = document.createElement('button');
+            reactivateBtn.className = 'btn-primary';
+            reactivateBtn.type = 'button';
+            reactivateBtn.textContent = 'Reactivate Subscription';
+            reactivateBtn.addEventListener('click', reactivateSubscription);
+            wrap.appendChild(reactivateBtn);
+        } else {
+            const cancelBtn = document.createElement('button');
+            cancelBtn.className = 'btn-secondary';
+            cancelBtn.type = 'button';
+            cancelBtn.style.color = 'var(--danger)';
+            cancelBtn.style.borderColor = 'var(--danger)';
+            cancelBtn.textContent = 'Cancel Subscription';
+            cancelBtn.addEventListener('click', openCancelModal);
+            wrap.appendChild(cancelBtn);
+        }
+
+        banner.appendChild(wrap);
+    }
+
+    function openCancelModal() {
+        const modal = document.getElementById('cancelModal');
+        if (!modal) return;
+        modal.classList.add('open');
+        modal.setAttribute('aria-hidden', 'false');
+    }
+
+    function closeCancelModal() {
+        const modal = document.getElementById('cancelModal');
+        if (!modal) return;
+        modal.classList.remove('open');
+        modal.setAttribute('aria-hidden', 'true');
+    }
+
+    async function confirmCancel() {
+        const btn = document.getElementById('cancelConfirmBtn');
+        if (btn) { btn.disabled = true; btn.textContent = 'Cancelling...'; }
+        try {
+            const res = await window.apiFetch('/api/billing/cancel', { method: 'POST' });
+            const data = await res.json();
+            if (data.success) {
+                closeCancelModal();
+                showToast('Subscription will end ' + (data.accessEnds || 'at period end'));
+                setTimeout(function () { location.reload(); }, 900);
+            } else {
+                showToast(data.message || 'Could not cancel', true);
+                if (btn) { btn.disabled = false; btn.textContent = 'Yes, Cancel'; }
+            }
+        } catch (e) {
+            showToast('Cancel failed', true);
+            if (btn) { btn.disabled = false; btn.textContent = 'Yes, Cancel'; }
+        }
+    }
+
+    async function reactivateSubscription() {
+        if (!confirm('Reactivate your subscription? Renewals will continue as scheduled.')) return;
+        try {
+            const res = await window.apiFetch('/api/billing/reactivate', { method: 'POST' });
+            const data = await res.json();
+            if (data.success) {
+                showToast('Subscription reactivated');
+                setTimeout(function () { location.reload(); }, 900);
+            } else {
+                showToast(data.message || 'Could not reactivate', true);
+            }
+        } catch (e) {
+            showToast('Reactivate failed', true);
+        }
+    }
+
+    function wireCancelUI() {
+        const keepBtn = document.getElementById('cancelKeepBtn');
+        const confirmBtn = document.getElementById('cancelConfirmBtn');
+        const overlay = document.getElementById('cancelModal');
+        if (keepBtn) keepBtn.addEventListener('click', closeCancelModal);
+        if (confirmBtn) confirmBtn.addEventListener('click', confirmCancel);
+        if (overlay) {
+            overlay.addEventListener('click', function (e) {
+                if (e.target === overlay) closeCancelModal();
+            });
+        }
+    }
+
     // ---------- HELPERS ----------
     let toastTimer;
     function showToast(msg, isError) {
@@ -342,6 +456,8 @@ document.addEventListener("DOMContentLoaded", function () {
         renderPlanCards();
         wireCycleToggle();
         wireManageButton();
+        wireCancelUI();
+        renderSubscriptionActions();
         loadUsage();
         loadPayments();
         if (typeof lucide !== "undefined") lucide.createIcons();
