@@ -411,7 +411,8 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     async function reactivateSubscription() {
-        if (!confirm('Reactivate your subscription? Renewals will continue as scheduled.')) return;
+        const _okRe = await window.crevioConfirm('Reactivate your subscription? Renewals will continue as scheduled.', { title: 'Reactivate subscription', confirmText: 'Reactivate' });
+        if (!_okRe) return;
         try {
             const res = await window.apiFetch('/api/billing/reactivate', { method: 'POST' });
             const data = await res.json();

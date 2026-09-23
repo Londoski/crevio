@@ -463,7 +463,8 @@
             }
         } else if (act === "delete") {
             if (!id) return;
-            if (!confirm("Delete this notification?")) return;
+            const _okSingle = await window.crevioConfirm("Delete this notification? This cannot be undone.", { title: "Delete notification", confirmText: "Delete", danger: true });
+            if (!_okSingle) return;
             try {
                 const res = await fetch("/api/notifications/" + id, {
                     method: "DELETE",
