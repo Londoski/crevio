@@ -127,6 +127,8 @@
             .sidebar { display:none; }
         }
 
+        .btn-accent-outline { border-color:var(--accent) !important; color:var(--accent) !important; } /* manageBtnAccent */
+        .btn-accent-outline:hover:not(:disabled) { background:var(--accent-dim); }
         .btn-danger { background:var(--danger); color:#fff; border:none; padding:10px 18px; border-radius:9px; font-family:inherit; font-size:13px; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:6px; transition:background 0.15s; }
         .btn-danger:hover:not(:disabled) { background:#DC2626; }
         .cancel-overlay { position:fixed; inset:0; background:rgba(15,23,42,0.55); backdrop-filter:blur(3px); display:flex; align-items:center; justify-content:center; padding:20px; z-index:5000; opacity:0; visibility:hidden; transition:opacity 0.15s, visibility 0.15s; }
@@ -157,7 +159,7 @@
             <a href="/dashboard/pages/messages.html" class="nav-item"><i data-lucide="mail" class="icon"></i> Messages</a>
             <a href="/dashboard/pages/notifications.html" class="nav-item"><i data-lucide="bell" class="icon"></i> Notifications</a>
             <div class="nav-divider"></div>
-            <a href="/dashboard/pages/billing.html" class="nav-item active"><i data-lucide="credit-card" class="icon"></i> Billing</a>
+            <a href="/dashboard/pages/billing.html?v=1790196652727" class="nav-item active"><i data-lucide="credit-card" class="icon"></i> Billing</a>
             <a href="/dashboard/pages/security.html" class="nav-item"><i data-lucide="shield" class="icon"></i> Security</a>
             <a href="/dashboard/pages/settings.html" class="nav-item"><i data-lucide="settings" class="icon"></i> Settings</a>
             <a href="/dashboard/pages/profile.html" class="nav-item"><i data-lucide="user" class="icon"></i> Profile</a>
@@ -185,7 +187,7 @@
             </div>
             <div class="plan-banner-actions">
                 <div class="plan-price" id="planPrice"></div>
-                <button class="btn-secondary" id="manageSubBtn" type="button">
+                <button class="btn-secondary btn-accent-outline" id="manageSubBtn" type="button">
                     <i data-lucide="external-link" class="icon" style="width:14px;height:14px;"></i>
                     Manage Subscription
                 </button>

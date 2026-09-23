@@ -193,13 +193,27 @@ async function handleSubscriptionDisable(event) {
 
     const user = getUserById(userId);
     const sub = getSubscriptionByUserId(userId);
-    const planId = sub ? sub.plan : "pro";
-    const planCfg = PLANS.get(planId);
+    if (!sub) { log("error", "subscription.disable — no sub for user " + userId); return; }
 
+    const planId = sub.plan || "pro";
+
+    // If user already cancelled via our /api/billing/cancel endpoint,
+    // the notification has already fired. Only sync the status flag.
+    if (sub.cancel_at_period_end === 1) {
+        log("info", "subscription.disable for user " + userId + " — already handled by cancel endpoint");
+        try {
+            db.prepare(
+                "UPDATE subscriptions SET status = 'cancelled', updated_at = CURRENT_TIMESTAMP WHERE user_id = ?"
+            ).run(userId);
+        } catch (e) {}
+        return;
+    }
+
+    // External disable (Paystack dashboard, admin action) — mark + notify
     try {
         db.prepare(
-            "UPDATE subscriptions SET status = 'cancelled', canceled_at = CURRENT_TIMESTAMP, " +
-            "updated_at = CURRENT_TIMESTAMP WHERE user_id = ?"
+            "UPDATE subscriptions SET cancel_at_period_end = 1, status = 'cancelled', " +
+            "canceled_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?"
         ).run(userId);
 
         if (user) {
@@ -207,9 +221,9 @@ async function handleSubscriptionDisable(event) {
                 userId: userId,
                 userEmail: user.email,
                 planId: planId,
-                accessEnds: sub && sub.current_period_end ? sub.current_period_end : null
+                accessEnds: sub.current_period_end || null
             });
-            log("info", "onSubscriptionCancelled fired for user " + userId);
+            log("info", "onSubscriptionCancelled (external) fired for user " + userId);
         }
     } catch (e) {
         log("error", "subscription.disable failed: " + e.message);

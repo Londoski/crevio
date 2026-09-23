@@ -1622,6 +1622,77 @@
         "api.paystack.co/subscription?customer",
         "manage-subscription"
       ]
+    },
+    {
+      "id": "phase-cancel-reactivate-endpoints",
+      "desc": "Crevio-native cancel + reactivate endpoints",
+      "type": "fileContains",
+      "file": "backend/controllers/billingController.js",
+      "patterns": [
+        "exports.cancelSubscription",
+        "exports.reactivateSubscription",
+        "resolveActiveSubscription"
+      ]
+    },
+    {
+      "id": "phase-cancel-reactivate-routes",
+      "desc": "POST /api/billing/cancel + /api/billing/reactivate",
+      "type": "fileContains",
+      "file": "backend/routes/billingRoutes.js",
+      "patterns": [
+        "/cancel",
+        "/reactivate"
+      ]
+    },
+    {
+      "id": "phase-cancel-modal",
+      "desc": "Cancel confirmation modal on billing page",
+      "type": "fileContains",
+      "file": "dashboard/pages/billing.html",
+      "patterns": [
+        "cancelModal",
+        "cancelKeepBtn",
+        "cancelConfirmBtn"
+      ]
+    },
+    {
+      "id": "phase-cancel-ui",
+      "desc": "Billing JS wires cancel modal + reactivate",
+      "type": "fileContains",
+      "file": "dashboard/js/billing.js",
+      "patterns": [
+        "renderSubscriptionActions",
+        "confirmCancel",
+        "reactivateSubscription"
+      ]
+    },
+    {
+      "id": "phase-lifecycle-handles-cancelled",
+      "desc": "Lifecycle cron downgrades cancelled subs at period end",
+      "type": "fileContains",
+      "file": "backend/services/subscriptionLifecycleCron.js",
+      "patterns": [
+        "cancel_at_period_end === 1",
+        "cancelled sub"
+      ]
+    },
+    {
+      "id": "phase-webhook-disable-idempotent",
+      "desc": "Webhook subscription.disable is idempotent with cancel endpoint",
+      "type": "fileContains",
+      "file": "backend/services/paystackWebhookHandler.js",
+      "patterns": [
+        "already handled by cancel endpoint"
+      ]
+    },
+    {
+      "id": "phase-manage-button-accent",
+      "desc": "Manage Subscription button has accent border like Cancel",
+      "type": "fileContains",
+      "file": "dashboard/pages/billing.html",
+      "patterns": [
+        "btn-accent-outline"
+      ]
     }
   ]
 }
