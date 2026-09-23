@@ -1743,6 +1743,44 @@
         "handleCheckoutCallback",
         "paystack=callback"
       ]
+    },
+    {
+      "id": "shared-sidebar-css",
+      "desc": "Canonical sidebar CSS file locks dimensions across all dashboard pages",
+      "type": "fileContains",
+      "file": "dashboard/css/sidebar.css",
+      "patterns": [
+        "padding: 24px 16px !important",
+        "padding: 10px 12px !important",
+        "width: 20px !important"
+      ]
+    },
+    {
+      "id": "every-dashboard-page-loads-sidebar-css",
+      "desc": "Every dashboard page loads sidebar.css",
+      "type": "fileContains",
+      "file": "dashboard/pages/messages.html",
+      "patterns": [
+        "/dashboard/css/sidebar.css"
+      ]
+    },
+    {
+      "id": "billing-loads-sidebar-css",
+      "desc": "Subscription page loads shared sidebar CSS",
+      "type": "fileContains",
+      "file": "dashboard/pages/billing.html",
+      "patterns": [
+        "/dashboard/css/sidebar.css"
+      ]
+    },
+    {
+      "id": "index-loads-sidebar-css",
+      "desc": "Overview page loads shared sidebar CSS",
+      "type": "fileContains",
+      "file": "dashboard/index.html",
+      "patterns": [
+        "/dashboard/css/sidebar.css"
+      ]
     }
   ]
 }
