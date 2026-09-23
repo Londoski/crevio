@@ -370,6 +370,13 @@ async function handleInvoicePaymentSucceeded(event) {
     } catch (e) {}
 
     try {
+        recordPayment(userId, {
+            amountKobo: Number(data.amount) || 0,
+            currency: data.currency || "NGN",
+            transactionId: data.reference || data.id || null,
+            status: "renewed"
+        });
+
         await planNotificationService.onSubscriptionRenewed({
             userId: userId,
             userEmail: user ? user.email : null,
@@ -443,6 +450,8 @@ async function handle(req, res) {
         } catch (e) {
             log("error", "handler crashed for " + eventType + ": " + e.message);
         }
+    
+        markProcessed(eventType, _key);
     });
 }
 
