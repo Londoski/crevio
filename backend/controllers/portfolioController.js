@@ -8,6 +8,7 @@
 // =========================================================
 
 const db = require("../../database/db");
+const engine = require("../templates/portfolio/_engine");
 const entitlementService = require("../services/entitlementService");
 const notificationService = require("../services/notificationService");
 
@@ -87,6 +88,7 @@ exports.getConfig = (req, res) => {
 // PUT /api/portfolio/config
 // =========================================================
 exports.saveConfig = (req, res) => {
+        try { engine.invalidate(); } catch (e) {}
     try {
         const b = req.body;
         const c = cols("portfolio_config");
@@ -178,6 +180,7 @@ exports.saveConfig = (req, res) => {
 // POST /api/portfolio/publish
 // =========================================================
 exports.publish = (req, res) => {
+        try { engine.invalidate(); } catch (e) {}
     try {
         const { publish } = req.body;
         const c = cols("portfolio_config");

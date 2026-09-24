@@ -101,9 +101,16 @@ app.get("/p/:slug/services/:serviceId", (req, res) => {
 });
 
 // Portfolio home
-app.get("/p/:slug", (req, res) => {
-    res.sendFile(path.join(__dirname, "..", "public", "portfolio.html"));
-});
+// Portfolio home - server-rendered via template engine.
+// Falls back to the legacy client-rendered portfolio.html
+// if the user has no template chosen or rendering fails.
+app.get(
+    "/p/:slug",
+    require("./controllers/portfolioRenderController").renderPublicPortfolio,
+    (req, res) => {
+        res.sendFile(path.join(__dirname, "..", "public", "portfolio.html"));
+    }
+);
 
 // Root
 app.get("/", (req, res) => {

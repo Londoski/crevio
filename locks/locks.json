@@ -1839,6 +1839,36 @@
         "buildTheme",
         "buildMeta"
       ]
+    },
+    {
+      "id": "phase-portfolio-ssr",
+      "desc": "Public portfolio is server-rendered via template engine (legacy fallback intact)",
+      "type": "fileContains",
+      "file": "backend/controllers/portfolioRenderController.js",
+      "patterns": [
+        "renderPublicPortfolio",
+        "engine.render",
+        "payloadBuilder.build"
+      ]
+    },
+    {
+      "id": "phase-portfolio-ssr-route",
+      "desc": "server.js /p/:slug uses template render with fallback to portfolio.html",
+      "type": "fileContains",
+      "file": "backend/server.js",
+      "patterns": [
+        "portfolioRenderController",
+        "/p/:slug"
+      ]
+    },
+    {
+      "id": "phase-portfolio-cache-invalidate",
+      "desc": "portfolioController invalidates template cache on save/publish",
+      "type": "fileContains",
+      "file": "backend/controllers/portfolioController.js",
+      "patterns": [
+        "engine.invalidate"
+      ]
     }
   ]
 }
