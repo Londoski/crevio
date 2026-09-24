@@ -1823,6 +1823,22 @@
         "\"slug\": \"minimal\"",
         "\"plan_gate\": \"free\""
       ]
+    },
+    {
+      "id": "phase-portfolio-payload",
+      "desc": "Portfolio payload builder — converts real DB rows to template shape (profile, projects, services, skills, social, theme, meta)",
+      "type": "fileContains",
+      "file": "backend/templates/portfolio/_payload.js",
+      "patterns": [
+        "function build",
+        "buildProfile",
+        "buildProjects",
+        "buildServices",
+        "buildSkills",
+        "buildSocial",
+        "buildTheme",
+        "buildMeta"
+      ]
     }
   ]
 }
