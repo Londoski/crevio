@@ -1781,6 +1781,15 @@
       "patterns": [
         "/dashboard/css/sidebar.css"
       ]
+    },
+    {
+      "id": "crevio-chat-label",
+      "desc": "Sidebar label reads 'Crevio Chat' (not Messages) across dashboard",
+      "type": "fileContains",
+      "file": "dashboard/pages/messages.html",
+      "patterns": [
+        "Crevio Chat"
+      ]
     }
   ]
 }
