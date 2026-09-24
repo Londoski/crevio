@@ -1,0 +1,158 @@
+/* =========================================================
+   CREVIO PORTFOLIO — TEMPLATE: MINIMAL
+   Scope: everything is under .crevio-portfolio
+   ========================================================= */
+
+.crevio-portfolio * { margin: 0; padding: 0; box-sizing: border-box; }
+
+.crevio-portfolio {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--fg);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+}
+
+.crevio-portfolio a { color: inherit; text-decoration: none; }
+.crevio-portfolio img { max-width: 100%; display: block; }
+
+/* ---------- Layout container ---------- */
+.crevio-portfolio > * {
+    max-width: 880px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 24px;
+    padding-right: 24px;
+}
+
+/* ---------- Hero ---------- */
+.pf-hero { padding-top: 80px; padding-bottom: 56px; text-align: left; }
+.pf-hero-avatar {
+    width: 96px; height: 96px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 24px;
+    border: 2px solid var(--border);
+}
+.pf-hero-name {
+    font-size: 44px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    margin-bottom: 12px;
+}
+.pf-hero-headline {
+    font-size: 18px;
+    color: var(--muted);
+    margin-bottom: 16px;
+    font-weight: 500;
+}
+.pf-hero-bio {
+    font-size: 16px;
+    color: var(--muted);
+    max-width: 640px;
+    margin-bottom: 28px;
+}
+.pf-hero-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+
+.pf-btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 12px 22px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.15s;
+    cursor: pointer;
+}
+.pf-btn-primary { background: var(--accent); color: #fff; }
+.pf-btn-primary:hover { filter: brightness(1.08); }
+.pf-btn-ghost { border: 1px solid var(--border); color: var(--fg); }
+.pf-btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ---------- Sections ---------- */
+.pf-section { padding-top: 56px; padding-bottom: 56px; border-top: 1px solid var(--border); }
+.pf-section-title {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    margin-bottom: 28px;
+}
+
+/* ---------- Grid of cards ---------- */
+.pf-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+}
+.pf-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: border-color 0.15s, transform 0.15s;
+}
+.pf-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+.pf-card-media { aspect-ratio: 16 / 10; overflow: hidden; background: var(--border); }
+.pf-card-media img { width: 100%; height: 100%; object-fit: cover; }
+.pf-card-body { padding: 18px 20px; }
+.pf-card-title { font-size: 17px; font-weight: 700; margin-bottom: 4px; line-height: 1.3; }
+.pf-card-tag {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--accent);
+    margin-bottom: 8px;
+}
+.pf-card-desc { font-size: 14px; color: var(--muted); line-height: 1.55; }
+
+/* ---------- Skills ---------- */
+.pf-skills {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.pf-skills li {
+    padding: 6px 14px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+}
+
+/* ---------- Social ---------- */
+.pf-social { list-style: none; display: flex; flex-wrap: wrap; gap: 16px; }
+.pf-social a {
+    font-size: 14px;
+    font-weight: 600;
+    padding-bottom: 2px;
+    border-bottom: 1px solid var(--accent);
+    color: var(--accent);
+}
+
+/* ---------- Footer ---------- */
+.pf-footer {
+    padding-top: 32px;
+    padding-bottom: 40px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--muted);
+    border-top: 1px solid var(--border);
+}
+.pf-footer a { color: var(--accent); }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 640px) {
+    .pf-hero { padding-top: 48px; padding-bottom: 40px; }
+    .pf-hero-name { font-size: 32px; }
+    .pf-hero-headline { font-size: 16px; }
+    .pf-hero-bio { font-size: 15px; }
+    .pf-section { padding-top: 40px; padding-bottom: 40px; }
+}

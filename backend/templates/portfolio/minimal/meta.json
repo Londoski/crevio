@@ -1,0 +1,17 @@
+{
+  "name": "Minimal",
+  "slug": "minimal",
+  "description": "Clean, editorial layout focused on your content.",
+  "category": "minimal",
+  "preview_image": "/dashboard/assets/templates/minimal.png",
+  "is_active": true,
+  "plan_gate": "free",
+  "accent_capable": true,
+  "font_capable": true,
+  "layout": "single-column",
+  "default_theme_settings": {
+    "accent": "#2563EB",
+    "mode": "light",
+    "font": "Inter"
+  }
+}

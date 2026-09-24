@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="{{ theme.mode }}">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ meta.title }}</title>
+<meta name="description" content="{{ meta.description }}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --accent: {{ theme.accent }};
+  --bg: {{ themeColors.bg }};
+  --fg: {{ themeColors.fg }};
+  --muted: {{ themeColors.muted }};
+  --border: {{ themeColors.border }};
+}
+{{ css }}
+</style>
+</head>
+<body class="crevio-portfolio" data-template="minimal">
+
+{{#hasProfile}}
+<header class="pf-hero">
+  {{#profile.image}}<img class="pf-hero-avatar" src="{{ profile.image }}" alt="{{ profile.name }}">{{/profile.image}}
+  <h1 class="pf-hero-name">{{ profile.name }}</h1>
+  {{#profile.headline}}<p class="pf-hero-headline">{{ profile.headline }}</p>{{/profile.headline}}
+  {{#profile.bio}}<p class="pf-hero-bio">{{ profile.bio }}</p>{{/profile.bio}}
+  <div class="pf-hero-actions">
+    {{#hasProjects}}<a class="pf-btn pf-btn-primary" href="#projects">View My Work</a>{{/hasProjects}}
+    {{#hasServices}}<a class="pf-btn pf-btn-ghost" href="#contact">Start a Conversation</a>{{/hasServices}}
+  </div>
+</header>
+{{/hasProfile}}
+
+{{#hasProjects}}
+<section class="pf-section" id="projects">
+  <h2 class="pf-section-title">Selected Work</h2>
+  <div class="pf-grid">
+    {{#projects}}
+    <article class="pf-card">
+      {{#thumbnail}}<div class="pf-card-media"><img src="{{ thumbnail }}" alt="{{ title }}"></div>{{/thumbnail}}
+      <div class="pf-card-body">
+        <h3 class="pf-card-title">{{ title }}</h3>
+        {{#category}}<span class="pf-card-tag">{{ category }}</span>{{/category}}
+        {{#description}}<p class="pf-card-desc">{{ description }}</p>{{/description}}
+      </div>
+    </article>
+    {{/projects}}
+  </div>
+</section>
+{{/hasProjects}}
+
+{{#hasServices}}
+<section class="pf-section" id="services">
+  <h2 class="pf-section-title">How I Can Help</h2>
+  <div class="pf-grid">
+    {{#services}}
+    <article class="pf-card">
+      <div class="pf-card-body">
+        <h3 class="pf-card-title">{{ name }}</h3>
+        {{#description}}<p class="pf-card-desc">{{ description }}</p>{{/description}}
+      </div>
+    </article>
+    {{/services}}
+  </div>
+</section>
+{{/hasServices}}
+
+{{#hasSkills}}
+<section class="pf-section">
+  <h2 class="pf-section-title">Expertise</h2>
+  <ul class="pf-skills">
+    {{#skills}}<li>{{ name }}</li>{{/skills}}
+  </ul>
+</section>
+{{/hasSkills}}
+
+{{#hasSocial}}
+<section class="pf-section" id="contact">
+  <h2 class="pf-section-title">Get In Touch</h2>
+  <ul class="pf-social">
+    {{#social}}<li><a href="{{ url }}" target="_blank" rel="noopener">{{ platform }}</a></li>{{/social}}
+  </ul>
+</section>
+{{/hasSocial}}
+
+<footer class="pf-footer">
+  <p>Built with <a href="https://crevio.indevs.in">Crevio</a></p>
+</footer>
+
+</body>
+</html>

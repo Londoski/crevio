@@ -1790,6 +1790,39 @@
       "patterns": [
         "Crevio Chat"
       ]
+    },
+    {
+      "id": "phase-portfolio-engine",
+      "desc": "Portfolio template engine — tokenizer-based, supports vars + nested blocks + conditionals",
+      "type": "fileContains",
+      "file": "backend/templates/portfolio/_engine.js",
+      "patterns": [
+        "function parse",
+        "function renderNodes",
+        "resolvePath",
+        "computeThemeColors"
+      ]
+    },
+    {
+      "id": "phase-portfolio-registry",
+      "desc": "Portfolio template registry — scans folders + syncs to templates table",
+      "type": "fileContains",
+      "file": "backend/templates/portfolio/_registry.js",
+      "patterns": [
+        "scanFolders",
+        "upsertTemplate",
+        "syncAll"
+      ]
+    },
+    {
+      "id": "phase-portfolio-minimal-template",
+      "desc": "First reference template (minimal) with meta + html + css",
+      "type": "fileContains",
+      "file": "backend/templates/portfolio/minimal/meta.json",
+      "patterns": [
+        "\"slug\": \"minimal\"",
+        "\"plan_gate\": \"free\""
+      ]
     }
   ]
 }
