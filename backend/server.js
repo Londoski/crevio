@@ -148,6 +148,13 @@ app.use((err, req, res, next) => {
 });
 
 // 9. START SERVER
+// Sync portfolio template registry into the templates table on boot.
+// Reads backend/templates/portfolio/*/meta.json and upserts each row.
+// Idempotent + fail-safe — a broken meta.json never crashes the server.
+try {
+    require("./templates/portfolio/_registry").syncAll();
+} catch (e) { console.error("[server] template registry sync failed:", e.message); }
+
 app.listen(PORT, "0.0.0.0", () => {
     console.log(`🚀 Server running on port ${PORT}`);
     console.log(`   Local:   http://localhost:${PORT}`);

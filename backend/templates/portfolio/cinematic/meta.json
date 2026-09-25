@@ -1,0 +1,17 @@
+{
+  "name": "Cinematic",
+  "slug": "cinematic",
+  "description": "Dark, immersive, full-width media. Ideal for videographers and filmmakers.",
+  "category": "Creative",
+  "preview_image": "/dashboard/assets/templates/cinematic.svg",
+  "is_active": true,
+  "plan_gate": "pro",
+  "accent_capable": true,
+  "font_capable": true,
+  "layout": "full-bleed-alternating",
+  "default_theme_settings": {
+    "accent": "#F59E0B",
+    "mode": "dark",
+    "font": "Inter"
+  }
+}

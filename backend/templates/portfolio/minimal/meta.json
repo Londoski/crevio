@@ -3,7 +3,7 @@
   "slug": "minimal",
   "description": "Clean, editorial layout focused on your content.",
   "category": "minimal",
-  "preview_image": "/dashboard/assets/templates/minimal.png",
+  "preview_image": "/dashboard/assets/templates/minimal.svg",
   "is_active": true,
   "plan_gate": "free",
   "accent_capable": true,

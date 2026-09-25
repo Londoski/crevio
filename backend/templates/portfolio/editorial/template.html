@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ meta.title }}</title>
+<meta name="description" content="{{ meta.description }}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@0,700;0,900;1,700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --accent: {{ theme.accent }};
+  --bg: #F8F5F0;
+  --fg: #1A1A1A;
+  --muted: #4A4A4A;
+  --border: #DDD5C7;
+  --surface: #FFFFFF;
+}
+</style>
+</head>
+<body class="crevio-editorial" data-template="editorial">
+
+{{#hasProfile}}
+<header class="ed-masthead">
+  <div class="ed-masthead-top">
+    <span class="ed-issue">Portfolio</span>
+    {{#profile.location}}<span class="ed-date">{{ profile.location }}</span>{{/profile.location}}
+  </div>
+  <h1 class="ed-name">{{ profile.name }}</h1>
+  {{#profile.headline}}<p class="ed-headline">{{ profile.headline }}</p>{{/profile.headline}}
+  <div class="ed-rule"></div>
+  {{#profile.bio}}<p class="ed-lede">{{ profile.bio }}</p>{{/profile.bio}}
+</header>
+{{/hasProfile}}
+
+{{#hasProjects}}
+<section class="ed-section" id="projects">
+  <h2 class="ed-section-title"><span>Selected Work</span></h2>
+  <div class="ed-grid">
+    {{#projects}}
+    <article class="ed-card">
+      {{#thumbnail}}<div class="ed-thumb"><img src="{{ thumbnail }}" alt="{{ title }}"></div>{{/thumbnail}}
+      <div class="ed-card-body">
+        {{#category}}<span class="ed-tag">{{ category }}</span>{{/category}}
+        <h3 class="ed-title">{{ title }}</h3>
+        {{#description}}<p class="ed-desc">{{ description }}</p>{{/description}}
+      </div>
+    </article>
+    {{/projects}}
+  </div>
+</section>
+{{/hasProjects}}
+
+{{#hasSkills}}
+<section class="ed-section">
+  <h2 class="ed-section-title"><span>Expertise</span></h2>
+  <ul class="ed-skills">
+    {{#skills}}<li>{{ name }}</li>{{/skills}}
+  </ul>
+</section>
+{{/hasSkills}}
+
+{{#hasSocial}}
+<section class="ed-section" id="contact">
+  <h2 class="ed-section-title"><span>Get In Touch</span></h2>
+  <ul class="ed-social">
+    {{#social}}<li><a href="{{ url }}" target="_blank" rel="noopener">{{ platform }}</a></li>{{/social}}
+  </ul>
+</section>
+{{/hasSocial}}
+
+<footer class="ed-footer">
+  <p>Built with <a href="https://crevio.indevs.in">Crevio</a></p>
+</footer>
+
+</body>
+</html>

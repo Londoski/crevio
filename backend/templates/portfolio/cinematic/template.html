@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ meta.title }}</title>
+<meta name="description" content="{{ meta.description }}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --accent: {{ theme.accent }};
+  --bg: #0F172A;
+  --surface: #1E293B;
+  --fg: #F1F5F9;
+  --muted: #94A3B8;
+  --border: #334155;
+}
+</style>
+</head>
+<body class="crevio-cinematic" data-template="cinematic">
+
+{{#hasProfile}}
+<header class="cm-hero">
+  <div class="cm-hero-inner">
+    {{#profile.image}}<img class="cm-avatar" src="{{ profile.image }}" alt="{{ profile.name }}">{{/profile.image}}
+    <h1 class="cm-name">{{ profile.name }}</h1>
+    {{#profile.headline}}<p class="cm-headline">{{ profile.headline }}</p>{{/profile.headline}}
+    {{#profile.bio}}<p class="cm-bio">{{ profile.bio }}</p>{{/profile.bio}}
+    {{#hasProjects}}<div class="cm-actions"><a class="cm-btn" href="#projects">View My Work</a></div>{{/hasProjects}}
+  </div>
+</header>
+{{/hasProfile}}
+
+{{#hasProjects}}
+<section class="cm-section" id="projects">
+  <h2 class="cm-section-title">Selected Work</h2>
+  <div class="cm-rows">
+    {{#projects}}
+    <article class="cm-row">
+      {{#thumbnail}}<div class="cm-thumb"><img src="{{ thumbnail }}" alt="{{ title }}"></div>{{/thumbnail}}
+      <div class="cm-row-body">
+        {{#category}}<span class="cm-tag">{{ category }}</span>{{/category}}
+        <h3 class="cm-title">{{ title }}</h3>
+        {{#description}}<p class="cm-desc">{{ description }}</p>{{/description}}
+      </div>
+    </article>
+    {{/projects}}
+  </div>
+</section>
+{{/hasProjects}}
+
+{{#hasSkills}}
+<section class="cm-section">
+  <h2 class="cm-section-title">Expertise</h2>
+  <ul class="cm-skills">
+    {{#skills}}<li>{{ name }}</li>{{/skills}}
+  </ul>
+</section>
+{{/hasSkills}}
+
+{{#hasSocial}}
+<section class="cm-section" id="contact">
+  <h2 class="cm-section-title">Get In Touch</h2>
+  <ul class="cm-social">
+    {{#social}}<li><a href="{{ url }}" target="_blank" rel="noopener">{{ platform }}</a></li>{{/social}}
+  </ul>
+</section>
+{{/hasSocial}}
+
+<footer class="cm-footer">
+  <p>Built with <a href="https://crevio.indevs.in">Crevio</a></p>
+</footer>
+
+</body>
+</html>

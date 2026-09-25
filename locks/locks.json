@@ -2014,6 +2014,72 @@
       "patterns": [
         "[^a-z0-9_-]"
       ]
+    },
+    {
+      "id": "phase-2-cinematic-template",
+      "desc": "Cinematic template renders (dark hero + alternating rows + Inter)",
+      "type": "fileContains",
+      "file": "backend/templates/portfolio/cinematic/template.html",
+      "patterns": [
+        "crevio-cinematic",
+        "data-template=\"cinematic\"",
+        "{{#projects}}",
+        "{{#hasProfile}}"
+      ]
+    },
+    {
+      "id": "phase-2-editorial-template",
+      "desc": "Editorial template renders (magazine masthead + serif + two-column grid)",
+      "type": "fileContains",
+      "file": "backend/templates/portfolio/editorial/template.html",
+      "patterns": [
+        "crevio-editorial",
+        "data-template=\"editorial\"",
+        "{{#projects}}",
+        "Playfair"
+      ]
+    },
+    {
+      "id": "phase-2-cinematic-preview",
+      "desc": "Cinematic preview SVG for picker card",
+      "type": "fileContains",
+      "file": "dashboard/assets/templates/cinematic.svg",
+      "patterns": [
+        "<svg",
+        "#0F172A",
+        "#F59E0B"
+      ]
+    },
+    {
+      "id": "phase-2-editorial-preview",
+      "desc": "Editorial preview SVG for picker card",
+      "type": "fileContains",
+      "file": "dashboard/assets/templates/editorial.svg",
+      "patterns": [
+        "<svg",
+        "#F8F5F0",
+        "#C0392B"
+      ]
+    },
+    {
+      "id": "phase-2-minimal-preview",
+      "desc": "Minimal preview SVG for picker card (replaces missing png)",
+      "type": "fileContains",
+      "file": "dashboard/assets/templates/minimal.svg",
+      "patterns": [
+        "<svg",
+        "#FFFFFF"
+      ]
+    },
+    {
+      "id": "phase-2-registry-sync-on-boot",
+      "desc": "server.js syncs the portfolio template registry on boot",
+      "type": "fileContains",
+      "file": "backend/server.js",
+      "patterns": [
+        "_registry",
+        "syncAll"
+      ]
     }
   ]
 }

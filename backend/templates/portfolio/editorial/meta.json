@@ -1,0 +1,17 @@
+{
+  "name": "Editorial",
+  "slug": "editorial",
+  "description": "Magazine-inspired, strong typography, image-heavy. Great for photographers and creatives.",
+  "category": "Editorial",
+  "preview_image": "/dashboard/assets/templates/editorial.svg",
+  "is_active": true,
+  "plan_gate": "business",
+  "accent_capable": true,
+  "font_capable": true,
+  "layout": "magazine",
+  "default_theme_settings": {
+    "accent": "#C0392B",
+    "mode": "light",
+    "font": "Playfair Display"
+  }
+}
