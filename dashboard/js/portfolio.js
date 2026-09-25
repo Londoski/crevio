@@ -84,6 +84,13 @@ document.addEventListener("DOMContentLoaded", function () {
             if (row) row.classList.toggle("locked", !isBusiness);
         }
 
+        // AI Assistant card — Business only
+        const aiCard = $("aiAssistantCard");
+        if (aiCard) {
+            const isBiz = (config.user_plan || "free") === "business";
+            aiCard.style.display = isBiz ? "flex" : "none";
+        }
+
         // Preview button — link to public portfolio
         const previewBtn = $("previewBtn");
         if (previewBtn) previewBtn.href = `/p/${slug}`;
@@ -329,6 +336,104 @@ document.addEventListener("DOMContentLoaded", function () {
             "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
         })[s]);
     }
+    // =========================================================
+    // AI ASSISTANT
+    // =========================================================
+    let aiRecommendation = null;
+
+    function openAiModal() {
+        $("aiModalOverlay").classList.add("open");
+        $("aiModalOverlay").setAttribute("aria-hidden", "false");
+        setTimeout(function () { $("aiDescription").focus(); }, 50);
+        updateAiDescCount();
+    }
+    function closeAiModal() {
+        $("aiModalOverlay").classList.remove("open");
+        $("aiModalOverlay").setAttribute("aria-hidden", "true");
+    }
+    function updateAiDescCount() {
+        const t = $("aiDescription");
+        const c = $("aiDescCount");
+        if (t && c) c.textContent = String(t.value.length);
+    }
+
+    function resetAiResult() {
+        aiRecommendation = null;
+        $("aiResult").style.display = "none";
+        $("aiResult").innerHTML = "";
+        $("aiApplyBtn").style.display = "none";
+        $("aiAnalyzeBtn").style.display = "inline-flex";
+        $("aiAnalyzeBtn").disabled = false;
+        $("aiAnalyzeLabel").textContent = "Analyze";
+    }
+
+    async function analyzeDescription() {
+        const description = ($("aiDescription").value || "").trim();
+        if (description.length < 10) {
+            showToast("Please describe your work in at least 10 characters.", true);
+            return;
+        }
+        resetAiResult();
+        $("aiAnalyzeBtn").disabled = true;
+        $("aiAnalyzeLabel").innerHTML = "<span class=\"ai-spinner\"></span>Analyzing...";
+
+        try {
+            const res = await window.apiFetch("/api/portfolio/ai/recommend", {
+                method: "POST",
+                body: JSON.stringify({ description: description })
+            });
+            const data = await res.json();
+            if (!data.success) throw new Error(data.message || "AI request failed");
+
+            aiRecommendation = data.recommendation;
+            const r = aiRecommendation;
+            const templateLabel = r.template.charAt(0).toUpperCase() + r.template.slice(1);
+            $("aiResult").innerHTML = [
+                '<div class="ai-result-row"><strong>Template</strong><span>' + escapeHtml(templateLabel) + '</span></div>',
+                '<div class="ai-result-row"><strong>Accent</strong><span><span class="ai-color-dot" style="background:' + escapeHtml(r.accent) + ';"></span>' + escapeHtml(r.accent) + '</span></div>',
+                '<div class="ai-result-row"><strong>Font</strong><span>' + escapeHtml(r.font) + '</span></div>',
+                '<div class="ai-reason">' + escapeHtml(r.reason) + '</div>'
+            ].join("");
+            $("aiResult").style.display = "block";
+            $("aiAnalyzeBtn").style.display = "none";
+            $("aiApplyBtn").style.display = "inline-flex";
+        } catch (err) {
+            showToast(err.message || "AI request failed", true);
+            resetAiResult();
+        }
+    }
+
+    async function applyRecommendation() {
+        if (!aiRecommendation) return;
+        const r = aiRecommendation;
+
+        // 1. Select the recommended template card
+        const card = document.querySelector('[data-template="' + r.template + '"]');
+        if (card && card.dataset.locked !== "true") {
+            document.querySelectorAll("[data-template]").forEach(function (c) { c.classList.remove("active"); });
+            card.classList.add("active");
+            config.template = r.template;
+        }
+
+        // 2. Set accent color + font
+        if ($("primary_color")) $("primary_color").value = r.accent;
+        if ($("font_family")) $("font_family").value = r.font;
+
+        // 3. Save through the existing pipeline
+        closeAiModal();
+        await saveConfig(false);
+    }
+
+    $("aiOpenBtn")?.addEventListener("click", openAiModal);
+    $("aiCloseBtn")?.addEventListener("click", function () { closeAiModal(); resetAiResult(); });
+    $("aiCancelBtn")?.addEventListener("click", function () { closeAiModal(); resetAiResult(); });
+    $("aiModalOverlay")?.addEventListener("click", function (e) {
+        if (e.target === $("aiModalOverlay")) { closeAiModal(); resetAiResult(); }
+    });
+    $("aiAnalyzeBtn")?.addEventListener("click", analyzeDescription);
+    $("aiApplyBtn")?.addEventListener("click", applyRecommendation);
+    $("aiDescription")?.addEventListener("input", updateAiDescCount);
+
 
     // =========================================================
     // INIT

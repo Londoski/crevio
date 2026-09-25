@@ -2587,6 +2587,62 @@
         "effectHover",
         "hover:"
       ]
+    },
+    {
+      "id": "phase-11-ai-controller",
+      "desc": "AI recommender controller exists with plan gate + Gemini call + validated JSON parsing",
+      "type": "fileContains",
+      "file": "backend/controllers/portfolioAiController.js",
+      "patterns": [
+        "getUserPlan",
+        "callGemini",
+        "parseRecommendation",
+        "ALLOWED_TEMPLATES"
+      ]
+    },
+    {
+      "id": "phase-11-ai-route",
+      "desc": "AI route file wires POST /recommend with auth",
+      "type": "fileContains",
+      "file": "backend/routes/portfolioAiRoutes.js",
+      "patterns": [
+        "/recommend",
+        "authMiddleware",
+        "portfolioAiController"
+      ]
+    },
+    {
+      "id": "phase-11-ai-mounted",
+      "desc": "server.js mounts /api/portfolio/ai",
+      "type": "fileContains",
+      "file": "backend/server.js",
+      "patterns": [
+        "portfolioAiRoutes",
+        "/api/portfolio/ai"
+      ]
+    },
+    {
+      "id": "phase-12-ai-picker-card",
+      "desc": "Picker page has AI Assistant card + modal, Business-only by JS",
+      "type": "fileContains",
+      "file": "dashboard/pages/portfolio.html",
+      "patterns": [
+        "aiAssistantCard",
+        "aiModalOverlay",
+        "aiDescription",
+        "AI Portfolio Assistant"
+      ]
+    },
+    {
+      "id": "phase-12-ai-picker-js",
+      "desc": "Picker JS wires AI modal → API → apply + save",
+      "type": "fileContains",
+      "file": "dashboard/js/portfolio.js",
+      "patterns": [
+        "/api/portfolio/ai/recommend",
+        "applyRecommendation",
+        "aiRecommendation"
+      ]
     }
   ]
 }

@@ -79,6 +79,39 @@
         .form-group .hint { font-size:12px; color:var(--text-muted); margin-top:4px; }
         .form-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
 
+        /* AI Assistant */
+        .ai-card { background: linear-gradient(135deg, rgba(37,99,235,0.08), rgba(139,92,246,0.08)); border:1px solid var(--border-color); border-radius:14px; padding:20px 24px; margin-bottom:20px; display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+        .ai-card-info { display:flex; align-items:center; gap:14px; flex:1; min-width:240px; }
+        .ai-card-icon { width:42px; height:42px; border-radius:50%; background:linear-gradient(135deg, var(--accent), #8B5CF6); color:#fff; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+        .ai-card-info h3 { font-size:15px; font-weight:600; margin-bottom:2px; }
+        .ai-card-info p { font-size:13px; color:var(--text-secondary); }
+        .ai-card.locked { opacity:0.6; }
+        .ai-card .badge-plan { display:inline-flex; padding:2px 8px; border-radius:999px; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; background:rgba(139,92,246,0.18); color:#8B5CF6; margin-left:8px; }
+
+        /* AI modal */
+        .ai-modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.6); backdrop-filter:blur(3px); display:flex; align-items:center; justify-content:center; padding:20px; z-index:5000; opacity:0; visibility:hidden; transition:opacity 0.18s, visibility 0.18s; }
+        .ai-modal-overlay.open { opacity:1; visibility:visible; }
+        .ai-modal-card { background:var(--bg-card); border:1px solid var(--border-color); border-radius:14px; width:100%; max-width:min(560px, 94vw); max-height:90vh; overflow-y:auto; box-shadow:0 24px 60px rgba(0,0,0,0.5); }
+        .ai-modal-head { padding:20px 24px; border-bottom:1px solid var(--border-color); display:flex; align-items:center; justify-content:space-between; gap:12px; }
+        .ai-modal-head h3 { font-size:16px; font-weight:600; display:flex; align-items:center; gap:8px; }
+        .ai-modal-close { background:transparent; border:none; color:var(--text-secondary); cursor:pointer; padding:6px; border-radius:8px; }
+        .ai-modal-close:hover { background:var(--bg-input); color:var(--text-primary); }
+        .ai-modal-body { padding:20px 24px; }
+        .ai-modal-body label { display:block; font-size:13px; font-weight:500; color:var(--text-secondary); margin-bottom:8px; }
+        .ai-modal-body textarea { width:100%; min-height:110px; background:var(--bg-input); border:1px solid var(--border-color); color:var(--text-primary); padding:12px; border-radius:10px; font-size:14px; font-family:inherit; resize:vertical; }
+        .ai-modal-body textarea:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-dim); }
+        .ai-modal-hint { font-size:12px; color:var(--text-muted); margin-top:6px; }
+        .ai-modal-actions { display:flex; justify-content:flex-end; gap:10px; margin-top:18px; }
+        .ai-result { margin-top:20px; padding:18px; border:1px solid var(--border-color); border-radius:12px; background:var(--bg-input); }
+        .ai-result-row { display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--border-color); font-size:13px; }
+        .ai-result-row:last-child { border-bottom:none; }
+        .ai-result-row strong { color:var(--text-primary); font-weight:600; }
+        .ai-result-row span { color:var(--text-secondary); }
+        .ai-reason { font-size:13px; color:var(--text-secondary); margin-top:12px; padding:10px 12px; background:rgba(37,99,235,0.06); border-left:3px solid var(--accent); border-radius:6px; line-height:1.5; }
+        .ai-color-dot { display:inline-block; width:14px; height:14px; border-radius:50%; border:1px solid var(--border-color); vertical-align:middle; margin-right:6px; }
+        .ai-spinner { display:inline-block; width:14px; height:14px; border:2px solid rgba(255,255,255,0.3); border-top-color:#fff; border-radius:50%; animation:aiSpin 0.7s linear infinite; vertical-align:-2px; margin-right:8px; }
+        @keyframes aiSpin { to { transform: rotate(360deg); } }
+
         /* Social display mode */
         .social-display-row { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--border-color); }
         .social-display-label { display: block; font-size: 13px; color: var(--text-secondary); font-weight: 500; margin-bottom: 10px; }
@@ -240,6 +273,21 @@
             <button class="btn-success" id="publishBtn">
                 <i data-lucide="upload-cloud" class="icon" style="width:16px;height:16px;"></i>
                 Publish Portfolio
+            </button>
+        </div>
+
+        <!-- AI ASSISTANT (Business only) -->
+        <div class="ai-card" id="aiAssistantCard" style="display:none;">
+            <div class="ai-card-info">
+                <div class="ai-card-icon"><i data-lucide="sparkles" class="icon"></i></div>
+                <div>
+                    <h3>AI Assistant <span class="badge-plan">Business</span></h3>
+                    <p>Not sure where to start? Describe your work and we'll suggest a template, colors, and font.</p>
+                </div>
+            </div>
+            <button class="btn-primary" id="aiOpenBtn" type="button">
+                <i data-lucide="wand-2" class="icon" style="width:16px;height:16px;"></i>
+                Get Started
             </button>
         </div>
 
@@ -410,6 +458,36 @@
                 <i data-lucide="save" class="icon" style="width:16px;height:16px;"></i>
                 Save Changes
             </button>
+        </div>
+        <!-- AI MODAL -->
+        <div class="ai-modal-overlay" id="aiModalOverlay" role="dialog" aria-hidden="true">
+            <div class="ai-modal-card">
+                <div class="ai-modal-head">
+                    <h3><i data-lucide="sparkles" class="icon" style="width:18px;height:18px;color:var(--accent);"></i> AI Portfolio Assistant</h3>
+                    <button class="ai-modal-close" id="aiCloseBtn" type="button" aria-label="Close">
+                        <i data-lucide="x" class="icon" style="width:18px;height:18px;"></i>
+                    </button>
+                </div>
+                <div class="ai-modal-body">
+                    <label for="aiDescription">Describe yourself and your work</label>
+                    <textarea id="aiDescription" placeholder="e.g., I'm a Lagos-based fashion photographer. I shoot editorial portraits and brand campaigns for beauty and lifestyle clients." maxlength="500"></textarea>
+                    <div class="ai-modal-hint"><span id="aiDescCount">0</span>/500 characters &middot; The more specific, the better the pick.</div>
+
+                    <div id="aiResult" class="ai-result" style="display:none;"></div>
+
+                    <div class="ai-modal-actions">
+                        <button class="btn-secondary" id="aiCancelBtn" type="button">Cancel</button>
+                        <button class="btn-primary" id="aiAnalyzeBtn" type="button">
+                            <i data-lucide="sparkles" class="icon" style="width:16px;height:16px;"></i>
+                            <span id="aiAnalyzeLabel">Analyze</span>
+                        </button>
+                        <button class="btn-primary" id="aiApplyBtn" type="button" style="display:none;">
+                            <i data-lucide="check" class="icon" style="width:16px;height:16px;"></i>
+                            Apply
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
     </main>
 
