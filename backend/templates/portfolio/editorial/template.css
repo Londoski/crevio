@@ -74,3 +74,22 @@
 
 .ed-see-all-wrap { text-align: center; margin-top: 40px; }
 .ed-see-all-link { font-family: "Playfair Display", Georgia, serif; font-style: italic; font-size: 18px; color: var(--accent); border-bottom: 1px solid var(--accent); padding-bottom: 2px; }
+
+/* ---------- Scroll fade-in (Business only, opt-in) ---------- */
+html.crevio-js-enabled [data-fade] {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+    will-change: opacity, transform;
+}
+html.crevio-js-enabled [data-fade].crevio-fade-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+@media (prefers-reduced-motion: reduce) {
+    html.crevio-js-enabled [data-fade] {
+        opacity: 1 !important;
+        transform: none !important;
+        transition: none !important;
+    }
+}

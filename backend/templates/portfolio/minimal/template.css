@@ -183,3 +183,22 @@
 }
 
 .pf-see-all-wrap { text-align: center; margin-top: 32px; }
+
+/* ---------- Scroll fade-in (Business only, opt-in) ---------- */
+html.crevio-js-enabled [data-fade] {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+    will-change: opacity, transform;
+}
+html.crevio-js-enabled [data-fade].crevio-fade-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+@media (prefers-reduced-motion: reduce) {
+    html.crevio-js-enabled [data-fade] {
+        opacity: 1 !important;
+        transform: none !important;
+        transition: none !important;
+    }
+}

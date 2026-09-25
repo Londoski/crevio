@@ -64,6 +64,17 @@ document.addEventListener("DOMContentLoaded", function () {
         document.querySelectorAll('input[name="social_display"]').forEach(function (r) {
             r.checked = r.value === socialDisplay;
         });
+        // Effects (Business only)
+        const effectFadeEl = $("effectFade");
+        if (effectFadeEl) {
+            const isBusiness = (config.user_plan || "free") === "business";
+            effectFadeEl.disabled = !isBusiness;
+            effectFadeEl.checked = isBusiness && !!(config.effects && config.effects.fade);
+            const row = $("effectFadeRow");
+            if (row) row.classList.toggle("locked", !isBusiness);
+            const lockedMsg = $("effectsLocked");
+            if (lockedMsg) lockedMsg.style.display = isBusiness ? "none" : "flex";
+        }
 
         // Preview button — link to public portfolio
         const previewBtn = $("previewBtn");
@@ -179,7 +190,12 @@ document.addEventListener("DOMContentLoaded", function () {
             primary_color:    $("primary_color").value,
             background_color: $("background_color").value,
             font_family:      $("font_family").value,
-            social_display:   socialDisplay
+            social_display:   socialDisplay,
+            effects:          (function () {
+                const el = $("effectFade");
+                const isBusiness = (config.user_plan || "free") === "business";
+                return (el && isBusiness) ? { fade: !!el.checked } : (config.effects || {});
+            })()
         };
 
         const saveBtn = $("saveBtn");

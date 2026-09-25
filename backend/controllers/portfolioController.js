@@ -75,7 +75,12 @@ exports.getConfig = (req, res) => {
             template_id: row?.template_id || null,
             status: row?.published ? "published" : "draft",
             last_published_at: row?.last_published_at || null,
-            social_display: theme.social_display || "text"
+            social_display: theme.social_display || "text",
+        effects: theme.effects || {},
+        user_plan: (function () {
+            try { return entitlementService.getUserPlan(req.user.id); }
+            catch (e) { return "free"; }
+        })()
         };
 
         res.json({ success: true, config });
@@ -115,7 +120,8 @@ exports.saveConfig = (req, res) => {
             primary_color:    b.primary_color    ?? currentTheme.primary_color,
             background_color: b.background_color ?? currentTheme.background_color,
             font_family:      b.font_family      ?? currentTheme.font_family,
-            social_display:   b.social_display   ?? currentTheme.social_display ?? "text"
+            social_display:   b.social_display   ?? currentTheme.social_display ?? "text",
+            effects:          b.effects ? Object.assign({}, currentTheme.effects || {}, b.effects) : (currentTheme.effects || {})
         };
 
         // ---- Phase 1D: plan gate ----

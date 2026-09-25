@@ -278,6 +278,27 @@ function build(userId, opts) {
     const totalRow = safeGet("SELECT COUNT(*) AS c FROM testimonials WHERE user_id = ? AND is_visible = 1", userId);
     const testimonialsTotal = totalRow ? totalRow.c : 0;
     const theme     = buildTheme(config, templateMeta);
+
+    // ---------- Effects (Business + opt-in per effect) ----------
+    const effects = (function () {
+        const plan = (function () {
+            try { return entitlementService.getUserPlan(userId); }
+            catch (e) { return "free"; }
+        })();
+        const isBusiness = plan === "business";
+        let ts = {};
+        if (config && config.theme_settings) {
+            try { ts = typeof config.theme_settings === "string"
+                ? JSON.parse(config.theme_settings)
+                : config.theme_settings; } catch (e) { ts = {}; }
+        }
+        const userFx = (ts && ts.effects) || {};
+        const fade = isBusiness && userFx.fade === true;
+        return {
+            fade: fade,
+            enabled: fade
+        };
+    })();
     const meta      = buildMeta(config, profile, templateMeta);
 
     const mode = theme.social_display;
@@ -325,6 +346,7 @@ function build(userId, opts) {
 
         theme: theme,
         meta: meta,
+        effects: effects,
 
         config: config ? { published: !!config.published, last_published_at: config.last_published_at } : null
     };

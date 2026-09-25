@@ -87,6 +87,15 @@
         .social-display-options label:hover { border-color: var(--accent); color: var(--text-primary); }
         .social-display-options input[type="radio"] { accent-color: var(--accent); }
 
+        /* Effects */
+        .effect-row { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:14px; border:1px solid var(--border-color); border-radius:12px; }
+        .effect-row + .effect-row { margin-top:10px; }
+        .effect-info h4 { font-size:14px; font-weight:600; margin-bottom:2px; }
+        .effect-info p { font-size:12px; color:var(--text-muted); }
+        .effect-row.locked { opacity:0.55; }
+        .effect-locked { display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text-muted); margin-top:10px; }
+        .effect-locked .icon { width:14px; height:14px; }
+
         /* Template grid */
         .template-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(180px, 1fr)); gap:14px; }
         .template-card {
@@ -333,6 +342,26 @@
                     <label><input type="radio" name="social_display" value="text"> Names only</label>
                     <label><input type="radio" name="social_display" value="icon"> Icons only</label>
                     <label><input type="radio" name="social_display" value="both"> Icons + names</label>
+                </div>
+            </div>
+        </div>
+
+        <!-- EFFECTS -->
+        <div class="card">
+            <h2><i data-lucide="sparkles" class="icon"></i> Effects</h2>
+            <p class="desc">Animated interactions for visitors <span style="color:var(--text-muted);">(Business plan)</span></p>
+
+            <div id="effectsContainer">
+                <div class="effect-row" id="effectFadeRow">
+                    <div class="effect-info">
+                        <h4>Scroll fade-in</h4>
+                        <p>Sections gently fade up as visitors scroll</p>
+                    </div>
+                    <label class="toggle"><input type="checkbox" id="effectFade"><span class="slider"></span></label>
+                </div>
+                <div class="effect-locked" id="effectsLocked" style="display:none;">
+                    <i data-lucide="lock" class="icon"></i>
+                    <span>Upgrade to Business to unlock effects</span>
                 </div>
             </div>
         </div>

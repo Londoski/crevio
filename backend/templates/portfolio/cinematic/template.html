@@ -42,7 +42,7 @@ body.crevio-portfolio, body.crevio-cinematic, body.crevio-editorial {
 {{/hasProfile}}
 
 {{#hasProjects}}
-<section class="cm-section" id="projects">
+<section class="cm-section"{{#effects.fade}} data-fade{{/effects.fade}} id="projects">
   <h2 class="cm-section-title">Selected Work</h2>
   <div class="cm-rows">
     {{#projects}}
@@ -60,7 +60,7 @@ body.crevio-portfolio, body.crevio-cinematic, body.crevio-editorial {
 {{/hasProjects}}
 
 {{#hasSkills}}
-<section class="cm-section">
+<section class="cm-section"{{#effects.fade}} data-fade{{/effects.fade}}>
   <h2 class="cm-section-title">Expertise</h2>
   <ul class="cm-skills">
     {{#skills}}<li>{{ name }}</li>{{/skills}}
@@ -69,7 +69,7 @@ body.crevio-portfolio, body.crevio-cinematic, body.crevio-editorial {
 {{/hasSkills}}
 
 {{#hasTestimonials}}
-<section class="cm-section" id="testimonials">
+<section class="cm-section"{{#effects.fade}} data-fade{{/effects.fade}} id="testimonials">
   <h2 class="cm-section-title">{{#is_testimonials_page}}All Client Testimonials{{/is_testimonials_page}}{{#is_portfolio_page}}What Clients Say{{/is_portfolio_page}}</h2>
   <div class="cm-testimonials">
     {{#testimonials}}
@@ -100,7 +100,7 @@ body.crevio-portfolio, body.crevio-cinematic, body.crevio-editorial {
 {{/hasTestimonials}}
 
 {{#hasSocial}}
-<section class="cm-section" id="contact">
+<section class="cm-section"{{#effects.fade}} data-fade{{/effects.fade}} id="contact">
   <h2 class="cm-section-title">Get In Touch</h2>
   <ul class="cm-social">
     {{#social}}
@@ -114,5 +114,6 @@ body.crevio-portfolio, body.crevio-cinematic, body.crevio-editorial {
   <p>Built with <a href="https://crevio.indevs.in">Crevio</a></p>
 </footer>
 
+{{#effects.enabled}}<script src="/dashboard/js/portfolio-effects.js" defer></script>{{/effects.enabled}}
 </body>
 </html>

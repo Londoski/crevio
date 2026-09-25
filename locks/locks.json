@@ -2395,6 +2395,111 @@
         "has_more_testimonials",
         "is_testimonials_page"
       ]
+    },
+    {
+      "id": "phase-8-effects-file",
+      "desc": "Portfolio effects JS (scroll fade via IntersectionObserver)",
+      "type": "fileContains",
+      "file": "dashboard/js/portfolio-effects.js",
+      "patterns": [
+        "data-fade",
+        "IntersectionObserver",
+        "prefers-reduced-motion"
+      ]
+    },
+    {
+      "id": "phase-8-effects-payload",
+      "desc": "Payload exposes server-gated effects object (Business + toggle)",
+      "type": "fileContains",
+      "file": "backend/templates/portfolio/_payload.js",
+      "patterns": [
+        "effects: effects",
+        "isBusiness",
+        "userFx.fade"
+      ]
+    },
+    {
+      "id": "phase-8-effects-template-minimal",
+      "desc": "Minimal template tags sections with data-fade and loads effects script",
+      "type": "fileContains",
+      "file": "backend/templates/portfolio/minimal/template.html",
+      "patterns": [
+        "data-fade",
+        "portfolio-effects.js"
+      ]
+    },
+    {
+      "id": "phase-8-effects-template-cinematic",
+      "desc": "Cinematic template tags sections with data-fade and loads effects script",
+      "type": "fileContains",
+      "file": "backend/templates/portfolio/cinematic/template.html",
+      "patterns": [
+        "data-fade",
+        "portfolio-effects.js"
+      ]
+    },
+    {
+      "id": "phase-8-effects-template-editorial",
+      "desc": "Editorial template tags sections with data-fade and loads effects script",
+      "type": "fileContains",
+      "file": "backend/templates/portfolio/editorial/template.html",
+      "patterns": [
+        "data-fade",
+        "portfolio-effects.js"
+      ]
+    },
+    {
+      "id": "phase-8-effects-css",
+      "desc": "All templates ship fade CSS with reduced-motion fallback",
+      "type": "fileContains",
+      "file": "backend/templates/portfolio/minimal/template.css",
+      "patterns": [
+        "Scroll fade-in",
+        "crevio-fade-visible",
+        "prefers-reduced-motion"
+      ]
+    },
+    {
+      "id": "phase-9-effects-getConfig",
+      "desc": "getConfig returns effects + user_plan",
+      "type": "fileContains",
+      "file": "backend/controllers/portfolioController.js",
+      "patterns": [
+        "effects: theme.effects",
+        "user_plan:"
+      ]
+    },
+    {
+      "id": "phase-9-effects-saveConfig",
+      "desc": "saveConfig merges effects object",
+      "type": "fileContains",
+      "file": "backend/controllers/portfolioController.js",
+      "patterns": [
+        "effects:          b.effects",
+        "currentTheme.effects"
+      ]
+    },
+    {
+      "id": "phase-9-effects-picker-ui",
+      "desc": "Picker page has Effects card with fade toggle",
+      "type": "fileContains",
+      "file": "dashboard/pages/portfolio.html",
+      "patterns": [
+        "effectFade",
+        "Scroll fade-in",
+        "effectsLocked"
+      ]
+    },
+    {
+      "id": "phase-9-effects-picker-js",
+      "desc": "Picker JS hydrates + saves effects, gates by plan",
+      "type": "fileContains",
+      "file": "dashboard/js/portfolio.js",
+      "patterns": [
+        "effectFade",
+        "effects.fade",
+        "isBusiness"
+      ]
     }
   ]
 }

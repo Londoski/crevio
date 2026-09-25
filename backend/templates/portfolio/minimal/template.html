@@ -41,7 +41,7 @@ body.crevio-portfolio, body.crevio-cinematic, body.crevio-editorial {
 {{/hasProfile}}
 
 {{#hasProjects}}
-<section class="pf-section" id="projects">
+<section class="pf-section"{{#effects.fade}} data-fade{{/effects.fade}} id="projects">
   <h2 class="pf-section-title">Selected Work</h2>
   <div class="pf-grid">
     {{#projects}}
@@ -59,7 +59,7 @@ body.crevio-portfolio, body.crevio-cinematic, body.crevio-editorial {
 {{/hasProjects}}
 
 {{#hasServices}}
-<section class="pf-section" id="services">
+<section class="pf-section"{{#effects.fade}} data-fade{{/effects.fade}} id="services">
   <h2 class="pf-section-title">How I Can Help</h2>
   <div class="pf-grid">
     {{#services}}
@@ -75,7 +75,7 @@ body.crevio-portfolio, body.crevio-cinematic, body.crevio-editorial {
 {{/hasServices}}
 
 {{#hasSkills}}
-<section class="pf-section">
+<section class="pf-section"{{#effects.fade}} data-fade{{/effects.fade}}>
   <h2 class="pf-section-title">Expertise</h2>
   <ul class="pf-skills">
     {{#skills}}<li>{{ name }}</li>{{/skills}}
@@ -84,7 +84,7 @@ body.crevio-portfolio, body.crevio-cinematic, body.crevio-editorial {
 {{/hasSkills}}
 
 {{#hasTestimonials}}
-<section class="pf-section" id="testimonials">
+<section class="pf-section"{{#effects.fade}} data-fade{{/effects.fade}} id="testimonials">
   <h2 class="pf-section-title">{{#is_testimonials_page}}All Client Testimonials{{/is_testimonials_page}}{{#is_portfolio_page}}What Clients Say{{/is_portfolio_page}}</h2>
   <div class="pf-testimonials">
     {{#testimonials}}
@@ -115,7 +115,7 @@ body.crevio-portfolio, body.crevio-cinematic, body.crevio-editorial {
 {{/hasTestimonials}}
 
 {{#hasSocial}}
-<section class="pf-section" id="contact">
+<section class="pf-section"{{#effects.fade}} data-fade{{/effects.fade}} id="contact">
   <h2 class="pf-section-title">Get In Touch</h2>
   <ul class="pf-social">
     {{#social}}
@@ -129,5 +129,6 @@ body.crevio-portfolio, body.crevio-cinematic, body.crevio-editorial {
   <p>Built with <a href="https://crevio.indevs.in">Crevio</a></p>
 </footer>
 
+{{#effects.enabled}}<script src="/dashboard/js/portfolio-effects.js" defer></script>{{/effects.enabled}}
 </body>
 </html>
