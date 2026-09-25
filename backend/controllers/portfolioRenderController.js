@@ -32,7 +32,8 @@ function resolveTemplateSlug(config) {
     return (settings && settings.template) || null;
 }
 
-exports.renderPublicPortfolio = (req, res, next) => {
+function doRender(req, res, next, mode) {
+
     try {
         const slug = req.params.slug;
         if (!slug) return next();
@@ -82,7 +83,7 @@ exports.renderPublicPortfolio = (req, res, next) => {
             return next();
         }
 
-        const data = payloadBuilder.build(user.id, { templateMeta: tpl.meta });
+        const data = payloadBuilder.build(user.id, { templateMeta: tpl.meta, mode: mode });
         if (!data) return next();
 
         const html = engine.render(effectiveSlug, data);
@@ -98,4 +99,7 @@ exports.renderPublicPortfolio = (req, res, next) => {
         console.error("[portfolioRender] failed:", e.message);
         return next();
     }
-};
+}
+
+exports.renderPublicPortfolio = (req, res, next) => doRender(req, res, next, "portfolio");
+exports.renderTestimonialsPage = (req, res, next) => doRender(req, res, next, "testimonials");

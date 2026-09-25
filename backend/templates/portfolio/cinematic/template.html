@@ -70,13 +70,14 @@ body.crevio-portfolio, body.crevio-cinematic, body.crevio-editorial {
 
 {{#hasTestimonials}}
 <section class="cm-section" id="testimonials">
-  <h2 class="cm-section-title">What Clients Say</h2>
+  <h2 class="cm-section-title">{{#is_testimonials_page}}All Client Testimonials{{/is_testimonials_page}}{{#is_portfolio_page}}What Clients Say{{/is_portfolio_page}}</h2>
   <div class="cm-testimonials">
     {{#testimonials}}
     <figure class="cm-testimonial">
       <blockquote class="cm-quote">{{ quote }}</blockquote>
       <figcaption class="cm-author">
-        {{#avatar}}<img class="cm-author-avatar" src="{{ avatar }}" alt="{{ name }}">{{/avatar}}
+        {{#has_avatar}}<img class="cm-author-avatar" src="{{ avatar }}" alt="{{ name }}">{{/has_avatar}}
+        {{#show_initials}}<div class="cm-author-avatar cm-author-initials" aria-hidden="true">{{ initials }}</div>{{/show_initials}}
         <div>
           <div class="cm-author-name">{{ name }}</div>
           {{#attribution}}<div class="cm-author-role">{{ attribution }}</div>{{/attribution}}
@@ -86,6 +87,16 @@ body.crevio-portfolio, body.crevio-cinematic, body.crevio-editorial {
     {{/testimonials}}
   </div>
 </section>
+  {{#has_more_testimonials}}
+  <div class="cm-see-all-wrap">
+    <a class="cm-btn" href="{{ portfolio_url }}/testimonials">See all {{ testimonials_total }} testimonials &rarr;</a>
+  </div>
+  {{/has_more_testimonials}}
+  {{#is_testimonials_page}}
+  <div class="cm-see-all-wrap">
+    <a class="cm-btn" href="{{ portfolio_url }}">&larr; Back to portfolio</a>
+  </div>
+  {{/is_testimonials_page}}
 {{/hasTestimonials}}
 
 {{#hasSocial}}

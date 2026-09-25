@@ -173,3 +173,13 @@
 .pf-author-info { display: flex; flex-direction: column; }
 .pf-author-name { font-size: 14px; font-weight: 600; color: var(--fg); }
 .pf-author-role { font-size: 12px; color: var(--muted); }
+
+.pf-author-initials {
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(0,0,0,0.06);
+    background: color-mix(in srgb, var(--accent) 18%, transparent);
+    color: var(--accent);
+    font-weight: 700; font-size: 14px; letter-spacing: 0.02em;
+}
+
+.pf-see-all-wrap { text-align: center; margin-top: 32px; }

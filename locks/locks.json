@@ -2267,6 +2267,134 @@
         "Add Testimonial",
         "listContainer"
       ]
+    },
+    {
+      "id": "phase-6-avatar-initials",
+      "desc": "Testimonial avatars fall back to initials when no image is set",
+      "type": "fileContains",
+      "file": "backend/templates/portfolio/_payload.js",
+      "patterns": [
+        "computeInitials",
+        "show_initials",
+        "has_avatar"
+      ]
+    },
+    {
+      "id": "phase-6-avatar-initials-minimal",
+      "desc": "Minimal template renders initials fallback",
+      "type": "fileContains",
+      "file": "backend/templates/portfolio/minimal/template.html",
+      "patterns": [
+        "pf-author-initials",
+        "show_initials"
+      ]
+    },
+    {
+      "id": "phase-6-avatar-initials-cinematic",
+      "desc": "Cinematic template renders initials fallback",
+      "type": "fileContains",
+      "file": "backend/templates/portfolio/cinematic/template.html",
+      "patterns": [
+        "cm-author-initials",
+        "show_initials"
+      ]
+    },
+    {
+      "id": "phase-6-avatar-initials-editorial",
+      "desc": "Editorial template renders initials fallback",
+      "type": "fileContains",
+      "file": "backend/templates/portfolio/editorial/template.html",
+      "patterns": [
+        "ed-author-initials",
+        "show_initials"
+      ]
+    },
+    {
+      "id": "phase-6-avatar-picker-ui",
+      "desc": "Testimonials management page has a proper file uploader for author photos",
+      "type": "fileContains",
+      "file": "dashboard/pages/testimonials.html",
+      "patterns": [
+        "avatar-picker",
+        "avatarPreview",
+        "avatarFile"
+      ]
+    },
+    {
+      "id": "phase-6-avatar-picker-js",
+      "desc": "Testimonials JS wires upload, remove, and initials preview",
+      "type": "fileContains",
+      "file": "dashboard/js/testimonials.js",
+      "patterns": [
+        "currentAvatarUrl",
+        "uploadAvatar",
+        "computeInitials"
+      ]
+    },
+    {
+      "id": "phase-7-testimonials-page-route",
+      "desc": "Server mounts /p/:slug/testimonials for the dedicated testimonials page",
+      "type": "fileContains",
+      "file": "backend/server.js",
+      "patterns": [
+        "/p/:slug/testimonials",
+        "renderTestimonialsPage"
+      ]
+    },
+    {
+      "id": "phase-7-testimonials-page-controller",
+      "desc": "Render controller exposes renderTestimonialsPage via shared doRender",
+      "type": "fileContains",
+      "file": "backend/controllers/portfolioRenderController.js",
+      "patterns": [
+        "renderTestimonialsPage",
+        "doRender"
+      ]
+    },
+    {
+      "id": "phase-7-testimonials-payload-flags",
+      "desc": "Payload exposes mode-based flags: is_testimonials_page, has_more_testimonials, portfolio_url",
+      "type": "fileContains",
+      "file": "backend/templates/portfolio/_payload.js",
+      "patterns": [
+        "is_testimonials_page",
+        "has_more_testimonials",
+        "portfolio_url",
+        "TESTIMONIALS_HOMEPAGE_LIMIT"
+      ]
+    },
+    {
+      "id": "phase-7-see-all-minimal",
+      "desc": "Minimal template has see-all + back link",
+      "type": "fileContains",
+      "file": "backend/templates/portfolio/minimal/template.html",
+      "patterns": [
+        "pf-see-all-wrap",
+        "has_more_testimonials",
+        "is_testimonials_page"
+      ]
+    },
+    {
+      "id": "phase-7-see-all-cinematic",
+      "desc": "Cinematic template has see-all + back link",
+      "type": "fileContains",
+      "file": "backend/templates/portfolio/cinematic/template.html",
+      "patterns": [
+        "cm-see-all-wrap",
+        "has_more_testimonials",
+        "is_testimonials_page"
+      ]
+    },
+    {
+      "id": "phase-7-see-all-editorial",
+      "desc": "Editorial template has see-all + back link",
+      "type": "fileContains",
+      "file": "backend/templates/portfolio/editorial/template.html",
+      "patterns": [
+        "ed-see-all-wrap",
+        "has_more_testimonials",
+        "is_testimonials_page"
+      ]
     }
   ]
 }

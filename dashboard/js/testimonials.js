@@ -14,6 +14,66 @@ document.addEventListener("DOMContentLoaded", function () {
     const quoteCount = $("quoteCount");
 
     let testimonials = [];
+    // ---------- Avatar picker ----------
+    let currentAvatarUrl = "";
+
+    function computeInitials(name) {
+        const parts = String(name || "").trim().split(/\s+/).filter(Boolean);
+        if (!parts.length) return "?";
+        if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+        return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+    }
+
+    function setAvatarPreview(url, name) {
+        currentAvatarUrl = url || "";
+        const preview = $("avatarPreview");
+        const removeBtn = $("removeAvatarBtn");
+        const hiddenInput = $("authorAvatar");
+        if (!preview || !hiddenInput) return;
+        hiddenInput.value = currentAvatarUrl;
+        if (removeBtn) removeBtn.style.display = currentAvatarUrl ? "inline-flex" : "none";
+        if (currentAvatarUrl) {
+            preview.innerHTML = '<img src="' + escapeHtml(currentAvatarUrl) + '" alt="">';
+        } else {
+            preview.innerHTML = '<div class="avatar-initials">' + escapeHtml(computeInitials(name)) + '</div>';
+        }
+        if (typeof lucide !== "undefined") lucide.createIcons();
+    }
+
+    async function uploadAvatar(file) {
+        if (file.size > 5 * 1024 * 1024) { showToast("Image must be under 5MB", true); return; }
+        const form = new FormData();
+        form.append("file", file);
+        const btn = $("uploadAvatarBtn");
+        const original = btn ? btn.innerHTML : "";
+        if (btn) { btn.disabled = true; btn.innerHTML = "Uploading..."; }
+        try {
+            const token = localStorage.getItem("token") || "";
+            const res = await fetch("/api/upload", {
+                method: "POST",
+                headers: { Authorization: "Bearer " + token },
+                body: form
+            });
+            const data = await res.json().catch(function () { return {}; });
+            const url =
+                data.url ||
+                (data.file && data.file.url) ||
+                data.fileUrl ||
+                data.path ||
+                (data.file && data.file.path) ||
+                (data.filename ? "/uploads/" + data.filename : null);
+            if (!url) throw new Error("Upload succeeded but response had no URL");
+            setAvatarPreview(url, $("authorName").value);
+            showToast("Image uploaded");
+        } catch (err) {
+            showToast(err.message || "Upload failed", true);
+        } finally {
+            if (btn) { btn.disabled = false; btn.innerHTML = original; }
+            if ($("avatarFile")) $("avatarFile").value = "";
+            if (typeof lucide !== "undefined") lucide.createIcons();
+        }
+    }
+
     let editingId = null;
 
     // ---------- Helpers ----------
@@ -121,7 +181,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 $("authorName").value = t.author_name || "";
                 $("authorRole").value = t.author_role || "";
                 $("authorCompany").value = t.author_company || "";
-                $("authorAvatar").value = t.author_avatar || "";
+                setAvatarPreview(t.author_avatar || "", t.author_name || "");
                 $("displayOrder").value = t.display_order || 0;
                 $("isVisible").value = t.is_visible ? "1" : "0";
             }
@@ -130,7 +190,7 @@ document.addEventListener("DOMContentLoaded", function () {
             $("authorName").value = "";
             $("authorRole").value = "";
             $("authorCompany").value = "";
-            $("authorAvatar").value = "";
+            setAvatarPreview("", "");
             $("displayOrder").value = testimonials.length;
             $("isVisible").value = "1";
         }
@@ -218,6 +278,19 @@ document.addEventListener("DOMContentLoaded", function () {
     $("cancelBtn")?.addEventListener("click", closeForm);
     $("saveBtn")?.addEventListener("click", saveTestimonial);
     quoteInput?.addEventListener("input", updateQuoteCount);
+
+    $("uploadAvatarBtn")?.addEventListener("click", () => $("avatarFile").click());
+    $("avatarFile")?.addEventListener("change", async (e) => {
+        const f = e.target.files && e.target.files[0];
+        if (f) await uploadAvatar(f);
+    });
+    $("removeAvatarBtn")?.addEventListener("click", () => {
+        setAvatarPreview("", $("authorName").value);
+        showToast("Image removed — Save to apply");
+    });
+    $("authorName")?.addEventListener("input", () => {
+        if (!currentAvatarUrl) setAvatarPreview("", $("authorName").value);
+    });
 
     loadTestimonials();
 });

@@ -106,6 +106,15 @@ app.get("/p/:slug/services/:serviceId", (req, res) => {
 });
 
 // Portfolio home — SSR via template engine (Phase 1C + 1E)
+// Dedicated testimonials page — same template, more testimonials shown
+app.get(
+    "/p/:slug/testimonials",
+    require("./controllers/portfolioRenderController").renderTestimonialsPage,
+    (req, res) => {
+        res.sendFile(path.join(__dirname, "..", "public", "portfolio.html"));
+    }
+);
+
 app.get(
     "/p/:slug",
     require("./controllers/portfolioRenderController").renderPublicPortfolio,

@@ -96,6 +96,12 @@
             .form-row { grid-template-columns:1fr; }
             .testimonial-item { flex-direction:column; }
         }
+
+        .avatar-picker { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
+        .avatar-preview { width: 72px; height: 72px; border-radius: 50%; overflow: hidden; background: var(--bg-input); border: 1px solid var(--border-color); flex-shrink: 0; }
+        .avatar-preview img { width: 100%; height: 100%; object-fit: cover; }
+        .avatar-initials { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 700; color: var(--accent); background: rgba(0,0,0,0.05); }
+        .avatar-actions { display: flex; gap: 8px; flex-wrap: wrap; }
     </style>
     <link rel="stylesheet" href="/dashboard/css/sidebar.css">
     <link rel="stylesheet" href="/dashboard/css/mobile.css?v=639253624517313970">
@@ -173,9 +179,23 @@
             </div>
 
             <div class="form-group">
-                <label>Avatar URL (optional)</label>
-                <input type="text" id="authorAvatar" placeholder="/uploads/profiles/... or a full URL" maxlength="500">
-                <div class="hint">Leave blank to show just the name</div>
+                <label>Author Photo (optional)</label>
+                <div class="avatar-picker">
+                    <div class="avatar-preview" id="avatarPreview"><div class="avatar-initials" id="avatarInitials">?</div></div>
+                    <div class="avatar-actions">
+                        <input type="file" id="avatarFile" accept="image/png,image/jpeg,image/webp,image/gif" style="display:none;">
+                        <button type="button" class="btn-secondary" id="uploadAvatarBtn">
+                            <i data-lucide="upload" class="icon" style="width:14px;height:14px;"></i>
+                            Upload Image
+                        </button>
+                        <button type="button" class="btn-secondary" id="removeAvatarBtn" style="display:none;">
+                            <i data-lucide="trash-2" class="icon" style="width:14px;height:14px;"></i>
+                            Remove
+                        </button>
+                    </div>
+                    <input type="hidden" id="authorAvatar" value="">
+                    <p class="hint" style="margin-top:10px; flex-basis:100%;">PNG, JPG, WebP, or GIF. Square images look best. Max 5MB.</p>
+                </div>
             </div>
 
             <div class="form-row">

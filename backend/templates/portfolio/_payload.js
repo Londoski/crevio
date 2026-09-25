@@ -181,21 +181,34 @@ function buildSocial(userId) {
 }
 
 // ---------- Testimonials ----------
-function buildTestimonials(userId) {
+function computeInitials(name) {
+    const parts = String(name || "").trim().split(/\s+/).filter(Boolean);
+    if (!parts.length) return "?";
+    if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+    return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+}
+
+function buildTestimonials(userId, limit) {
+    const cap = parseInt(limit, 10) || 20;
     const rows = safeAll(
         "SELECT id, quote, author_name, author_role, author_company, author_avatar " +
         "FROM testimonials WHERE user_id = ? AND is_visible = 1 " +
-        "ORDER BY display_order ASC, id ASC LIMIT 20",
-        userId
+        "ORDER BY display_order ASC, id ASC LIMIT ?",
+        userId, cap
     );
     return rows.map(function (t) {
+        const name = t.author_name || "Anonymous";
+        const avatar = t.author_avatar || null;
         return {
             id: t.id,
             quote: t.quote || "",
-            name: t.author_name || "Anonymous",
+            name: name,
             role: t.author_role || null,
             company: t.author_company || null,
-            avatar: t.author_avatar || null,
+            avatar: avatar,
+            has_avatar: !!avatar,
+            show_initials: !avatar,
+            initials: computeInitials(name),
             attribution: [t.author_role, t.author_company].filter(Boolean).join(" at ") || null
         };
     });
@@ -240,6 +253,8 @@ function buildMeta(config, profile, templateMeta) {
 // ---------- Main entry ----------
 function build(userId, opts) {
     opts = opts || {};
+    const onTestimonialsPage = opts.mode === "testimonials";
+    const TESTIMONIALS_HOMEPAGE_LIMIT = 6;
     const templateMeta = opts.templateMeta || null;
 
     const user = safeGet(
@@ -259,24 +274,41 @@ function build(userId, opts) {
     const services  = buildServices(userId);
     const skills    = buildSkills(userId);
     const social    = buildSocial(userId);
-    const testimonials = buildTestimonials(userId);
+    const testimonials = buildTestimonials(userId, onTestimonialsPage ? 500 : TESTIMONIALS_HOMEPAGE_LIMIT);
+    const totalRow = safeGet("SELECT COUNT(*) AS c FROM testimonials WHERE user_id = ? AND is_visible = 1", userId);
+    const testimonialsTotal = totalRow ? totalRow.c : 0;
     const theme     = buildTheme(config, templateMeta);
     const meta      = buildMeta(config, profile, templateMeta);
 
     const mode = theme.social_display;
+
+
+    const sectionsToggleOnTestimonials = (function () {
+        try {
+            if (!config || !config.theme_settings) return true;
+            const ts = typeof config.theme_settings === "string"
+                ? JSON.parse(config.theme_settings)
+                : config.theme_settings;
+            return !ts.sections || ts.sections.testimonials !== false;
+        } catch (e) { return true; }
+    })();
+
+    const portfolioUrl = profile.username
+        ? ("/p/" + encodeURIComponent(profile.username))
+        : "/p";
 
     return {
         profile: profile,
         hasProfile: !!(profile && (profile.name || profile.headline || profile.bio)),
 
         projects: projects,
-        hasProjects: projects.length > 0,
+        hasProjects: !onTestimonialsPage && projects.length > 0,
 
         services: services,
-        hasServices: services.length > 0,
+        hasServices: !onTestimonialsPage && services.length > 0,
 
         skills: skills,
-        hasSkills: skills.length > 0,
+        hasSkills: !onTestimonialsPage && skills.length > 0,
 
         social: social,
         hasSocial: social.length > 0,
@@ -284,12 +316,12 @@ function build(userId, opts) {
         social_show_icon: mode === "icon" || mode === "both",
         social_show_text: mode === "text" || mode === "both",
         testimonials: testimonials,
-        hasTestimonials: testimonials.length > 0 && (!config || !config.theme_settings || (() => {
-            try {
-                const ts = typeof config.theme_settings === "string" ? JSON.parse(config.theme_settings) : config.theme_settings;
-                return !ts.sections || ts.sections.testimonials !== false;
-            } catch (e) { return true; }
-        })()),
+        hasTestimonials: testimonials.length > 0 && (onTestimonialsPage || sectionsToggleOnTestimonials),
+        has_more_testimonials: !onTestimonialsPage && testimonialsTotal > testimonials.length,
+        testimonials_total: testimonialsTotal,
+        is_testimonials_page: onTestimonialsPage,
+        is_portfolio_page: !onTestimonialsPage,
+        portfolio_url: portfolioUrl,
 
         theme: theme,
         meta: meta,

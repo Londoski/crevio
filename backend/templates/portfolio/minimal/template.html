@@ -85,13 +85,14 @@ body.crevio-portfolio, body.crevio-cinematic, body.crevio-editorial {
 
 {{#hasTestimonials}}
 <section class="pf-section" id="testimonials">
-  <h2 class="pf-section-title">What Clients Say</h2>
+  <h2 class="pf-section-title">{{#is_testimonials_page}}All Client Testimonials{{/is_testimonials_page}}{{#is_portfolio_page}}What Clients Say{{/is_portfolio_page}}</h2>
   <div class="pf-testimonials">
     {{#testimonials}}
     <figure class="pf-testimonial">
       <blockquote class="pf-quote">{{ quote }}</blockquote>
       <figcaption class="pf-author">
-        {{#avatar}}<img class="pf-author-avatar" src="{{ avatar }}" alt="{{ name }}">{{/avatar}}
+        {{#has_avatar}}<img class="pf-author-avatar" src="{{ avatar }}" alt="{{ name }}">{{/has_avatar}}
+        {{#show_initials}}<div class="pf-author-avatar pf-author-initials" aria-hidden="true">{{ initials }}</div>{{/show_initials}}
         <div class="pf-author-info">
           <span class="pf-author-name">{{ name }}</span>
           {{#attribution}}<span class="pf-author-role">{{ attribution }}</span>{{/attribution}}
@@ -101,6 +102,16 @@ body.crevio-portfolio, body.crevio-cinematic, body.crevio-editorial {
     {{/testimonials}}
   </div>
 </section>
+  {{#has_more_testimonials}}
+  <div class="pf-see-all-wrap">
+    <a class="pf-btn pf-btn-ghost" href="{{ portfolio_url }}/testimonials">See all {{ testimonials_total }} testimonials &rarr;</a>
+  </div>
+  {{/has_more_testimonials}}
+  {{#is_testimonials_page}}
+  <div class="pf-see-all-wrap">
+    <a class="pf-btn pf-btn-ghost" href="{{ portfolio_url }}">&larr; Back to portfolio</a>
+  </div>
+  {{/is_testimonials_page}}
 {{/hasTestimonials}}
 
 {{#hasSocial}}
