@@ -49,3 +49,15 @@
 .ed-social-item a { display: inline-flex; align-items: center; gap: 10px; }
 .ed-social-icon { display: inline-flex; align-items: center; }
 .ed-social-icon svg { width: 20px; height: 20px; }
+
+/* ---------- Testimonials ---------- */
+.ed-testimonials { display: grid; grid-template-columns: 1fr; gap: 48px; max-width: 720px; margin: 0 auto; }
+.ed-testimonial { text-align: center; }
+.ed-quote { font-family: "Playfair Display", Georgia, serif; font-style: italic; font-size: 24px; line-height: 1.5; color: var(--fg); margin-bottom: 24px; }
+.ed-quote::before { content: "\201C"; }
+.ed-quote::after { content: "\201D"; }
+.ed-author { display: flex; align-items: center; justify-content: center; gap: 14px; }
+.ed-author-avatar { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; }
+.ed-author-info { text-align: left; }
+.ed-author-name { font-size: 14px; font-weight: 600; color: var(--fg); text-transform: uppercase; letter-spacing: 0.1em; }
+.ed-author-role { font-size: 12px; color: var(--muted); font-style: italic; margin-top: 2px; }

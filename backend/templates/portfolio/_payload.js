@@ -180,6 +180,27 @@ function buildSocial(userId) {
     }).filter(function (s) { return s.url; });
 }
 
+// ---------- Testimonials ----------
+function buildTestimonials(userId) {
+    const rows = safeAll(
+        "SELECT id, quote, author_name, author_role, author_company, author_avatar " +
+        "FROM testimonials WHERE user_id = ? AND is_visible = 1 " +
+        "ORDER BY display_order ASC, id ASC LIMIT 20",
+        userId
+    );
+    return rows.map(function (t) {
+        return {
+            id: t.id,
+            quote: t.quote || "",
+            name: t.author_name || "Anonymous",
+            role: t.author_role || null,
+            company: t.author_company || null,
+            avatar: t.author_avatar || null,
+            attribution: [t.author_role, t.author_company].filter(Boolean).join(" at ") || null
+        };
+    });
+}
+
 // ---------- Theme ----------
 function buildTheme(config, templateMeta) {
     const defaults = (templateMeta && templateMeta.default_theme_settings) || {};
@@ -238,6 +259,7 @@ function build(userId, opts) {
     const services  = buildServices(userId);
     const skills    = buildSkills(userId);
     const social    = buildSocial(userId);
+    const testimonials = buildTestimonials(userId);
     const theme     = buildTheme(config, templateMeta);
     const meta      = buildMeta(config, profile, templateMeta);
 
@@ -261,6 +283,13 @@ function build(userId, opts) {
         social_display: mode,
         social_show_icon: mode === "icon" || mode === "both",
         social_show_text: mode === "text" || mode === "both",
+        testimonials: testimonials,
+        hasTestimonials: testimonials.length > 0 && (!config || !config.theme_settings || (() => {
+            try {
+                const ts = typeof config.theme_settings === "string" ? JSON.parse(config.theme_settings) : config.theme_settings;
+                return !ts.sections || ts.sections.testimonials !== false;
+            } catch (e) { return true; }
+        })()),
 
         theme: theme,
         meta: meta,

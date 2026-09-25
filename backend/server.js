@@ -72,6 +72,7 @@ const verificationRoutes = require("./routes/verificationRoutes");
 const twoFactorRoutes    = require("./routes/twoFactorRoutes");
 const uploadRoutes       = require("./routes/uploadRoutes");
 const webhookRoutes      = require("./routes/webhookRoutes");
+const testimonialRoutes  = require("./routes/testimonialRoutes");
 
 // 5. Mount routes
 app.use("/api/auth",          authRoutes);
@@ -93,6 +94,7 @@ app.use("/api/verification",  verificationRoutes);
 app.use("/api/2fa",           twoFactorRoutes);
 app.use("/api/upload",        uploadRoutes);
 app.use("/api/webhooks",      webhookRoutes);
+app.use("/api/testimonials",   testimonialRoutes);
 
 // =========================================================
 // 6. Public routes

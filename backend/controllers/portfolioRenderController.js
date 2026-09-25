@@ -89,7 +89,10 @@ exports.renderPublicPortfolio = (req, res, next) => {
         if (!html) return next();
 
         res.setHeader("Content-Type", "text/html; charset=utf-8");
-        res.setHeader("Cache-Control", "public, max-age=60");
+        res.setHeader("Cache-Control",
+        process.env.NODE_ENV === "production"
+            ? "public, max-age=60"
+            : "no-store, no-cache, must-revalidate, private");
         return res.send(html);
     } catch (e) {
         console.error("[portfolioRender] failed:", e.message);

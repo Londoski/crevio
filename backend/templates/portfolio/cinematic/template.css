@@ -53,3 +53,14 @@
 .cm-social-item a { display: inline-flex; align-items: center; gap: 10px; }
 .cm-social-icon { display: inline-flex; align-items: center; }
 .cm-social-icon svg { width: 20px; height: 20px; }
+
+/* ---------- Testimonials ---------- */
+.cm-testimonials { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+.cm-testimonial { padding: 32px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+.cm-quote { font-size: 18px; line-height: 1.6; color: var(--fg); margin-bottom: 24px; font-weight: 500; }
+.cm-quote::before { content: "\201C"; font-size: 48px; line-height: 0.5; color: var(--accent); display: block; margin-bottom: 12px; font-weight: 900; }
+.cm-author { display: flex; align-items: center; gap: 14px; }
+.cm-author-avatar { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent); }
+.cm-author-name { font-size: 15px; font-weight: 700; color: var(--fg); }
+.cm-author-role { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 2px; }
+@media (max-width: 720px) { .cm-testimonials { grid-template-columns: 1fr; } }

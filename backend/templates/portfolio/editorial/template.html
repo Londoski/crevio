@@ -19,6 +19,13 @@
 }
 {{{ css }}}
 </style>
+<style>
+/* User overrides — applied after template CSS to win specificity */
+{{#theme.background}}:root { --bg: {{{ theme.background }}}; }{{/theme.background}}
+body.crevio-portfolio, body.crevio-cinematic, body.crevio-editorial {
+    font-family: '{{{ theme.font }}}', system-ui, sans-serif;
+}
+</style>
 </head>
 <body class="crevio-editorial" data-template="editorial">
 
@@ -61,6 +68,26 @@
   </ul>
 </section>
 {{/hasSkills}}
+
+{{#hasTestimonials}}
+<section class="ed-section" id="testimonials">
+  <h2 class="ed-section-title"><span>Praise</span></h2>
+  <div class="ed-testimonials">
+    {{#testimonials}}
+    <figure class="ed-testimonial">
+      <blockquote class="ed-quote">{{ quote }}</blockquote>
+      <figcaption class="ed-author">
+        {{#avatar}}<img class="ed-author-avatar" src="{{ avatar }}" alt="{{ name }}">{{/avatar}}
+        <div class="ed-author-info">
+          <div class="ed-author-name">{{ name }}</div>
+          {{#attribution}}<div class="ed-author-role">{{ attribution }}</div>{{/attribution}}
+        </div>
+      </figcaption>
+    </figure>
+    {{/testimonials}}
+  </div>
+</section>
+{{/hasTestimonials}}
 
 {{#hasSocial}}
 <section class="ed-section" id="contact">

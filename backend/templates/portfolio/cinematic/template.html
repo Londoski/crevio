@@ -19,6 +19,13 @@
 }
 {{{ css }}}
 </style>
+<style>
+/* User overrides — applied after template CSS to win specificity */
+{{#theme.background}}:root { --bg: {{{ theme.background }}}; }{{/theme.background}}
+body.crevio-portfolio, body.crevio-cinematic, body.crevio-editorial {
+    font-family: '{{{ theme.font }}}', system-ui, sans-serif;
+}
+</style>
 </head>
 <body class="crevio-cinematic" data-template="cinematic">
 
@@ -60,6 +67,26 @@
   </ul>
 </section>
 {{/hasSkills}}
+
+{{#hasTestimonials}}
+<section class="cm-section" id="testimonials">
+  <h2 class="cm-section-title">What Clients Say</h2>
+  <div class="cm-testimonials">
+    {{#testimonials}}
+    <figure class="cm-testimonial">
+      <blockquote class="cm-quote">{{ quote }}</blockquote>
+      <figcaption class="cm-author">
+        {{#avatar}}<img class="cm-author-avatar" src="{{ avatar }}" alt="{{ name }}">{{/avatar}}
+        <div>
+          <div class="cm-author-name">{{ name }}</div>
+          {{#attribution}}<div class="cm-author-role">{{ attribution }}</div>{{/attribution}}
+        </div>
+      </figcaption>
+    </figure>
+    {{/testimonials}}
+  </div>
+</section>
+{{/hasTestimonials}}
 
 {{#hasSocial}}
 <section class="cm-section" id="contact">

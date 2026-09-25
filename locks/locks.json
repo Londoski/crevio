@@ -2137,6 +2137,105 @@
       "patterns": [
         "social_display"
       ]
+    },
+    {
+      "id": "phase-4-appearance-minimal",
+      "desc": "Minimal template honors user font + background",
+      "type": "fileContains",
+      "file": "backend/templates/portfolio/minimal/template.html",
+      "patterns": [
+        "User overrides",
+        "theme.font",
+        "theme.background"
+      ]
+    },
+    {
+      "id": "phase-4-appearance-cinematic",
+      "desc": "Cinematic template honors user font + background",
+      "type": "fileContains",
+      "file": "backend/templates/portfolio/cinematic/template.html",
+      "patterns": [
+        "User overrides",
+        "theme.font",
+        "theme.background"
+      ]
+    },
+    {
+      "id": "phase-4-appearance-editorial",
+      "desc": "Editorial template honors user font + background",
+      "type": "fileContains",
+      "file": "backend/templates/portfolio/editorial/template.html",
+      "patterns": [
+        "User overrides",
+        "theme.font",
+        "theme.background"
+      ]
+    },
+    {
+      "id": "phase-4-dev-cache-bypass",
+      "desc": "Render controller skips cache in dev (NODE_ENV !== production)",
+      "type": "fileContains",
+      "file": "backend/controllers/portfolioRenderController.js",
+      "patterns": [
+        "NODE_ENV === \"production\"",
+        "no-store"
+      ]
+    },
+    {
+      "id": "phase-5-testimonials-table",
+      "desc": "testimonials table exists with all columns",
+      "type": "sqliteTable",
+      "table": "testimonials"
+    },
+    {
+      "id": "phase-5-testimonials-route",
+      "desc": "Server mounts /api/testimonials",
+      "type": "fileContains",
+      "file": "backend/server.js",
+      "patterns": [
+        "testimonialRoutes",
+        "/api/testimonials"
+      ]
+    },
+    {
+      "id": "phase-5-testimonials-payload",
+      "desc": "Payload exposes testimonials + hasTestimonials",
+      "type": "fileContains",
+      "file": "backend/templates/portfolio/_payload.js",
+      "patterns": [
+        "buildTestimonials",
+        "hasTestimonials"
+      ]
+    },
+    {
+      "id": "phase-5-testimonials-minimal",
+      "desc": "Minimal template renders testimonials",
+      "type": "fileContains",
+      "file": "backend/templates/portfolio/minimal/template.html",
+      "patterns": [
+        "hasTestimonials",
+        "pf-testimonial"
+      ]
+    },
+    {
+      "id": "phase-5-testimonials-cinematic",
+      "desc": "Cinematic template renders testimonials",
+      "type": "fileContains",
+      "file": "backend/templates/portfolio/cinematic/template.html",
+      "patterns": [
+        "hasTestimonials",
+        "cm-testimonial"
+      ]
+    },
+    {
+      "id": "phase-5-testimonials-editorial",
+      "desc": "Editorial template renders testimonials",
+      "type": "fileContains",
+      "file": "backend/templates/portfolio/editorial/template.html",
+      "patterns": [
+        "hasTestimonials",
+        "ed-testimonial"
+      ]
     }
   ]
 }
