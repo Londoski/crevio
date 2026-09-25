@@ -1987,6 +1987,33 @@
         "portfolioRenderController",
         "renderPublicPortfolio"
       ]
+    },
+    {
+      "id": "portfolio-page-uses-crevio-confirm",
+      "desc": "Portfolio picker page loads crevio-confirm.js and uses crevioConfirm (no native confirm)",
+      "type": "fileContains",
+      "file": "dashboard/js/portfolio.js",
+      "patterns": [
+        "window.crevioConfirm"
+      ]
+    },
+    {
+      "id": "portfolio-html-loads-crevio-confirm",
+      "desc": "Portfolio picker page includes the shared crevio-confirm.js script tag",
+      "type": "fileContains",
+      "file": "dashboard/pages/portfolio.html",
+      "patterns": [
+        "crevio-confirm.js"
+      ]
+    },
+    {
+      "id": "slug-preserves-underscore",
+      "desc": "Slug generator preserves underscores so joseph_test stays joseph_test",
+      "type": "fileContains",
+      "file": "backend/controllers/portfolioController.js",
+      "patterns": [
+        "[^a-z0-9_-]"
+      ]
     }
   ]
 }

@@ -222,7 +222,7 @@ document.addEventListener("DOMContentLoaded", function () {
             ? "Unpublish your portfolio? Visitors won't see it."
             : "Publish your portfolio? It will be visible to everyone.";
 
-        if (!confirm(confirmMsg)) return;
+        if (!(await window.crevioConfirm(confirmMsg, { title: isPublished ? "Unpublish portfolio" : "Publish portfolio", confirmText: isPublished ? "Unpublish" : "Publish" }))) return;
 
         try {
             const res  = await window.apiFetch("/api/portfolio/publish", {
@@ -248,8 +248,8 @@ document.addEventListener("DOMContentLoaded", function () {
     // =========================================================
     // RESET
     // =========================================================
-    $("resetBtn")?.addEventListener("click", () => {
-        if (!confirm("Reset all portfolio settings to defaults?")) return;
+    $("resetBtn")?.addEventListener("click", async () => {
+        const ok = await window.crevioConfirm("Reset all portfolio settings to defaults?", { title: "Reset portfolio", confirmText: "Reset" }); if (!ok) return;
 
         $("title").value = "";
         $("tagline").value = "";

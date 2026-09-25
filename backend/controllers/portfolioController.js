@@ -63,7 +63,7 @@ exports.getConfig = (req, res) => {
 
         const config = {
             user_id: req.user.id,
-            slug: (user?.username || "user").toLowerCase().replace(/[^a-z0-9-]/g, ""),
+            slug: (user?.username || "user").toLowerCase().replace(/[^a-z0-9_-]/g, ""),
             title: theme.title,
             tagline: theme.tagline,
             meta_description: theme.meta_description,
