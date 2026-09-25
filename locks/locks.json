@@ -2080,6 +2080,33 @@
         "_registry",
         "syncAll"
       ]
+    },
+    {
+      "id": "phase-2-css-raw-output",
+      "desc": "Template engine renders CSS unescaped ({{{ css }}}) in all three templates",
+      "type": "fileContains",
+      "file": "backend/templates/portfolio/minimal/template.html",
+      "patterns": [
+        "{{{ css }}}"
+      ]
+    },
+    {
+      "id": "phase-2-cinematic-css-injected",
+      "desc": "Cinematic template injects its stylesheet via raw output",
+      "type": "fileContains",
+      "file": "backend/templates/portfolio/cinematic/template.html",
+      "patterns": [
+        "{{{ css }}}"
+      ]
+    },
+    {
+      "id": "phase-2-editorial-css-injected",
+      "desc": "Editorial template injects its stylesheet via raw output",
+      "type": "fileContains",
+      "file": "backend/templates/portfolio/editorial/template.html",
+      "patterns": [
+        "{{{ css }}}"
+      ]
     }
   ]
 }
