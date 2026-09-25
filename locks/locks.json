@@ -147,7 +147,7 @@
       "id": "server-botRoutes-mounted",
       "desc": "server.js mounts /api/bot",
       "type": "fileContains",
-      "file": "server.js",
+      "file": "backend/server.js",
       "patterns": [
         "botRoutes",
         "app.use(\"/api/bot\""
@@ -1868,6 +1868,124 @@
       "file": "backend/controllers/portfolioController.js",
       "patterns": [
         "engine.invalidate"
+      ]
+    },
+    {
+      "id": "phase-1d-entitlement-tiers",
+      "desc": "Phase 1D - entitlementService exposes TEMPLATE_TIERS + canUseTemplate + planForTemplate",
+      "type": "fileContains",
+      "file": "backend/services/entitlementService.js",
+      "patterns": [
+        "TEMPLATE_TIERS",
+        "templatesForPlan",
+        "planForTemplate",
+        "canUseTemplate"
+      ]
+    },
+    {
+      "id": "phase-1d-getTemplates-locked-flags",
+      "desc": "Phase 1D - getTemplates stamps locked + required_plan on every template",
+      "type": "fileContains",
+      "file": "backend/controllers/portfolioController.js",
+      "patterns": [
+        "required_plan",
+        "canUseTemplate",
+        "locked:"
+      ]
+    },
+    {
+      "id": "phase-1d-saveConfig-plan-gate",
+      "desc": "Phase 1D - saveConfig rejects template changes the user's plan does not unlock",
+      "type": "fileContains",
+      "file": "backend/controllers/portfolioController.js",
+      "patterns": [
+        "Phase 1D",
+        "requires the",
+        "required_plan"
+      ]
+    },
+    {
+      "id": "phase-1d-picker-locked-render",
+      "desc": "Phase 1D - picker renders locked cards with data-locked + lock-overlay + toast guard",
+      "type": "fileContains",
+      "file": "dashboard/js/portfolio.js",
+      "patterns": [
+        "data-locked",
+        "lock-overlay",
+        "requires the"
+      ]
+    },
+    {
+      "id": "phase-1d-picker-locked-css",
+      "desc": "Phase 1D - locked card CSS present in picker page",
+      "type": "fileContains",
+      "file": "dashboard/pages/portfolio.html",
+      "patterns": [
+        ".template-card.locked",
+        ".lock-overlay"
+      ]
+    },
+    {
+      "id": "phase-1e-render-plan-fallback",
+      "desc": "Phase 1E - render controller falls back to minimal when owner's plan no longer unlocks stored template",
+      "type": "fileContains",
+      "file": "backend/controllers/portfolioRenderController.js",
+      "patterns": [
+        "entitlementService",
+        "canUseTemplate",
+        "FALLBACK_TEMPLATE",
+        "does not unlock template"
+      ]
+    },
+    {
+      "id": "route-drift-projectMediaRoutes",
+      "desc": "projectMediaRoutes uses linkMedia/unlinkMedia (not stale addProjectMedia/removeProjectMedia)",
+      "type": "fileContains",
+      "file": "backend/routes/projectMediaRoutes.js",
+      "patterns": [
+        "linkMedia",
+        "unlinkMedia"
+      ]
+    },
+    {
+      "id": "route-drift-mediaLibraryRoutes",
+      "desc": "mediaLibraryRoutes only wires controller exports that actually exist",
+      "type": "fileContains",
+      "file": "backend/routes/mediaLibraryRoutes.js",
+      "patterns": [
+        "getMedia",
+        "uploadMedia",
+        "deleteMedia"
+      ]
+    },
+    {
+      "id": "route-drift-publicProjectRoutes",
+      "desc": "publicProjectRoutes uses getByUsername/getOne (not stale getPublicProjects/getPublicProjectById)",
+      "type": "fileContains",
+      "file": "backend/routes/publicProjectRoutes.js",
+      "patterns": [
+        "getByUsername",
+        "getOne"
+      ]
+    },
+    {
+      "id": "route-drift-publicSkillRoutes",
+      "desc": "publicSkillRoutes uses getByUsername (not stale getPublicSkills)",
+      "type": "fileContains",
+      "file": "backend/routes/publicSkillRoutes.js",
+      "patterns": [
+        "getByUsername"
+      ]
+    },
+    {
+      "id": "server-p-slug-ssr-mount",
+      "desc": "backend/server.js mounts /p/:slug via portfolioRenderController with legacy HTML fallback",
+      "type": "fileContains",
+      "file": "backend/server.js",
+      "patterns": [
+        "/p/:slug",
+        "portfolioRenderController",
+        "renderPublicPortfolio"
       ]
     }
   ]
