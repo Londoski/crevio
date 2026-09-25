@@ -202,3 +202,30 @@ html.crevio-js-enabled [data-fade].crevio-fade-visible {
         transition: none !important;
     }
 }
+
+/* ---------- Hover polish (Business only) ---------- */
+.pf-card[data-hover] .pf-card-media { overflow: hidden; }
+.pf-card[data-hover] .pf-card-media img {
+    transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.pf-card[data-hover]:hover .pf-card-media img {
+    transform: scale(1.06);
+}
+.pf-card[data-hover]:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px -12px rgba(15, 23, 42, 0.18);
+}
+.pf-testimonial[data-hover] {
+    transition: transform 0.35s ease, box-shadow 0.35s ease;
+}
+.pf-testimonial[data-hover]:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 28px -14px rgba(15, 23, 42, 0.16);
+}
+@media (prefers-reduced-motion: reduce) {
+    .pf-card[data-hover] .pf-card-media img,
+    .pf-card[data-hover],
+    .pf-testimonial[data-hover] { transition: none !important; }
+    .pf-card[data-hover]:hover .pf-card-media img { transform: none; }
+    .pf-card[data-hover]:hover, .pf-testimonial[data-hover]:hover { transform: none; }
+}

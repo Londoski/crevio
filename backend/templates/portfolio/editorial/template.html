@@ -47,7 +47,7 @@ body.crevio-portfolio, body.crevio-cinematic, body.crevio-editorial {
   <h2 class="ed-section-title"><span>Selected Work</span></h2>
   <div class="ed-grid">
     {{#projects}}
-    <article class="ed-card">
+    <article class="ed-card"{{#effects.hover}} data-hover{{/effects.hover}}>
       {{#thumbnail}}<div class="ed-thumb"><img src="{{ thumbnail }}" alt="{{ title }}"></div>{{/thumbnail}}
       <div class="ed-card-body">
         {{#category}}<span class="ed-tag">{{ category }}</span>{{/category}}
@@ -74,7 +74,7 @@ body.crevio-portfolio, body.crevio-cinematic, body.crevio-editorial {
   <h2 class="ed-section-title"><span>{{#is_testimonials_page}}All Praise{{/is_testimonials_page}}{{#is_portfolio_page}}Praise{{/is_portfolio_page}}</span></h2>
   <div class="ed-testimonials">
     {{#testimonials}}
-    <figure class="ed-testimonial">
+    <figure class="ed-testimonial"{{#effects.hover}} data-hover{{/effects.hover}}>
       <blockquote class="ed-quote">{{ quote }}</blockquote>
       <figcaption class="ed-author">
         {{#has_avatar}}<img class="ed-author-avatar" src="{{ avatar }}" alt="{{ name }}">{{/has_avatar}}

@@ -93,3 +93,29 @@ html.crevio-js-enabled [data-fade].crevio-fade-visible {
         transition: none !important;
     }
 }
+
+/* ---------- Hover polish (Business only) ---------- */
+.ed-card[data-hover] .ed-thumb { overflow: hidden; }
+.ed-card[data-hover] .ed-thumb img {
+    transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.ed-card[data-hover]:hover .ed-thumb img {
+    transform: scale(1.04);
+}
+.ed-card[data-hover]:hover .ed-title {
+    color: var(--accent);
+    transition: color 0.25s ease;
+}
+.ed-testimonial[data-hover] {
+    transition: transform 0.4s ease;
+}
+.ed-testimonial[data-hover]:hover {
+    transform: scale(1.015);
+}
+@media (prefers-reduced-motion: reduce) {
+    .ed-card[data-hover] .ed-thumb img,
+    .ed-card[data-hover]:hover .ed-title,
+    .ed-testimonial[data-hover] { transition: none !important; }
+    .ed-card[data-hover]:hover .ed-thumb img { transform: none; }
+    .ed-testimonial[data-hover]:hover { transform: none; }
+}

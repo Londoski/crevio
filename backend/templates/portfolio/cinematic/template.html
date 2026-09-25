@@ -46,7 +46,7 @@ body.crevio-portfolio, body.crevio-cinematic, body.crevio-editorial {
   <h2 class="cm-section-title">Selected Work</h2>
   <div class="cm-rows">
     {{#projects}}
-    <article class="cm-row">
+    <article class="cm-row"{{#effects.hover}} data-hover{{/effects.hover}}>
       {{#thumbnail}}<div class="cm-thumb"><img src="{{ thumbnail }}" alt="{{ title }}"></div>{{/thumbnail}}
       <div class="cm-row-body">
         {{#category}}<span class="cm-tag">{{ category }}</span>{{/category}}
@@ -73,7 +73,7 @@ body.crevio-portfolio, body.crevio-cinematic, body.crevio-editorial {
   <h2 class="cm-section-title">{{#is_testimonials_page}}All Client Testimonials{{/is_testimonials_page}}{{#is_portfolio_page}}What Clients Say{{/is_portfolio_page}}</h2>
   <div class="cm-testimonials">
     {{#testimonials}}
-    <figure class="cm-testimonial">
+    <figure class="cm-testimonial"{{#effects.hover}} data-hover{{/effects.hover}}>
       <blockquote class="cm-quote">{{ quote }}</blockquote>
       <figcaption class="cm-author">
         {{#has_avatar}}<img class="cm-author-avatar" src="{{ avatar }}" alt="{{ name }}">{{/has_avatar}}

@@ -75,6 +75,14 @@ document.addEventListener("DOMContentLoaded", function () {
             const lockedMsg = $("effectsLocked");
             if (lockedMsg) lockedMsg.style.display = isBusiness ? "none" : "flex";
         }
+        const effectHoverEl = $("effectHover");
+        if (effectHoverEl) {
+            const isBusiness = (config.user_plan || "free") === "business";
+            effectHoverEl.disabled = !isBusiness;
+            effectHoverEl.checked = isBusiness && !!(config.effects && config.effects.hover);
+            const row = $("effectHoverRow");
+            if (row) row.classList.toggle("locked", !isBusiness);
+        }
 
         // Preview button — link to public portfolio
         const previewBtn = $("previewBtn");
@@ -194,7 +202,10 @@ document.addEventListener("DOMContentLoaded", function () {
             effects:          (function () {
                 const el = $("effectFade");
                 const isBusiness = (config.user_plan || "free") === "business";
-                return (el && isBusiness) ? { fade: !!el.checked } : (config.effects || {});
+                return (isBusiness) ? {
+                    fade:  !!($("effectFade")  && $("effectFade").checked),
+                    hover: !!($("effectHover") && $("effectHover").checked)
+                } : (config.effects || {});
             })()
         };
 

@@ -2500,6 +2500,93 @@
         "effects.fade",
         "isBusiness"
       ]
+    },
+    {
+      "id": "phase-10-hover-payload",
+      "desc": "Payload exposes effects.hover (Business + toggle)",
+      "type": "fileContains",
+      "file": "backend/templates/portfolio/_payload.js",
+      "patterns": [
+        "const hover",
+        "hover: hover"
+      ]
+    },
+    {
+      "id": "phase-10-hover-minimal",
+      "desc": "Minimal template tags cards with data-hover and styles zoom",
+      "type": "fileContains",
+      "file": "backend/templates/portfolio/minimal/template.html",
+      "patterns": [
+        "data-hover"
+      ]
+    },
+    {
+      "id": "phase-10-hover-css-minimal",
+      "desc": "Minimal hover polish CSS",
+      "type": "fileContains",
+      "file": "backend/templates/portfolio/minimal/template.css",
+      "patterns": [
+        "Hover polish",
+        "data-hover"
+      ]
+    },
+    {
+      "id": "phase-10-hover-cinematic",
+      "desc": "Cinematic template tags rows with data-hover",
+      "type": "fileContains",
+      "file": "backend/templates/portfolio/cinematic/template.html",
+      "patterns": [
+        "data-hover"
+      ]
+    },
+    {
+      "id": "phase-10-hover-css-cinematic",
+      "desc": "Cinematic hover polish CSS",
+      "type": "fileContains",
+      "file": "backend/templates/portfolio/cinematic/template.css",
+      "patterns": [
+        "Hover polish",
+        "data-hover"
+      ]
+    },
+    {
+      "id": "phase-10-hover-editorial",
+      "desc": "Editorial template tags cards with data-hover",
+      "type": "fileContains",
+      "file": "backend/templates/portfolio/editorial/template.html",
+      "patterns": [
+        "data-hover"
+      ]
+    },
+    {
+      "id": "phase-10-hover-css-editorial",
+      "desc": "Editorial hover polish CSS",
+      "type": "fileContains",
+      "file": "backend/templates/portfolio/editorial/template.css",
+      "patterns": [
+        "Hover polish",
+        "data-hover"
+      ]
+    },
+    {
+      "id": "phase-10-hover-picker",
+      "desc": "Picker Effects card has hover row + JS hydration/save",
+      "type": "fileContains",
+      "file": "dashboard/pages/portfolio.html",
+      "patterns": [
+        "effectHover",
+        "Card hover polish"
+      ]
+    },
+    {
+      "id": "phase-10-hover-picker-js",
+      "desc": "Picker JS hydrates + saves hover",
+      "type": "fileContains",
+      "file": "dashboard/js/portfolio.js",
+      "patterns": [
+        "effectHover",
+        "hover:"
+      ]
     }
   ]
 }
