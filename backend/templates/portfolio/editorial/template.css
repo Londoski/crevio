@@ -43,3 +43,9 @@
   .ed-title { font-size: 22px; }
   .ed-section-title { font-size: 12px; }
 }
+
+/* ---------- Social display mode ---------- */
+.ed-social-item { display: inline-flex; }
+.ed-social-item a { display: inline-flex; align-items: center; gap: 10px; }
+.ed-social-icon { display: inline-flex; align-items: center; }
+.ed-social-icon svg { width: 20px; height: 20px; }

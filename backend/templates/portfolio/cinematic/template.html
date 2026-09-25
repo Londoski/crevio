@@ -65,7 +65,9 @@
 <section class="cm-section" id="contact">
   <h2 class="cm-section-title">Get In Touch</h2>
   <ul class="cm-social">
-    {{#social}}<li><a href="{{ url }}" target="_blank" rel="noopener">{{ platform }}</a></li>{{/social}}
+    {{#social}}
+    <li class="cm-social-item"><a href="{{ url }}" target="_blank" rel="noopener">{{#social_show_icon}}<span class="cm-social-icon">{{{ icon }}}</span>{{/social_show_icon}}{{#social_show_text}}<span class="cm-social-name">{{ platform }}</span>{{/social_show_text}}</a></li>
+    {{/social}}
   </ul>
 </section>
 {{/hasSocial}}

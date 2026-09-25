@@ -80,7 +80,9 @@
 <section class="pf-section" id="contact">
   <h2 class="pf-section-title">Get In Touch</h2>
   <ul class="pf-social">
-    {{#social}}<li><a href="{{ url }}" target="_blank" rel="noopener">{{ platform }}</a></li>{{/social}}
+    {{#social}}
+    <li class="pf-social-item"><a href="{{ url }}" target="_blank" rel="noopener">{{#social_show_icon}}<span class="pf-social-icon">{{{ icon }}}</span>{{/social_show_icon}}{{#social_show_text}}<span class="pf-social-name">{{ platform }}</span>{{/social_show_text}}</a></li>
+    {{/social}}
   </ul>
 </section>
 {{/hasSocial}}

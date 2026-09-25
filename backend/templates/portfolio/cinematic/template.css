@@ -47,3 +47,9 @@
   .cm-section { padding: 56px 20px; }
   .cm-rows { gap: 48px; }
 }
+
+/* ---------- Social display mode ---------- */
+.cm-social-item { display: inline-flex; }
+.cm-social-item a { display: inline-flex; align-items: center; gap: 10px; }
+.cm-social-icon { display: inline-flex; align-items: center; }
+.cm-social-icon svg { width: 20px; height: 20px; }

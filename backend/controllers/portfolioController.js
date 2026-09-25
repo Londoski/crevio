@@ -74,7 +74,8 @@ exports.getConfig = (req, res) => {
             font_family: theme.font_family,
             template_id: row?.template_id || null,
             status: row?.published ? "published" : "draft",
-            last_published_at: row?.last_published_at || null
+            last_published_at: row?.last_published_at || null,
+            social_display: theme.social_display || "text"
         };
 
         res.json({ success: true, config });
@@ -113,7 +114,8 @@ exports.saveConfig = (req, res) => {
             sections:         { ...currentTheme.sections, ...sectionsObj },
             primary_color:    b.primary_color    ?? currentTheme.primary_color,
             background_color: b.background_color ?? currentTheme.background_color,
-            font_family:      b.font_family      ?? currentTheme.font_family
+            font_family:      b.font_family      ?? currentTheme.font_family,
+            social_display:   b.social_display   ?? currentTheme.social_display ?? "text"
         };
 
         // ---- Phase 1D: plan gate ----

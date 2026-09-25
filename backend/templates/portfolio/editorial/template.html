@@ -66,7 +66,9 @@
 <section class="ed-section" id="contact">
   <h2 class="ed-section-title"><span>Get In Touch</span></h2>
   <ul class="ed-social">
-    {{#social}}<li><a href="{{ url }}" target="_blank" rel="noopener">{{ platform }}</a></li>{{/social}}
+    {{#social}}
+    <li class="ed-social-item"><a href="{{ url }}" target="_blank" rel="noopener">{{#social_show_icon}}<span class="ed-social-icon">{{{ icon }}}</span>{{/social_show_icon}}{{#social_show_text}}<span class="ed-social-name">{{ platform }}</span>{{/social_show_text}}</a></li>
+    {{/social}}
   </ul>
 </section>
 {{/hasSocial}}

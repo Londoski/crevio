@@ -2107,6 +2107,36 @@
       "patterns": [
         "{{{ css }}}"
       ]
+    },
+    {
+      "id": "phase-3-social-display-ui",
+      "desc": "Picker UI has radio group for social display mode",
+      "type": "fileContains",
+      "file": "dashboard/pages/portfolio.html",
+      "patterns": [
+        "social_display",
+        "Names only",
+        "Icons only"
+      ]
+    },
+    {
+      "id": "phase-3-social-display-js",
+      "desc": "Picker JS hydrates + saves social_display",
+      "type": "fileContains",
+      "file": "dashboard/js/portfolio.js",
+      "patterns": [
+        "social_display",
+        "socialDisplay"
+      ]
+    },
+    {
+      "id": "phase-3-social-display-server",
+      "desc": "Controller round-trips social_display in getConfig + saveConfig",
+      "type": "fileContains",
+      "file": "backend/controllers/portfolioController.js",
+      "patterns": [
+        "social_display"
+      ]
     }
   ]
 }

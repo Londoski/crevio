@@ -156,3 +156,9 @@
     .pf-hero-bio { font-size: 15px; }
     .pf-section { padding-top: 40px; padding-bottom: 40px; }
 }
+
+/* ---------- Social display mode ---------- */
+.pf-social-item { display: inline-flex; }
+.pf-social-item a { display: inline-flex; align-items: center; gap: 8px; }
+.pf-social-icon { display: inline-flex; align-items: center; }
+.pf-social-icon svg { width: 18px; height: 18px; }

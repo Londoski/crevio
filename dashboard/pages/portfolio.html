@@ -79,6 +79,14 @@
         .form-group .hint { font-size:12px; color:var(--text-muted); margin-top:4px; }
         .form-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
 
+        /* Social display mode */
+        .social-display-row { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--border-color); }
+        .social-display-label { display: block; font-size: 13px; color: var(--text-secondary); font-weight: 500; margin-bottom: 10px; }
+        .social-display-options { display: flex; gap: 8px; flex-wrap: wrap; }
+        .social-display-options label { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border: 1px solid var(--border-color); border-radius: 10px; font-size: 13px; font-weight: 500; cursor: pointer; color: var(--text-secondary); transition: all 0.15s; }
+        .social-display-options label:hover { border-color: var(--accent); color: var(--text-primary); }
+        .social-display-options input[type="radio"] { accent-color: var(--accent); }
+
         /* Template grid */
         .template-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(180px, 1fr)); gap:14px; }
         .template-card {
@@ -308,6 +316,15 @@
                     <div><h4>Social Links</h4><p>Your social media profiles</p></div>
                 </div>
                 <label class="toggle"><input type="checkbox" data-section="social" checked><span class="slider"></span></label>
+            </div>
+
+            <div class="social-display-row">
+                <label class="social-display-label">Display social links as</label>
+                <div class="social-display-options">
+                    <label><input type="radio" name="social_display" value="text"> Names only</label>
+                    <label><input type="radio" name="social_display" value="icon"> Icons only</label>
+                    <label><input type="radio" name="social_display" value="both"> Icons + names</label>
+                </div>
             </div>
         </div>
 

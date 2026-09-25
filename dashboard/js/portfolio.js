@@ -59,6 +59,12 @@ document.addEventListener("DOMContentLoaded", function () {
             el.checked = sections[el.dataset.section] !== false;
         });
 
+        // Social display mode
+        const socialDisplay = config.social_display || "text";
+        document.querySelectorAll('input[name="social_display"]').forEach(function (r) {
+            r.checked = r.value === socialDisplay;
+        });
+
         // Preview button — link to public portfolio
         const previewBtn = $("previewBtn");
         if (previewBtn) previewBtn.href = `/p/${slug}`;
@@ -162,6 +168,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         const activeTemplate = document.querySelector("[data-template].active")?.dataset.template
                               || config.template || "minimal";
+        const socialDisplay = document.querySelector('input[name="social_display"]:checked')?.value || "text";
 
         const payload = {
             title:            $("title").value.trim(),
@@ -171,7 +178,8 @@ document.addEventListener("DOMContentLoaded", function () {
             sections:         JSON.stringify(sections),
             primary_color:    $("primary_color").value,
             background_color: $("background_color").value,
-            font_family:      $("font_family").value
+            font_family:      $("font_family").value,
+            social_display:   socialDisplay
         };
 
         const saveBtn = $("saveBtn");
