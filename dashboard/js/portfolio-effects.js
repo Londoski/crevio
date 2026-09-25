@@ -4,12 +4,16 @@
 // =========================================================
 // Runs on every rendered public portfolio page.
 // Effects are enabled server-side (payload) via data attributes
-// baked into the HTML. This script only *animates* whatever the
+// baked into the HTML. This script only animates whatever the
 // server decided to mark.
 //
 // Progressive enhancement: if JS fails to load, content stays
 // fully visible because we only hide [data-fade] when we can
-// run the observer (see js-enabled guard in CSS).
+// run the observer (see js-enabled guard in the template CSS).
+//
+// Behavior: elements fade in every time they enter the viewport.
+// When they fully leave, the visible class is removed so the fade
+// replays on re-entry. Reduced-motion users get static content.
 // =========================================================
 (function () {
     if (window.__crevioEffectsInstalled) return;
@@ -20,44 +24,36 @@
     // fully visible by default.
     document.documentElement.classList.add("crevio-js-enabled");
 
-    // Respect users who've set prefers-reduced-motion
     var reduceMotion = window.matchMedia
         && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    // ---------- Fade-in on scroll ----------
     function setupFadeIn() {
         var targets = document.querySelectorAll("[data-fade]");
         if (!targets.length) return;
 
-        // Reduced motion OR no IntersectionObserver: reveal immediately
+        // Reduced motion OR no IntersectionObserver support:
+        // reveal everything immediately, no animation.
         if (reduceMotion || !("IntersectionObserver" in window)) {
-            targets.forEach(function (el) { el.classList.add("crevio-fade-visible"); });
+            targets.forEach(function (el) {
+                el.classList.add("crevio-fade-visible");
+            });
             return;
         }
 
+        // Toggle visible class based on intersection.
+        //   In viewport  → add class    (fade up)
+        //   Out of view  → remove class (reset so it replays next time)
         var io = new IntersectionObserver(function (entries) {
             entries.forEach(function (entry) {
                 if (entry.isIntersecting) {
                     entry.target.classList.add("crevio-fade-visible");
-                    io.unobserve(entry.target);
+                } else {
+                    entry.target.classList.remove("crevio-fade-visible");
                 }
             });
-        }, { rootMargin: "0px 0px -60px 0px", threshold: 0.05 });
+        }, { threshold: 0.05 });
 
         targets.forEach(function (el) { io.observe(el); });
-
-        // Safety net: reveal anything still hidden after 3 seconds.
-        // Guards against a misbehaving observer, a parent with
-        // `display:none`, or an element that never scrolls into view
-        // (e.g. very short pages).
-        setTimeout(function () {
-            document.querySelectorAll("[data-fade]:not(.crevio-fade-visible)").forEach(function (el) {
-                var rect = el.getBoundingClientRect();
-                if (rect.top < window.innerHeight) {
-                    el.classList.add("crevio-fade-visible");
-                }
-            });
-        }, 3000);
     }
 
     if (document.readyState === "loading") {
