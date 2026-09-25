@@ -1,5 +1,6 @@
 // =========================================================
 // CREVIO — MEDIA LIBRARY ROUTES
+// File: backend/routes/mediaLibraryRoutes.js
 // =========================================================
 
 const express = require("express");
@@ -9,11 +10,20 @@ const controller = require("../controllers/mediaLibraryController");
 
 // ---- Main library endpoints ----
 router.get("/", authMiddleware, controller.getMedia);
-router.get("/:id", authMiddleware, controller.getMediaById);
 router.post("/upload", authMiddleware, controller.uploadMedia);
-router.put("/:id", authMiddleware, controller.updateMedia);
 router.delete("/:id", authMiddleware, controller.deleteMedia);
-router.delete("/bulk", authMiddleware, controller.bulkDeleteMedia);
-router.put("/bulk/assign", authMiddleware, controller.bulkAssignMedia);
+
+// ---- Not yet wired (controller has no matching export) ----
+// TODO: implement getMediaById in mediaController.js, then re-enable:
+// router.get("/:id", authMiddleware, controller.getMediaById);
+//
+// TODO: implement updateMedia in mediaController.js, then re-enable:
+// router.put("/:id", authMiddleware, controller.updateMedia);
+//
+// TODO: implement bulkDeleteMedia in mediaController.js, then re-enable:
+// router.delete("/bulk", authMiddleware, controller.bulkDeleteMedia);
+//
+// TODO: implement bulkAssignMedia in mediaController.js, then re-enable:
+// router.put("/bulk/assign", authMiddleware, controller.bulkAssignMedia);
 
 module.exports = router;

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
@@ -95,11 +95,23 @@
             display:flex; align-items:center; justify-content:center;
             color:var(--accent);
             overflow: hidden;
+            position: relative;
         }
         .template-preview img { width:100%; height:100%; object-fit:cover; }
         .template-preview .icon { width:32px; height:32px; }
         .template-card h3 { font-size:13px; font-weight:600; margin-bottom:2px; }
         .template-card p { font-size:11px; color:var(--text-muted); }
+
+        /* Phase 1D — locked template cards */
+        .template-card.locked { opacity:0.55; cursor:not-allowed; position:relative; }
+        .template-card.locked:hover { border-color:var(--border-color); transform:none; }
+        .template-card.locked .lock-overlay {
+            position:absolute; inset:0; background:rgba(0,0,0,0.35);
+            display:flex; align-items:center; justify-content:center;
+            border-radius:inherit;
+        }
+        .template-card.locked .lock-overlay .icon { color:#fff; width:26px; height:26px; }
+        .template-card.locked h3 { color:var(--text-muted); }
 
         .section-toggle {
             display:flex; align-items:center; justify-content:space-between;

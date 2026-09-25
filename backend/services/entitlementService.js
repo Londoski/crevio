@@ -122,6 +122,41 @@ function getAllPlansPublic() {
     });
 }
 
+// =========================================================
+// TEMPLATE TIERS (Phase 1D)
+// Single source of truth for which plan unlocks which template.
+// To move a template between tiers, edit one line here.
+// =========================================================
+const TEMPLATE_TIERS = {
+    minimal:   "free",
+    cinematic: "pro",
+    editorial: "business"
+};
+
+const PLAN_RANK = { free: 0, pro: 1, business: 2 };
+
+function templatesForPlan(plan) {
+    const rank = PLAN_RANK[String(plan || "free").toLowerCase()];
+    const safeRank = (rank === undefined) ? 0 : rank;
+    return Object.keys(TEMPLATE_TIERS).filter(function (slug) {
+        const need = PLAN_RANK[TEMPLATE_TIERS[slug]];
+        const safeNeed = (need === undefined) ? 99 : need;
+        return safeNeed <= safeRank;
+    });
+}
+
+function planForTemplate(slug) {
+    return TEMPLATE_TIERS[slug] || "business";
+}
+
+function canUseTemplate(plan, slug) {
+    const rank = PLAN_RANK[String(plan || "free").toLowerCase()];
+    const safeRank = (rank === undefined) ? 0 : rank;
+    const need = PLAN_RANK[TEMPLATE_TIERS[slug]];
+    const safeNeed = (need === undefined) ? 99 : need;
+    return safeRank >= safeNeed;
+}
+
 module.exports = {
     getUserPlan,
     getPlanConfig,
@@ -133,6 +168,10 @@ module.exports = {
     isOverLimit,
     getEntitlements,
     getAllPlansPublic,
+    templatesForPlan,
+    planForTemplate,
+    canUseTemplate,
+    TEMPLATE_TIERS,
     UNLIMITED: PLANS.UNLIMITED,
     TECHNICAL_CAPS: PLANS.TECHNICAL_CAPS
 };

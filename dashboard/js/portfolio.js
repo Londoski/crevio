@@ -96,10 +96,12 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     // =========================================================
-    // RENDER TEMPLATES
+    // RENDER TEMPLATES  (Phase 1D — plan-gated)
     // =========================================================
     function renderTemplates() {
         const grid = $("templateGrid");
+        if (!grid) return;
+
         const activeTemplate = config.template || "minimal";
 
         if (!templates.length) {
@@ -107,22 +109,40 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
-        grid.innerHTML = templates.map(t => `
-            <div class="template-card ${t.slug === activeTemplate ? "active" : ""}" data-template="${t.slug}">
+        grid.innerHTML = templates.map(t => {
+            const locked   = !!t.locked;
+            const req      = t.required_plan ? String(t.required_plan) : "pro";
+            const reqLabel = req.charAt(0).toUpperCase() + req.slice(1);
+
+            return `
+            <div class="template-card ${t.slug === activeTemplate ? "active" : ""} ${locked ? "locked" : ""}"
+                 data-template="${escapeHtml(t.slug)}"
+                 ${locked ? `data-locked="true" data-required="${escapeHtml(req)}"` : ""}>
                 <div class="template-preview">
                     ${t.preview_image
                         ? `<img src="${escapeHtml(t.preview_image)}" alt="${escapeHtml(t.name)}">`
-                        : `<i data-lucide="layout" class="icon"></i>`}
+                        : `<i data-lucide="layout-template" class="icon"></i>`}
+                    ${locked ? `<div class="lock-overlay"><i data-lucide="lock" class="icon"></i></div>` : ""}
                 </div>
                 <h3>${escapeHtml(t.name)}</h3>
-                <p>${escapeHtml(t.description || "")}</p>
-            </div>
-        `).join("");
+                <p>${locked ? `Requires ${escapeHtml(reqLabel)}` : escapeHtml(t.category || t.description || "")}</p>
+            </div>`;
+        }).join("");
 
         if (typeof lucide !== "undefined") lucide.createIcons();
 
         grid.querySelectorAll("[data-template]").forEach(card => {
             card.addEventListener("click", () => {
+                if (card.dataset.locked === "true") {
+                    const need = card.dataset.required || "pro";
+                    showToast(
+                        "This template requires the " +
+                        need.charAt(0).toUpperCase() + need.slice(1) +
+                        " plan.",
+                        true
+                    );
+                    return;
+                }
                 grid.querySelectorAll("[data-template]").forEach(c => c.classList.remove("active"));
                 card.classList.add("active");
                 config.template = card.dataset.template;
@@ -135,7 +155,6 @@ document.addEventListener("DOMContentLoaded", function () {
     // SAVE
     // =========================================================
     async function saveConfig(silent = false) {
-        // Build sections object
         const sections = {};
         document.querySelectorAll("[data-section]").forEach(el => {
             sections[el.dataset.section] = el.checked;
@@ -172,7 +191,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
             if (data.success) {
                 if (!silent) showToast("Portfolio settings saved");
-                // Reload config to get fresh state
                 const refreshed = await window.apiFetch("/api/portfolio/config");
                 const refreshedData = await refreshed.json();
                 if (refreshedData.success) config = refreshedData.config;
@@ -199,7 +217,6 @@ document.addEventListener("DOMContentLoaded", function () {
     $("publishBtn")?.addEventListener("click", async () => {
         const badge = $("statusBadge");
         const isPublished = badge.classList.contains("published");
-        const action = isPublished ? "unpublish" : "publish";
 
         const confirmMsg = isPublished
             ? "Unpublish your portfolio? Visitors won't see it."
@@ -216,7 +233,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
             if (data.success) {
                 showToast(`Portfolio ${data.published ? "published" : "unpublished"}`);
-                // Reload config
                 const refreshed = await window.apiFetch("/api/portfolio/config");
                 const refreshedData = await refreshed.json();
                 if (refreshedData.success) config = refreshedData.config;
@@ -243,8 +259,8 @@ document.addEventListener("DOMContentLoaded", function () {
         $("font_family").value = "Inter";
 
         document.querySelectorAll("[data-template]").forEach(t => t.classList.remove("active"));
-        const firstTpl = document.querySelector("[data-template]");
-        if (firstTpl) firstTpl.classList.add("active");
+        const firstUnlocked = document.querySelector("[data-template]:not([data-locked])");
+        if (firstUnlocked) firstUnlocked.classList.add("active");
 
         document.querySelectorAll("[data-section]").forEach(el => el.checked = true);
 

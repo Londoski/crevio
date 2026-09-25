@@ -1,5 +1,6 @@
 // =========================================================
 // CREVIO — PROJECT MEDIA ROUTES
+// File: backend/routes/projectMediaRoutes.js
 // =========================================================
 
 const express = require("express");
@@ -12,13 +13,10 @@ const projectMediaController = require("../controllers/projectMediaController");
 // Get all media for a project
 router.get("/", authMiddleware, projectMediaController.getProjectMedia);
 
-// Add media to a project
-router.post("/", authMiddleware, projectMediaController.addProjectMedia);
+// Link existing media to a project
+router.post("/", authMiddleware, projectMediaController.linkMedia);
 
-// Remove media from a project
-router.delete("/:mediaId", authMiddleware, projectMediaController.removeProjectMedia);
-
-// Update media order / details within project
-router.put("/:mediaId", authMiddleware, projectMediaController.updateProjectMedia);
+// Unlink media from a project
+router.delete("/:mediaId", authMiddleware, projectMediaController.unlinkMedia);
 
 module.exports = router;

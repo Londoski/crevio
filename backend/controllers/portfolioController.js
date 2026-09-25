@@ -88,7 +88,7 @@ exports.getConfig = (req, res) => {
 // PUT /api/portfolio/config
 // =========================================================
 exports.saveConfig = (req, res) => {
-        try { engine.invalidate(); } catch (e) {}
+    try { engine.invalidate(); } catch (e) {}
     try {
         const b = req.body;
         const c = cols("portfolio_config");
@@ -115,6 +115,23 @@ exports.saveConfig = (req, res) => {
             background_color: b.background_color ?? currentTheme.background_color,
             font_family:      b.font_family      ?? currentTheme.font_family
         };
+
+        // ---- Phase 1D: plan gate ----
+        // Only fire when the user is *changing* to a different template.
+        // Users already stored on a locked template (grandfathered) can
+        // still update title, colors, etc. without being blocked.
+        if (b.template && b.template !== currentTheme.template) {
+            const userPlan = entitlementService.getUserPlan(req.user.id);
+            if (!entitlementService.canUseTemplate(userPlan, b.template)) {
+                const required = entitlementService.planForTemplate(b.template);
+                return res.status(403).json({
+                    success: false,
+                    message: `Template "${b.template}" requires the ${required} plan.`,
+                    required_plan: required
+                });
+            }
+        }
+        // ---- end Phase 1D plan gate ----
 
         const themeJson = JSON.stringify(theme);
 
@@ -180,7 +197,7 @@ exports.saveConfig = (req, res) => {
 // POST /api/portfolio/publish
 // =========================================================
 exports.publish = (req, res) => {
-        try { engine.invalidate(); } catch (e) {}
+    try { engine.invalidate(); } catch (e) {}
     try {
         const { publish } = req.body;
         const c = cols("portfolio_config");
@@ -241,9 +258,12 @@ exports.publish = (req, res) => {
 
 // =========================================================
 // GET /api/portfolio/templates — list available templates
+// Phase 1D: each row carries `locked` and `required_plan`
 // =========================================================
 exports.getTemplates = (req, res) => {
     try {
+        const plan = entitlementService.getUserPlan(req.user.id);
+
         let templates = [];
         try {
             templates = db.prepare(`
@@ -264,7 +284,16 @@ exports.getTemplates = (req, res) => {
             ];
         }
 
-        res.json({ success: true, templates });
+        const decorated = templates.map(function (t) {
+            const required = entitlementService.planForTemplate(t.slug);
+            const locked   = !entitlementService.canUseTemplate(plan, t.slug);
+            return Object.assign({}, t, {
+                locked: locked,
+                required_plan: required
+            });
+        });
+
+        res.json({ success: true, plan: plan, templates: decorated });
     } catch (err) {
         res.status(500).json({ success: false, message: "Failed", error: err.message });
     }
@@ -297,11 +326,11 @@ exports.getPublicPortfolio = (req, res) => {
         };
 
         const ownerPlanProjects = entitlementService.limitFor(user.id, "projects");
-                const projectCap = entitlementService.isUnlimited(ownerPlanProjects) ? 9999 : ownerPlanProjects;
-                const projects = safeAll("SELECT * FROM projects WHERE user_id = ? AND published = 1 ORDER BY created_at DESC LIMIT ?", user.id, projectCap);
+        const projectCap = entitlementService.isUnlimited(ownerPlanProjects) ? 9999 : ownerPlanProjects;
+        const projects = safeAll("SELECT * FROM projects WHERE user_id = ? AND published = 1 ORDER BY created_at DESC LIMIT ?", user.id, projectCap);
         const ownerPlanServices = entitlementService.limitFor(user.id, "services");
-                const serviceCap = entitlementService.isUnlimited(ownerPlanServices) ? 9999 : ownerPlanServices;
-                const services = safeAll("SELECT * FROM services WHERE user_id = ? AND status = 'published' LIMIT ?", user.id, serviceCap);
+        const serviceCap = entitlementService.isUnlimited(ownerPlanServices) ? 9999 : ownerPlanServices;
+        const services = safeAll("SELECT * FROM services WHERE user_id = ? AND status = 'published' LIMIT ?", user.id, serviceCap);
         const socials  = safeAll("SELECT * FROM social_links WHERE user_id = ? AND is_visible = 1 ORDER BY display_order LIMIT 20", user.id);
 
         const normalizedConfig = {
