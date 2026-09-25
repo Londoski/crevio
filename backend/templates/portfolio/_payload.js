@@ -295,10 +295,12 @@ function build(userId, opts) {
         const userFx = (ts && ts.effects) || {};
         const fade = isBusiness && userFx.fade === true;
         const hover = isBusiness && userFx.hover === true;
+        const shapes = isBusiness && userFx.shapes === true;
         return {
             fade: fade,
         hover: hover,
-            enabled: fade || hover
+        shapes: shapes,
+            enabled: fade || hover || shapes
         };
     })();
     const meta      = buildMeta(config, profile, templateMeta);

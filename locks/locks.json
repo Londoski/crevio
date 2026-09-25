@@ -2643,6 +2643,93 @@
         "applyRecommendation",
         "aiRecommendation"
       ]
+    },
+    {
+      "id": "phase-13-shapes-payload",
+      "desc": "Payload exposes effects.shapes (Business + toggle)",
+      "type": "fileContains",
+      "file": "backend/templates/portfolio/_payload.js",
+      "patterns": [
+        "const shapes",
+        "shapes: shapes"
+      ]
+    },
+    {
+      "id": "phase-13-shapes-minimal",
+      "desc": "Minimal template has pf-shapes container",
+      "type": "fileContains",
+      "file": "backend/templates/portfolio/minimal/template.html",
+      "patterns": [
+        "pf-shapes"
+      ]
+    },
+    {
+      "id": "phase-13-shapes-css-minimal",
+      "desc": "Minimal shapes CSS with animation + reduced-motion",
+      "type": "fileContains",
+      "file": "backend/templates/portfolio/minimal/template.css",
+      "patterns": [
+        "Floating shapes",
+        "@keyframes pf-shape-1"
+      ]
+    },
+    {
+      "id": "phase-13-shapes-cinematic",
+      "desc": "Cinematic template has cm-shapes container",
+      "type": "fileContains",
+      "file": "backend/templates/portfolio/cinematic/template.html",
+      "patterns": [
+        "cm-shapes"
+      ]
+    },
+    {
+      "id": "phase-13-shapes-css-cinematic",
+      "desc": "Cinematic shapes CSS with animation + reduced-motion",
+      "type": "fileContains",
+      "file": "backend/templates/portfolio/cinematic/template.css",
+      "patterns": [
+        "Floating shapes",
+        "@keyframes cm-shape-1"
+      ]
+    },
+    {
+      "id": "phase-13-shapes-editorial",
+      "desc": "Editorial template has ed-shapes container",
+      "type": "fileContains",
+      "file": "backend/templates/portfolio/editorial/template.html",
+      "patterns": [
+        "ed-shapes"
+      ]
+    },
+    {
+      "id": "phase-13-shapes-css-editorial",
+      "desc": "Editorial shapes CSS with animation + reduced-motion",
+      "type": "fileContains",
+      "file": "backend/templates/portfolio/editorial/template.css",
+      "patterns": [
+        "Floating shapes",
+        "@keyframes ed-shape-1"
+      ]
+    },
+    {
+      "id": "phase-13-shapes-picker",
+      "desc": "Picker Effects card has shapes row + JS wiring",
+      "type": "fileContains",
+      "file": "dashboard/pages/portfolio.html",
+      "patterns": [
+        "effectShapes",
+        "Floating shapes"
+      ]
+    },
+    {
+      "id": "phase-13-shapes-picker-js",
+      "desc": "Picker JS hydrates + saves shapes",
+      "type": "fileContains",
+      "file": "dashboard/js/portfolio.js",
+      "patterns": [
+        "effectShapes",
+        "shapes:"
+      ]
     }
   ]
 }

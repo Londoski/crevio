@@ -26,6 +26,11 @@ body.crevio-portfolio, body.crevio-cinematic, body.crevio-editorial {
 </style>
 </head>
 <body class="crevio-portfolio" data-template="minimal">
+{{#effects.shapes}}
+<div class="pf-shapes" aria-hidden="true">
+  <span></span><span></span><span></span>
+</div>
+{{/effects.shapes}}
 
 {{#hasProfile}}
 <header class="pf-hero">

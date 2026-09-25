@@ -119,3 +119,14 @@ html.crevio-js-enabled [data-fade].crevio-fade-visible {
     .ed-card[data-hover]:hover .ed-thumb img { transform: none; }
     .ed-testimonial[data-hover]:hover { transform: none; }
 }
+/* ---------- Floating shapes (Business only) ---------- */
+.ed-shapes { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+.ed-shapes span { position: absolute; border-radius: 50%; filter: blur(90px); opacity: 0.25; will-change: transform; }
+.ed-shapes span:nth-child(1) { width: 540px; height: 540px; background: radial-gradient(circle, var(--accent, #C0392B) 0%, transparent 65%); top: -180px; right: -140px; animation: ed-shape-1 28s ease-in-out infinite alternate; }
+.ed-shapes span:nth-child(2) { width: 440px; height: 440px; background: radial-gradient(circle, #E8B84C 0%, transparent 65%); bottom: -160px; left: -120px; animation: ed-shape-2 34s ease-in-out infinite alternate; }
+.ed-shapes span:nth-child(3) { width: 340px; height: 340px; background: radial-gradient(circle, var(--accent, #C0392B) 0%, transparent 65%); top: 42%; left: 58%; opacity: 0.16; animation: ed-shape-3 40s ease-in-out infinite alternate; }
+@keyframes ed-shape-1 { from { transform: translate(0, 0); } to { transform: translate(-140px, 100px); } }
+@keyframes ed-shape-2 { from { transform: translate(0, 0); } to { transform: translate(120px, -80px); } }
+@keyframes ed-shape-3 { from { transform: translate(0, 0); } to { transform: translate(-110px, -120px); } }
+.crevio-editorial > *:not(.ed-shapes) { position: relative; z-index: 1; }
+@media (prefers-reduced-motion: reduce) { .ed-shapes span { animation: none !important; } }

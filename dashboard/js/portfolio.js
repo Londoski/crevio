@@ -211,7 +211,8 @@ document.addEventListener("DOMContentLoaded", function () {
                 const isBusiness = (config.user_plan || "free") === "business";
                 return (isBusiness) ? {
                     fade:  !!($("effectFade")  && $("effectFade").checked),
-                    hover: !!($("effectHover") && $("effectHover").checked)
+                    hover: !!($("effectHover") && $("effectHover").checked),
+                    shapes: !!($("effectShapes") && $("effectShapes").checked)
                 } : (config.effects || {});
             })()
         };

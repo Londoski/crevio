@@ -229,3 +229,14 @@ html.crevio-js-enabled [data-fade].crevio-fade-visible {
     .pf-card[data-hover]:hover .pf-card-media img { transform: none; }
     .pf-card[data-hover]:hover, .pf-testimonial[data-hover]:hover { transform: none; }
 }
+/* ---------- Floating shapes (Business only) ---------- */
+.pf-shapes { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; max-width: none; margin: 0; padding: 0; }
+.pf-shapes span { position: absolute; border-radius: 50%; filter: blur(90px); opacity: 0.28; will-change: transform; }
+.pf-shapes span:nth-child(1) { width: 520px; height: 520px; background: radial-gradient(circle, var(--accent, #2563EB) 0%, transparent 65%); top: -160px; left: -120px; animation: pf-shape-1 26s ease-in-out infinite alternate; }
+.pf-shapes span:nth-child(2) { width: 420px; height: 420px; background: radial-gradient(circle, #8B5CF6 0%, transparent 65%); bottom: -140px; right: -100px; animation: pf-shape-2 32s ease-in-out infinite alternate; }
+.pf-shapes span:nth-child(3) { width: 340px; height: 340px; background: radial-gradient(circle, var(--accent, #2563EB) 0%, transparent 65%); top: 45%; left: 55%; opacity: 0.18; animation: pf-shape-3 38s ease-in-out infinite alternate; }
+@keyframes pf-shape-1 { from { transform: translate(0, 0); } to { transform: translate(140px, 90px); } }
+@keyframes pf-shape-2 { from { transform: translate(0, 0); } to { transform: translate(-120px, -70px); } }
+@keyframes pf-shape-3 { from { transform: translate(0, 0); } to { transform: translate(-90px, 120px); } }
+.crevio-portfolio > *:not(.pf-shapes) { position: relative; z-index: 1; }
+@media (prefers-reduced-motion: reduce) { .pf-shapes span { animation: none !important; } }

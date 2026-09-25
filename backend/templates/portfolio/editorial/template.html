@@ -28,6 +28,11 @@ body.crevio-portfolio, body.crevio-cinematic, body.crevio-editorial {
 </style>
 </head>
 <body class="crevio-editorial" data-template="editorial">
+{{#effects.shapes}}
+<div class="ed-shapes" aria-hidden="true">
+  <span></span><span></span><span></span>
+</div>
+{{/effects.shapes}}
 
 {{#hasProfile}}
 <header class="ed-masthead">
