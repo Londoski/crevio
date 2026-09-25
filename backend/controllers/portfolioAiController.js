@@ -8,9 +8,10 @@
 // trusts the model output blindly.
 // =========================================================
 const entitlementService = require("../services/entitlementService");
+const fontCatalog = require("../templates/portfolio/_fonts");
 
 const ALLOWED_TEMPLATES = ["minimal", "cinematic", "editorial"];
-const ALLOWED_FONTS = ["Inter", "Poppins", "Playfair Display", "Roboto", "Space Grotesk"];
+const ALLOWED_FONTS = fontCatalog.FONTS.map(function (f) { return f.name; });
 
 // ---------- Prompt ----------
 function buildPrompt(description) {
@@ -28,7 +29,7 @@ function buildPrompt(description) {
         "- editorial: Magazine-style, serif typography, two-column grid.",
         "             Good for photographers, writers, journalists, art directors.",
         "",
-        "Available fonts: Inter, Poppins, Playfair Display, Roboto, Space Grotesk",
+        "Available fonts: " + ALLOWED_FONTS.join(", ") + ",",
         "",
         "Accent color: any 6-digit hex like #F59E0B. It should feel like",
         "the user's brand — warm amber for cinematic types, deep red for",

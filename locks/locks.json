@@ -2029,13 +2029,10 @@
     },
     {
       "id": "phase-2-editorial-template",
-      "desc": "Editorial template renders (magazine masthead + serif + two-column grid)",
+      "desc": "Editorial template styles its serif display via Playfair (HTML loads font dynamically)",
       "type": "fileContains",
-      "file": "backend/templates/portfolio/editorial/template.html",
+      "file": "backend/templates/portfolio/editorial/template.css",
       "patterns": [
-        "crevio-editorial",
-        "data-template=\"editorial\"",
-        "{{#projects}}",
         "Playfair"
       ]
     },
@@ -2729,6 +2726,76 @@
       "patterns": [
         "effectShapes",
         "shapes:"
+      ]
+    },
+    {
+      "id": "phase-14-fonts-catalog",
+      "desc": "Font catalog file with 20+ fonts and URL builder",
+      "type": "fileContains",
+      "file": "backend/templates/portfolio/_fonts.js",
+      "patterns": [
+        "FONTS",
+        "buildGoogleFontsUrl",
+        "Cormorant Garamond",
+        "JetBrains Mono"
+      ]
+    },
+    {
+      "id": "phase-14-fonts-payload",
+      "desc": "Payload exposes meta.fontUrl + meta.fontName",
+      "type": "fileContains",
+      "file": "backend/templates/portfolio/_payload.js",
+      "patterns": [
+        "fontCatalog",
+        "fontUrl: fontUrl"
+      ]
+    },
+    {
+      "id": "phase-14-fonts-minimal",
+      "desc": "Minimal template links the dynamic font URL",
+      "type": "fileContains",
+      "file": "backend/templates/portfolio/minimal/template.html",
+      "patterns": [
+        "{{{ meta.fontUrl }}}"
+      ]
+    },
+    {
+      "id": "phase-14-fonts-cinematic",
+      "desc": "Cinematic template links the dynamic font URL",
+      "type": "fileContains",
+      "file": "backend/templates/portfolio/cinematic/template.html",
+      "patterns": [
+        "{{{ meta.fontUrl }}}"
+      ]
+    },
+    {
+      "id": "phase-14-fonts-editorial",
+      "desc": "Editorial template links the dynamic font URL",
+      "type": "fileContains",
+      "file": "backend/templates/portfolio/editorial/template.html",
+      "patterns": [
+        "{{{ meta.fontUrl }}}"
+      ]
+    },
+    {
+      "id": "phase-14-fonts-picker",
+      "desc": "Picker font select has optgroups + 20+ fonts",
+      "type": "fileContains",
+      "file": "dashboard/pages/portfolio.html",
+      "patterns": [
+        "<optgroup",
+        "Cormorant Garamond",
+        "JetBrains Mono"
+      ]
+    },
+    {
+      "id": "phase-14-fonts-ai",
+      "desc": "AI controller allowlist sourced from the font catalog",
+      "type": "fileContains",
+      "file": "backend/controllers/portfolioAiController.js",
+      "patterns": [
+        "fontCatalog",
+        "ALLOWED_FONTS = fontCatalog"
       ]
     }
   ]

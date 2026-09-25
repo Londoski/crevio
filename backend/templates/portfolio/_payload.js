@@ -8,6 +8,7 @@
 // =========================================================
 const db = require("../../../database/db");
 const entitlementService = require("../../services/entitlementService");
+const fontCatalog = require("./_fonts");
 
 // ---------- Helpers ----------
 function cols(table) {
@@ -247,7 +248,16 @@ function buildMeta(config, profile, templateMeta) {
     }
     const title = settings.title || (profile.name + (profile.headline ? " — " + profile.headline : ""));
     const description = settings.meta_description || settings.tagline || profile.bio || "";
-    return { title: title, description: description };
+    const userFont = (function () {
+                try {
+                    const ts = typeof config.theme_settings === "string"
+                        ? JSON.parse(config.theme_settings)
+                        : (config.theme_settings || {});
+                    return ts.font_family || null;
+                } catch (e) { return null; }
+            })();
+            const fontUrl = fontCatalog.buildGoogleFontsUrl(userFont);
+            return { title: title, description: description, fontUrl: fontUrl, fontName: (fontCatalog.findByName(userFont) || { name: fontCatalog.DEFAULT }).name };
 }
 
 // ---------- Main entry ----------
