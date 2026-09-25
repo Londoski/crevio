@@ -8,11 +8,16 @@
 //   - portfolio not published
 //   - no template chosen
 //   - engine or payload throws
+//   - owner's current plan no longer unlocks the stored template
+//     (Phase 1E — after downgrade, fall back to "minimal")
 // Result: existing legacy portfolio.html is the safety net.
 // =========================================================
 const db = require("../../database/db");
 const engine = require("../templates/portfolio/_engine");
 const payloadBuilder = require("../templates/portfolio/_payload");
+const entitlementService = require("../services/entitlementService");
+
+const FALLBACK_TEMPLATE = "minimal";
 
 function safeGet(sql, ...params) {
     try { return db.prepare(sql).get(...params); } catch (e) { return null; }
@@ -47,16 +52,40 @@ exports.renderPublicPortfolio = (req, res, next) => {
         const templateSlug = resolveTemplateSlug(config);
         if (!templateSlug) return next();
 
-        const tpl = engine.loadTemplate(templateSlug);
+        // ---- Phase 1E — plan-aware fallback ----
+        // If the owner downgraded and their current plan no longer
+        // unlocks the stored template, render the fallback template
+        // instead. Prevents Pro/Business templates from leaking to
+        // Free-tier owners after a downgrade.
+        let effectiveSlug = templateSlug;
+        try {
+            const ownerPlan = entitlementService.getUserPlan(user.id);
+            if (!entitlementService.canUseTemplate(ownerPlan, templateSlug)) {
+                console.warn(
+                    "[portfolioRender] plan '" + ownerPlan +
+                    "' does not unlock template '" + templateSlug +
+                    "' for user " + user.id +
+                    " — falling back to '" + FALLBACK_TEMPLATE + "'"
+                );
+                effectiveSlug = FALLBACK_TEMPLATE;
+            }
+        } catch (e) {
+            // If entitlement check fails for any reason, don't block rendering.
+            // Continue with stored template so an unrelated bug can't take
+            // down every published portfolio.
+            console.warn("[portfolioRender] entitlement check failed:", e.message);
+        }
+
+        const tpl = engine.loadTemplate(effectiveSlug);
         if (!tpl) {
-            console.warn("[portfolioRender] template not found: " + templateSlug);
+            console.warn("[portfolioRender] template not found: " + effectiveSlug);
             return next();
         }
 
         const data = payloadBuilder.build(user.id, { templateMeta: tpl.meta });
         if (!data) return next();
 
-        const html = engine.render(templateSlug, data);
+        const html = engine.render(effectiveSlug, data);
         if (!html) return next();
 
         res.setHeader("Content-Type", "text/html; charset=utf-8");

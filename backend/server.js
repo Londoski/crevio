@@ -16,6 +16,7 @@ const PORT = process.env.PORT || 3000;
 
 // 2. Core middleware
 app.use(cors());
+
 // =========================================================
 // Paystack webhook — MUST receive the raw body for HMAC
 // signature verification. Mounted BEFORE express.json()
@@ -28,7 +29,6 @@ app.post(
 );
 
 app.use(express.json({ limit: "10mb" }));
-
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 // 2b. Ensure upload folders exist
@@ -94,16 +94,16 @@ app.use("/api/2fa",           twoFactorRoutes);
 app.use("/api/upload",        uploadRoutes);
 app.use("/api/webhooks",      webhookRoutes);
 
+// =========================================================
 // 6. Public routes
-// Service detail (must come BEFORE /p/:slug)
+// =========================================================
+
+// Service detail — must come BEFORE /p/:slug
 app.get("/p/:slug/services/:serviceId", (req, res) => {
     res.sendFile(path.join(__dirname, "..", "public", "service.html"));
 });
 
-// Portfolio home
-// Portfolio home - server-rendered via template engine.
-// Falls back to the legacy client-rendered portfolio.html
-// if the user has no template chosen or rendering fails.
+// Portfolio home — SSR via template engine (Phase 1C + 1E)
 app.get(
     "/p/:slug",
     require("./controllers/portfolioRenderController").renderPublicPortfolio,
@@ -111,6 +111,22 @@ app.get(
         res.sendFile(path.join(__dirname, "..", "public", "portfolio.html"));
     }
 );
+
+// Legacy portfolio URL
+app.get("/public/:username", (req, res) => {
+    const username = req.params.username;
+    if (!username || username.includes("..") || username.includes("/")) {
+        return res.status(400).send("Invalid username");
+    }
+    res.sendFile(path.join(__dirname, "..", "public", "index.html"), (err) => {
+        if (err) {
+            console.error("Portfolio serve error:", err);
+            res.status(404).send("Portfolio page not found.");
+        }
+    });
+});
+
+app.use("/public", express.static(path.join(__dirname, "..", "public")));
 
 // Root
 app.get("/", (req, res) => {
@@ -131,15 +147,10 @@ app.use((err, req, res, next) => {
     res.status(500).json({ success: false, message: "Internal server error", error: err.message });
 });
 
-// =========================================================
-// 9. START SERVER — listens on ALL interfaces (0.0.0.0)
-// This is what allows your phone to connect over Wi-Fi.
-// =========================================================
+// 9. START SERVER
 app.listen(PORT, "0.0.0.0", () => {
     console.log(`🚀 Server running on port ${PORT}`);
     console.log(`   Local:   http://localhost:${PORT}`);
-
-    // Print LAN URL so you know what to type on your phone
     try {
         const os = require("os");
         const nets = os.networkInterfaces();
@@ -152,7 +163,8 @@ app.listen(PORT, "0.0.0.0", () => {
         }
     } catch (e) { /* ignore */ }
 });
-// Start subscription expiry cron
+
+// Start subscription crons
 try {
     const subCron = require("./services/subscriptionCronService");
     subCron.start();
