@@ -2797,6 +2797,78 @@
         "fontCatalog",
         "ALLOWED_FONTS = fontCatalog"
       ]
+    },
+    {
+      "id": "phase-15-featured-payload",
+      "desc": "Payload flags first published project with is_first",
+      "type": "fileContains",
+      "file": "backend/templates/portfolio/_payload.js",
+      "patterns": [
+        "is_first: idx === 0",
+        "index: idx"
+      ]
+    },
+    {
+      "id": "phase-15-featured-minimal",
+      "desc": "Minimal template marks the first project card featured",
+      "type": "fileContains",
+      "file": "backend/templates/portfolio/minimal/template.html",
+      "patterns": [
+        "pf-card-featured",
+        "is_first"
+      ]
+    },
+    {
+      "id": "phase-15-featured-css-minimal",
+      "desc": "Minimal featured CSS spans the grid",
+      "type": "fileContains",
+      "file": "backend/templates/portfolio/minimal/template.css",
+      "patterns": [
+        "Featured project",
+        "pf-card-featured",
+        "grid-column: 1 / -1"
+      ]
+    },
+    {
+      "id": "phase-15-featured-cinematic",
+      "desc": "Cinematic template marks the first row featured",
+      "type": "fileContains",
+      "file": "backend/templates/portfolio/cinematic/template.html",
+      "patterns": [
+        "cm-row-featured",
+        "is_first"
+      ]
+    },
+    {
+      "id": "phase-15-featured-css-cinematic",
+      "desc": "Cinematic featured CSS enlarges the first row",
+      "type": "fileContains",
+      "file": "backend/templates/portfolio/cinematic/template.css",
+      "patterns": [
+        "Featured project",
+        "cm-row-featured"
+      ]
+    },
+    {
+      "id": "phase-15-featured-editorial",
+      "desc": "Editorial template marks the first card featured",
+      "type": "fileContains",
+      "file": "backend/templates/portfolio/editorial/template.html",
+      "patterns": [
+        "ed-card-featured",
+        "is_first"
+      ]
+    },
+    {
+      "id": "phase-15-featured-css-editorial",
+      "desc": "Editorial featured CSS spans the grid",
+      "type": "fileContains",
+      "file": "backend/templates/portfolio/editorial/template.css",
+      "patterns": [
+        "Featured project",
+        "ed-card-featured",
+        "grid-column: 1 / -1"
+      ]
     }
   ]
 }

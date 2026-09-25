@@ -130,3 +130,10 @@ html.crevio-js-enabled [data-fade].crevio-fade-visible {
 @keyframes ed-shape-3 { from { transform: translate(0, 0); } to { transform: translate(-110px, -120px); } }
 .crevio-editorial > *:not(.ed-shapes) { position: relative; z-index: 1; }
 @media (prefers-reduced-motion: reduce) { .ed-shapes span { animation: none !important; } }
+/* ---------- Featured project (first item) ---------- */
+@media (min-width: 641px) {
+    .ed-card-featured { grid-column: 1 / -1; }
+    .ed-card-featured .ed-thumb { aspect-ratio: 16 / 9; }
+    .ed-card-featured .ed-title { font-size: 34px; }
+    .ed-card-featured .ed-desc { font-size: 16px; }
+}

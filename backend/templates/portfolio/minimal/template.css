@@ -240,3 +240,10 @@ html.crevio-js-enabled [data-fade].crevio-fade-visible {
 @keyframes pf-shape-3 { from { transform: translate(0, 0); } to { transform: translate(-90px, 120px); } }
 .crevio-portfolio > *:not(.pf-shapes) { position: relative; z-index: 1; }
 @media (prefers-reduced-motion: reduce) { .pf-shapes span { animation: none !important; } }
+/* ---------- Featured project (first item) ---------- */
+@media (min-width: 641px) {
+    .pf-card-featured { grid-column: 1 / -1; }
+    .pf-card-featured .pf-card-media { aspect-ratio: 21 / 9; }
+    .pf-card-featured .pf-card-title { font-size: 22px; }
+    .pf-card-featured .pf-card-desc { font-size: 15px; }
+}

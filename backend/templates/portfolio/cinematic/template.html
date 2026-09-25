@@ -51,7 +51,7 @@ body.crevio-portfolio, body.crevio-cinematic, body.crevio-editorial {
   <h2 class="cm-section-title">Selected Work</h2>
   <div class="cm-rows">
     {{#projects}}
-    <article class="cm-row"{{#effects.hover}} data-hover{{/effects.hover}}>
+    <article class="cm-row{{#is_first}} cm-row-featured{{/is_first}}"{{#effects.hover}} data-hover{{/effects.hover}}>
       {{#thumbnail}}<div class="cm-thumb"><img src="{{ thumbnail }}" alt="{{ title }}"></div>{{/thumbnail}}
       <div class="cm-row-body">
         {{#category}}<span class="cm-tag">{{ category }}</span>{{/category}}

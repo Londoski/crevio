@@ -50,7 +50,7 @@ body.crevio-portfolio, body.crevio-cinematic, body.crevio-editorial {
   <h2 class="pf-section-title">Selected Work</h2>
   <div class="pf-grid">
     {{#projects}}
-    <article class="pf-card"{{#effects.hover}} data-hover{{/effects.hover}}>
+    <article class="pf-card{{#is_first}} pf-card-featured{{/is_first}}"{{#effects.hover}} data-hover{{/effects.hover}}>
       {{#thumbnail}}<div class="pf-card-media"><img src="{{ thumbnail }}" alt="{{ title }}"></div>{{/thumbnail}}
       <div class="pf-card-body">
         <h3 class="pf-card-title">{{ title }}</h3>

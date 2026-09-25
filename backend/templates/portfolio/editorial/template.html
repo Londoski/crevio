@@ -52,7 +52,7 @@ body.crevio-portfolio, body.crevio-cinematic, body.crevio-editorial {
   <h2 class="ed-section-title"><span>Selected Work</span></h2>
   <div class="ed-grid">
     {{#projects}}
-    <article class="ed-card"{{#effects.hover}} data-hover{{/effects.hover}}>
+    <article class="ed-card{{#is_first}} ed-card-featured{{/is_first}}"{{#effects.hover}} data-hover{{/effects.hover}}>
       {{#thumbnail}}<div class="ed-thumb"><img src="{{ thumbnail }}" alt="{{ title }}"></div>{{/thumbnail}}
       <div class="ed-card-body">
         {{#category}}<span class="ed-tag">{{ category }}</span>{{/category}}

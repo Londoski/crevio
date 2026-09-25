@@ -127,3 +127,10 @@ html.crevio-js-enabled [data-fade].crevio-fade-visible {
 @keyframes cm-shape-3 { from { transform: translate(0, 0); } to { transform: translate(-100px, 140px); } }
 .crevio-cinematic > *:not(.cm-shapes) { position: relative; z-index: 1; }
 @media (prefers-reduced-motion: reduce) { .cm-shapes span { animation: none !important; } }
+/* ---------- Featured project (first item) ---------- */
+.cm-row-featured .cm-thumb { aspect-ratio: 21 / 9; }
+.cm-row-featured .cm-title { font-size: 42px; }
+.cm-row-featured .cm-desc { font-size: 17px; }
+@media (max-width: 720px) {
+    .cm-row-featured .cm-title { font-size: 26px; }
+}

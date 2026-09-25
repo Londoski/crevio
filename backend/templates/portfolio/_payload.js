@@ -52,7 +52,7 @@ function buildProjects(userId) {
         userId, capNum
     );
 
-    return rows.map(function (p) {
+    return rows.map(function (p, idx) {
         return {
             id: p.id,
             title: p.name || "Untitled",
@@ -60,7 +60,9 @@ function buildProjects(userId) {
             category: p.category || null,
             thumbnail: p.thumbnail_url || null,
             url: "/dashboard/pages/project-edit.html?id=" + p.id,
-            date: p.created_at || null
+            date: p.created_at || null,
+            is_first: idx === 0,
+            index: idx
         };
     });
 }
