@@ -3,16 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profile  Crevio</title>
+    <title>Testimonials  Crevio</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="/dashboard/js/auth.js?v=639252892257462073"></script>
+    <script src="/dashboard/js/crevio-confirm.js"></script>
 
     <style>
         * { margin:0; padding:0; box-sizing:border-box; }
         body { font-family:'Inter',sans-serif; background:var(--bg-primary); color:var(--text-primary); display:flex; min-height:100vh; }
+        a { text-decoration:none; color:inherit; }
 
         [data-theme="dark"] { --bg-primary:#0F172A; --bg-secondary:#1E293B; --bg-card:#1E293B; --bg-input:#0F172A; --border-color:#334155; --text-primary:#F1F5F9; --text-secondary:#94A3B8; --text-muted:#64748B; --accent:#2563EB; --accent-hover:#1D4ED8; --accent-dim:rgba(37,99,235,0.15); --danger:#EF4444; --success:#22C55E; --warning:#F59E0B; }
         [data-theme="light"] { --bg-primary:#F1F5F9; --bg-secondary:#FFFFFF; --bg-card:#FFFFFF; --bg-input:#F8FAFC; --border-color:#E2E8F0; --text-primary:#0F172A; --text-secondary:#475569; --text-muted:#94A3B8; --accent:#2563EB; --accent-hover:#1D4ED8; --accent-dim:rgba(37,99,235,0.1); --danger:#EF4444; --success:#22C55E; --warning:#F59E0B; }
@@ -22,7 +24,7 @@
         .sidebar-brand h1 { font-size:20px; font-weight:700; }
         .sidebar-brand span { font-size:11px; font-weight:500; text-transform:uppercase; color:var(--text-muted); }
         .sidebar-nav { display:flex; flex-direction:column; gap:2px; flex:1; }
-        .nav-item { display:flex; align-items:center; gap:12px; padding:10px 12px; border-radius:8px; color:var(--text-secondary); font-size:14px; font-weight:500; transition:all 0.15s; text-decoration:none; }
+        .nav-item { display:flex; align-items:center; gap:12px; padding:10px 12px; border-radius:8px; color:var(--text-secondary); font-size:14px; font-weight:500; transition:all 0.15s; }
         .nav-item:hover { background:var(--accent-dim); color:var(--text-primary); }
         .nav-item.active { background:var(--accent-dim); color:var(--accent); }
         .nav-item .icon { width:20px; height:20px; flex-shrink:0; }
@@ -32,74 +34,68 @@
         .logout-button:hover { background:rgba(239,68,68,0.1); }
 
         .main { flex:1; padding:28px 36px; background:var(--bg-primary); min-height:100vh; max-width:1100px; }
-        .header { margin-bottom:28px; }
+        .header { display:flex; justify-content:space-between; align-items:center; margin-bottom:28px; flex-wrap:wrap; gap:12px; }
         .header h1 { font-size:24px; font-weight:700; }
         .header p { font-size:14px; color:var(--text-secondary); margin-top:2px; }
 
-        .profile-layout { display:grid; grid-template-columns:280px 1fr; gap:24px; align-items:start; }
+        .card { background:var(--bg-card); border:1px solid var(--border-color); border-radius:14px; padding:24px; margin-bottom:20px; }
+        .card h2 { font-size:16px; font-weight:600; margin-bottom:6px; display:flex; align-items:center; gap:8px; }
+        .card h2 .icon { width:18px; height:18px; color:var(--accent); }
+        .card p.desc { font-size:13px; color:var(--text-secondary); margin-bottom:20px; }
 
-        .card { background:var(--bg-card); border:1px solid var(--border-color); border-radius:14px; padding:24px; }
-        .card h2 { font-size:16px; font-weight:600; margin-bottom:20px; padding-bottom:14px; border-bottom:1px solid var(--border-color); }
-
-        /* Avatar card */
-        .avatar-card { text-align:center; }
-        .avatar-wrap { position:relative; width:140px; height:140px; margin:0 auto 16px; }
-        .avatar-img {
-            width:140px; height:140px; border-radius:50%;
-            background:var(--accent); color:#fff;
-            display:flex; align-items:center; justify-content:center;
-            font-size:52px; font-weight:600;
-            overflow:hidden; border:3px solid var(--border-color);
-        }
-        .avatar-img img { width:100%; height:100%; object-fit:cover; }
-        .avatar-edit-btn {
-            position:absolute; bottom:6px; right:6px;
-            background:var(--accent); border:2px solid var(--bg-card);
-            color:#fff; width:36px; height:36px; border-radius:50%;
-            cursor:pointer; display:flex; align-items:center; justify-content:center;
-            transition:background 0.15s;
-        }
-        .avatar-edit-btn:hover { background:var(--accent-hover); }
-        .avatar-edit-btn .icon { width:16px; height:16px; }
-
-        .avatar-card h3 { font-size:16px; font-weight:600; margin-bottom:4px; }
-        .avatar-card .username { font-size:13px; color:var(--text-muted); margin-bottom:10px; }
-
-        .badge {
-            display:inline-flex; align-items:center; gap:6px;
-            padding:4px 12px; border-radius:999px; font-size:11px;
-            font-weight:600; text-transform:uppercase;
-            background:var(--accent-dim); color:var(--accent);
-        }
-
-        /* Form */
         .form-group { margin-bottom:16px; }
+        .form-group:last-child { margin-bottom:0; }
         .form-group label { display:block; font-size:13px; color:var(--text-secondary); margin-bottom:6px; font-weight:500; }
         .form-group input, .form-group textarea {
             width:100%; background:var(--bg-input); border:1px solid var(--border-color);
             color:var(--text-primary); padding:10px 12px; border-radius:10px;
             font-size:14px; font-family:inherit;
         }
-        .form-group input:disabled, .form-group textarea:disabled { opacity:0.6; cursor:not-allowed; }
         .form-group input:focus, .form-group textarea:focus {
             outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-dim);
         }
         .form-group textarea { resize:vertical; min-height:90px; }
         .form-group .hint { font-size:12px; color:var(--text-muted); margin-top:4px; }
-
         .form-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
 
         .btn-primary { padding:10px 22px; border-radius:10px; border:none; background:var(--accent); color:#fff; font-size:14px; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:6px; transition:all 0.15s; font-family:inherit; }
         .btn-primary:hover { background:var(--accent-hover); transform:translateY(-1px); }
         .btn-primary:disabled { opacity:0.6; cursor:not-allowed; transform:none; }
+        .btn-secondary { padding:10px 22px; border-radius:10px; border:1px solid var(--border-color); background:transparent; color:var(--text-secondary); font-size:14px; font-weight:500; cursor:pointer; transition:all 0.15s; font-family:inherit; display:inline-flex; align-items:center; gap:6px; }
+        .btn-secondary:hover { background:var(--bg-input); color:var(--text-primary); }
+        .btn-danger { padding:8px 16px; border-radius:9px; border:1px solid var(--border-color); background:transparent; color:var(--danger); font-size:13px; font-weight:500; cursor:pointer; display:inline-flex; align-items:center; gap:6px; font-family:inherit; }
+        .btn-danger:hover { background:rgba(239,68,68,0.08); border-color:var(--danger); }
 
-        .form-actions { display:flex; justify-content:flex-end; gap:10px; margin-top:8px; }
+        .testimonial-list { display:flex; flex-direction:column; gap:12px; }
+        .testimonial-item { background:var(--bg-input); border:1px solid var(--border-color); border-radius:12px; padding:20px; display:flex; gap:18px; align-items:flex-start; }
+        .testimonial-item.hidden-item { opacity:0.5; }
+        .t-quote { flex:1; }
+        .t-quote-text { font-size:14px; line-height:1.6; color:var(--text-primary); margin-bottom:12px; }
+        .t-author { font-size:13px; color:var(--text-secondary); }
+        .t-author strong { color:var(--text-primary); font-weight:600; }
+        .t-avatar { width:48px; height:48px; border-radius:50%; object-fit:cover; background:var(--bg-primary); flex-shrink:0; border:1px solid var(--border-color); }
+        .t-actions { display:flex; gap:8px; flex-shrink:0; }
+        .t-badge { display:inline-flex; align-items:center; padding:2px 8px; border-radius:999px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; margin-left:8px; }
+        .t-badge.hidden { background:rgba(148,163,184,0.2); color:var(--text-muted); }
+        .t-badge.visible { background:rgba(34,197,94,0.15); color:var(--success); }
+
+        .empty-state { text-align:center; padding:60px 20px; color:var(--text-muted); }
+        .empty-state .icon { width:48px; height:48px; margin:0 auto 16px; color:var(--text-muted); }
+        .empty-state h3 { font-size:16px; font-weight:600; color:var(--text-primary); margin-bottom:6px; }
+        .empty-state p { font-size:14px; margin-bottom:20px; }
 
         .toast { position:fixed; bottom:24px; right:24px; background:var(--bg-card); border:1px solid var(--border-color); border-left:4px solid var(--success); padding:14px 20px; border-radius:10px; font-size:14px; font-weight:500; box-shadow:0 8px 32px rgba(0,0,0,0.3); transform:translateY(calc(100% + 40px)); opacity:0; visibility:hidden; transition:transform 0.3s ease, opacity 0.3s ease, visibility 0.3s ease; z-index:1000; max-width:340px; pointer-events:none; }
         .toast.show { transform:translateY(0); opacity:1; visibility:visible; pointer-events:auto; }
         .toast.error { border-left-color:var(--danger); }
 
-        @media (max-width:900px) { .sidebar{display:none;} .main { padding: 0 20px 16px; } .profile-layout{grid-template-columns:1fr;} .form-row{grid-template-columns:1fr;} }
+        .loading { text-align:center; padding:40px; color:var(--text-muted); font-size:14px; }
+
+        @media (max-width:768px) {
+            .sidebar { display:none; }
+            .main { padding: 0 20px 16px; }
+            .form-row { grid-template-columns:1fr; }
+            .testimonial-item { flex-direction:column; }
+        }
     </style>
     <link rel="stylesheet" href="/dashboard/css/sidebar.css">
     <link rel="stylesheet" href="/dashboard/css/mobile.css?v=639253624517313970">
@@ -116,7 +112,7 @@
             <a href="/dashboard/pages/services.html" class="nav-item"><i data-lucide="briefcase" class="icon"></i> Services</a>
             <a href="/dashboard/pages/skills.html" class="nav-item"><i data-lucide="star" class="icon"></i> Skills</a>
             <a href="/dashboard/pages/social-links.html" class="nav-item"><i data-lucide="share-2" class="icon"></i> My Socials</a>
-            <a href="/dashboard/pages/testimonials.html" class="nav-item"><i data-lucide="message-square-quote" class="icon"></i> Testimonials</a>
+            <a href="/dashboard/pages/testimonials.html" class="nav-item active"><i data-lucide="message-square-quote" class="icon"></i> Testimonials</a>
             <div class="nav-divider"></div>
             <a href="/dashboard/pages/portfolio.html" class="nav-item"><i data-lucide="layout-template" class="icon"></i> Portfolio</a>
             <a href="/dashboard/pages/portfolio-edit.html" class="nav-item"><i data-lucide="edit-3" class="icon"></i> Edit Portfolio</a>
@@ -128,7 +124,7 @@
             <a href="/dashboard/pages/billing.html" class="nav-item"><i data-lucide="credit-card" class="icon"></i> Subscription</a>
             <a href="/dashboard/pages/security.html" class="nav-item"><i data-lucide="shield" class="icon"></i> Security</a>
             <a href="/dashboard/pages/settings.html" class="nav-item"><i data-lucide="settings" class="icon"></i> Settings</a>
-            <a href="/dashboard/pages/profile.html" class="nav-item active"><i data-lucide="user" class="icon"></i> Profile</a>
+            <a href="/dashboard/pages/profile.html" class="nav-item"><i data-lucide="user" class="icon"></i> Profile</a>
             <a href="/dashboard/pages/account-management.html" class="nav-item"><i data-lucide="user-cog" class="icon"></i> Account Management</a>
             <div class="nav-divider"></div>
             <a href="/" target="_blank" class="nav-item"><i data-lucide="globe" class="icon"></i> View Portfolio</a>
@@ -140,92 +136,84 @@
 
     <main class="main">
         <div class="header">
-            <h1>Profile</h1>
-            <p>Manage your personal information and public appearance</p>
+            <div>
+                <h1>Testimonials</h1>
+                <p>Client quotes shown on your public portfolio</p>
+            </div>
+            <button class="btn-primary" id="newBtn">
+                <i data-lucide="plus" class="icon" style="width:16px;height:16px;"></i>
+                Add Testimonial
+            </button>
         </div>
 
-        <div class="profile-layout">
-            <!-- Left: avatar card -->
-            <div class="card avatar-card">
-                <div class="avatar-wrap">
-                    <div class="avatar-img" id="avatarPreview">?</div>
-                    <button class="avatar-edit-btn" id="avatarBtn" title="Change avatar">
-                        <i data-lucide="camera" class="icon"></i>
-                    </button>
-                    <input type="file" id="avatarInput" accept="image/*" style="display:none;">
-                </div>
-                <h3 id="displayNamePreview">Loading...</h3>
-                <div class="username" id="usernamePreview">@user</div>
-                <span class="badge">
-                    <i data-lucide="shield-check" style="width:12px;height:12px;"></i>
-                    <span id="roleBadge">creator</span>
-                </span>
+        <div class="card" id="formCard" style="display:none;">
+            <h2><i data-lucide="message-square-quote" class="icon"></i> <span id="formTitle">Add Testimonial</span></h2>
+            <p class="desc">Quotes are shown on your public portfolio. Keep them short and specific.</p>
+
+            <div class="form-group">
+                <label>Quote</label>
+                <textarea id="quote" placeholder="e.g., Joseph turned a rough brief into a finished film we were proud to publish." maxlength="500"></textarea>
+                <div class="hint"><span id="quoteCount">0</span>/500 characters</div>
             </div>
 
-            <!-- Right: form -->
-            <div class="card">
-                <h2>Personal Information</h2>
-                <form id="profileForm">
-                    <div class="form-group">
-                        <label>Username</label>
-                        <input type="text" id="username" disabled>
-                        <div class="hint">Username cannot be changed</div>
-                    </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Author Name</label>
+                    <input type="text" id="authorName" placeholder="e.g., Adaeze Nwosu" maxlength="120">
+                </div>
+                <div class="form-group">
+                    <label>Author Role</label>
+                    <input type="text" id="authorRole" placeholder="e.g., Brand Lead" maxlength="120">
+                </div>
+            </div>
 
-                    <div class="form-group">
-                        <label>Email</label>
-                        <input type="email" id="email" disabled>
-                        <div class="hint">Email is tied to your account</div>
-                    </div>
+            <div class="form-group">
+                <label>Author Company</label>
+                <input type="text" id="authorCompany" placeholder="e.g., Lagos Fashion Week" maxlength="120">
+            </div>
 
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Display Name</label>
-                            <input type="text" id="display_name" placeholder="Your public name">
-                        </div>
-                        <div class="form-group">
-                            <label>Phone</label>
-                            <input type="tel" id="phone" placeholder="+1 555 123 4567">
-                        </div>
-                    </div>
+            <div class="form-group">
+                <label>Avatar URL (optional)</label>
+                <input type="text" id="authorAvatar" placeholder="/uploads/profiles/... or a full URL" maxlength="500">
+                <div class="hint">Leave blank to show just the name</div>
+            </div>
 
-                    <div class="form-group">
-                        <label>Bio</label>
-                        <textarea id="bio" placeholder="Tell clients about yourself..." maxlength="500"></textarea>
-                        <div class="hint"><span id="bioCount">0</span>/500 characters</div>
-                    </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Display Order</label>
+                    <input type="number" id="displayOrder" value="0" min="0" max="9999">
+                    <div class="hint">Lower numbers show first</div>
+                </div>
+                <div class="form-group">
+                    <label>Visibility</label>
+                    <select id="isVisible" style="width:100%; background:var(--bg-input); border:1px solid var(--border-color); color:var(--text-primary); padding:10px 12px; border-radius:10px; font-size:14px; font-family:inherit;">
+                        <option value="1">Visible on portfolio</option>
+                        <option value="0">Hidden</option>
+                    </select>
+                </div>
+            </div>
 
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Location</label>
-                            <input type="text" id="location" placeholder="City, Country">
-                        </div>
-                        <div class="form-group">
-                            <label>Primary Profession</label>
-                            <input type="text" id="primary_profession" placeholder="e.g., Video Editor">
-                        </div>
-                    </div>
+            <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:20px; padding-top:20px; border-top:1px solid var(--border-color);">
+                <button class="btn-secondary" id="cancelBtn">Cancel</button>
+                <button class="btn-primary" id="saveBtn">
+                    <i data-lucide="save" class="icon" style="width:16px;height:16px;"></i>
+                    Save Testimonial
+                </button>
+            </div>
+        </div>
 
-                    <div class="form-group">
-                        <label>Specialties</label>
-                        <input type="text" id="specialties" placeholder="Comma-separated, e.g., Motion Graphics, Color Grading">
-                        <div class="hint">Separate multiple with commas</div>
-                    </div>
-
-                    <div class="form-actions">
-                        <button type="submit" class="btn-primary" id="saveBtn">
-                            <i data-lucide="save" class="icon" style="width:16px;height:16px;"></i>
-                            Save Changes
-                        </button>
-                    </div>
-                </form>
+        <div class="card">
+            <h2><i data-lucide="list" class="icon"></i> All Testimonials</h2>
+            <p class="desc">Shown on your portfolio in the order below.</p>
+            <div id="listContainer" class="testimonial-list">
+                <div class="loading">Loading testimonials...</div>
             </div>
         </div>
     </main>
 
     <div class="toast" id="toast"></div>
 
-    <script src="/dashboard/js/profile.js"></script>
+    <script src="/dashboard/js/testimonials.js"></script>
     <script>
         document.getElementById('logoutButton')?.addEventListener('click', () => {
             localStorage.removeItem('token');

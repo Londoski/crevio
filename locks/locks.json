@@ -2236,6 +2236,37 @@
         "hasTestimonials",
         "ed-testimonial"
       ]
+    },
+    {
+      "id": "phase-5-testimonials-picker-toggle",
+      "desc": "Picker page has a Testimonials section toggle",
+      "type": "fileContains",
+      "file": "dashboard/pages/portfolio.html",
+      "patterns": [
+        "data-section=\"testimonials\"",
+        "Testimonials"
+      ]
+    },
+    {
+      "id": "phase-5-testimonials-sidebar",
+      "desc": "Sidebar shows a Testimonials nav item on dashboard pages",
+      "type": "fileContains",
+      "file": "dashboard/pages/projects.html",
+      "patterns": [
+        "/dashboard/pages/testimonials.html",
+        "Testimonials"
+      ]
+    },
+    {
+      "id": "phase-5-testimonials-page",
+      "desc": "Testimonials management page + JS exist and load",
+      "type": "fileContains",
+      "file": "dashboard/pages/testimonials.html",
+      "patterns": [
+        "testimonials.js",
+        "Add Testimonial",
+        "listContainer"
+      ]
     }
   ]
 }
