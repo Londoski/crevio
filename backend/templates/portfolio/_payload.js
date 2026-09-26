@@ -268,6 +268,7 @@ function build(userId, opts) {
     const onTestimonialsPage = opts.mode === "testimonials";
     const TESTIMONIALS_HOMEPAGE_LIMIT = 6;
     const templateMeta = opts.templateMeta || null;
+    const baseUrl = String(opts.baseUrl || process.env.SITE_URL || "").replace(/\/$/, "");
 
     const user = safeGet(
         "SELECT id, username, display_name, email, bio, profile_image, location, " +
@@ -334,6 +335,13 @@ function build(userId, opts) {
         ? ("/p/" + encodeURIComponent(profile.username))
         : "/p";
 
+    
+    // ---------- Open Graph / Twitter card metadata ----------
+    meta.ogUrl = baseUrl ? (baseUrl + portfolioUrl) : portfolioUrl;
+    meta.ogImage = (profile && profile.image) || (projects[0] && projects[0].thumbnail) || null;
+    if (meta.ogImage && meta.ogImage.charAt(0) === "/" && baseUrl) meta.ogImage = baseUrl + meta.ogImage;
+    meta.ogType = "profile";
+    meta.siteName = "Crevio";
     return {
         profile: profile,
         hasProfile: !!(profile && (profile.name || profile.headline || profile.bio)),

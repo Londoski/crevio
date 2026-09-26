@@ -2869,6 +2869,68 @@
         "ed-card-featured",
         "grid-column: 1 / -1"
       ]
+    },
+    {
+      "id": "phase-16-og-controller-baseurl",
+      "desc": "Render controller passes req base URL to the payload builder",
+      "type": "fileContains",
+      "file": "backend/controllers/portfolioRenderController.js",
+      "patterns": [
+        "baseUrl: req.protocol"
+      ]
+    },
+    {
+      "id": "phase-16-og-payload",
+      "desc": "Payload exposes meta.ogUrl + meta.ogImage",
+      "type": "fileContains",
+      "file": "backend/templates/portfolio/_payload.js",
+      "patterns": [
+        "meta.ogUrl",
+        "meta.ogImage",
+        "opts.baseUrl"
+      ]
+    },
+    {
+      "id": "phase-16-og-minimal",
+      "desc": "Minimal template emits OG + Twitter meta tags",
+      "type": "fileContains",
+      "file": "backend/templates/portfolio/minimal/template.html",
+      "patterns": [
+        "og:title",
+        "og:image",
+        "twitter:card"
+      ]
+    },
+    {
+      "id": "phase-16-og-cinematic",
+      "desc": "Cinematic template emits OG + Twitter meta tags",
+      "type": "fileContains",
+      "file": "backend/templates/portfolio/cinematic/template.html",
+      "patterns": [
+        "og:title",
+        "og:image",
+        "twitter:card"
+      ]
+    },
+    {
+      "id": "phase-16-og-editorial",
+      "desc": "Editorial template emits OG + Twitter meta tags",
+      "type": "fileContains",
+      "file": "backend/templates/portfolio/editorial/template.html",
+      "patterns": [
+        "og:title",
+        "og:image",
+        "twitter:card"
+      ]
+    },
+    {
+      "id": "phase-16-og-absolute-image",
+      "desc": "og:image is absolute when baseUrl is available",
+      "type": "fileContains",
+      "file": "backend/templates/portfolio/_payload.js",
+      "patterns": [
+        "meta.ogImage = baseUrl +"
+      ]
     }
   ]
 }

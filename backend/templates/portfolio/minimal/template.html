@@ -24,6 +24,16 @@ body.crevio-portfolio, body.crevio-cinematic, body.crevio-editorial {
     font-family: '{{{ theme.font }}}', system-ui, sans-serif;
 }
 </style>
+<meta property="og:type" content="{{ meta.ogType }}">
+<meta property="og:title" content="{{ meta.title }}">
+<meta property="og:description" content="{{ meta.description }}">
+<meta property="og:url" content="{{ meta.ogUrl }}">
+{{#meta.ogImage}}<meta property="og:image" content="{{ meta.ogImage }}">{{/meta.ogImage}}
+<meta property="og:site_name" content="{{ meta.siteName }}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{ meta.title }}">
+<meta name="twitter:description" content="{{ meta.description }}">
+{{#meta.ogImage}}<meta name="twitter:image" content="{{ meta.ogImage }}">{{/meta.ogImage}}
 </head>
 <body class="crevio-portfolio" data-template="minimal">
 {{#effects.shapes}}

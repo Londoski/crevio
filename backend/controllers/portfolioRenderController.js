@@ -83,7 +83,7 @@ function doRender(req, res, next, mode) {
             return next();
         }
 
-        const data = payloadBuilder.build(user.id, { templateMeta: tpl.meta, mode: mode });
+        const data = payloadBuilder.build(user.id, { templateMeta: tpl.meta, mode: mode, baseUrl: req.protocol + "://" + req.get("host") });
         if (!data) return next();
 
         const html = engine.render(effectiveSlug, data);
