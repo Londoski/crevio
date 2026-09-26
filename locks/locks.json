@@ -2931,6 +2931,28 @@
       "patterns": [
         "meta.ogImage = baseUrl +"
       ]
+    },
+    {
+      "id": "phase-17-seo-routes-file",
+      "desc": "SEO routes file provides /sitemap.xml + /robots.txt",
+      "type": "fileContains",
+      "file": "backend/routes/seoRoutes.js",
+      "patterns": [
+        "/sitemap.xml",
+        "/robots.txt",
+        "urlset",
+        "User-agent"
+      ]
+    },
+    {
+      "id": "phase-17-seo-mounted",
+      "desc": "server.js mounts seoRoutes before express.static",
+      "type": "fileContains",
+      "file": "backend/server.js",
+      "patterns": [
+        "seoRoutes",
+        "app.use(\"/\", seoRoutes)"
+      ]
     }
   ]
 }

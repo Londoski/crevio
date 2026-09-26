@@ -10,6 +10,7 @@ const express = require("express");
 const path    = require("path");
 const fs      = require("fs");
 const cors    = require("cors");
+const seoRoutes          = require("./routes/seoRoutes");
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -29,6 +30,9 @@ app.post(
 );
 
 app.use(express.json({ limit: "10mb" }));
+
+// SEO — sitemap.xml + robots.txt (must be before static middleware)
+app.use("/", seoRoutes);
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 // 2b. Ensure upload folders exist
