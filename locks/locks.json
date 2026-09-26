@@ -2953,6 +2953,57 @@
         "seoRoutes",
         "app.use(\"/\", seoRoutes)"
       ]
+    },
+    {
+      "id": "phase-18-favicon-payload",
+      "desc": "Payload exposes meta.favicon (profile image or Crevio default)",
+      "type": "fileContains",
+      "file": "backend/templates/portfolio/_payload.js",
+      "patterns": [
+        "meta.favicon",
+        "favicon-default.svg"
+      ]
+    },
+    {
+      "id": "phase-18-favicon-minimal",
+      "desc": "Minimal template links the dynamic favicon",
+      "type": "fileContains",
+      "file": "backend/templates/portfolio/minimal/template.html",
+      "patterns": [
+        "rel=\"icon\"",
+        "meta.favicon"
+      ]
+    },
+    {
+      "id": "phase-18-favicon-cinematic",
+      "desc": "Cinematic template links the dynamic favicon",
+      "type": "fileContains",
+      "file": "backend/templates/portfolio/cinematic/template.html",
+      "patterns": [
+        "rel=\"icon\"",
+        "meta.favicon"
+      ]
+    },
+    {
+      "id": "phase-18-favicon-editorial",
+      "desc": "Editorial template links the dynamic favicon",
+      "type": "fileContains",
+      "file": "backend/templates/portfolio/editorial/template.html",
+      "patterns": [
+        "rel=\"icon\"",
+        "meta.favicon"
+      ]
+    },
+    {
+      "id": "phase-18-favicon-fallback-file",
+      "desc": "Fallback favicon SVG exists for users with no profile image",
+      "type": "fileContains",
+      "file": "dashboard/assets/templates/favicon-default.svg",
+      "patterns": [
+        "<svg",
+        "#2563EB",
+        "text-anchor"
+      ]
     }
   ]
 }

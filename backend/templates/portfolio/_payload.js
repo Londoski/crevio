@@ -340,6 +340,9 @@ function build(userId, opts) {
     meta.ogUrl = baseUrl ? (baseUrl + portfolioUrl) : portfolioUrl;
     meta.ogImage = (profile && profile.image) || (projects[0] && projects[0].thumbnail) || null;
     if (meta.ogImage && meta.ogImage.charAt(0) === "/" && baseUrl) meta.ogImage = baseUrl + meta.ogImage;
+
+    // ---------- Favicon ----------
+    meta.favicon = (profile && profile.image) ? profile.image : "/dashboard/assets/templates/favicon-default.svg";
     meta.ogType = "profile";
     meta.siteName = "Crevio";
     return {
